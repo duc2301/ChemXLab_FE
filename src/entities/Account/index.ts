@@ -1,0 +1,6 @@
+export interface UserAccount {
+  id: string;
+  email: string;
+  passwordHash: string;
+  avatarUrl: string;
+}
