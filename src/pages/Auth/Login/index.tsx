@@ -13,7 +13,7 @@ const LoginPage = () => {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [showPassword, setShowPassword] = useState(false);
-  const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login');
+
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async () => {
@@ -28,8 +28,16 @@ const LoginPage = () => {
       password
     };
     
-    await Login(loginData);      
-      
+    const result = await Login(loginData);      
+    if (result === "success") {
+      message.success("Login successful");
+    } 
+    else {
+      message.error("Login failed");
+      setIsLoading(false);
+    }
+    setIsLoading(false);
+
   }
 
   // 2. Hàm xử lý phím Enter
@@ -49,17 +57,17 @@ const LoginPage = () => {
         {/* Tabs */}
         <div className="flex justify-center gap-6 mb-8">
           <button 
-            onClick={() => setActiveTab('login')}
+            onClick={() => navigate('/login')}
             type="button"
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${activeTab === 'login' ? 'bg-gray-100 font-semibold text-gray-900' : 'text-gray-500 hover:bg-gray-50'}`}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all bg-gray-100 font-semibold text-gray-900 `}
           >
             <LogIn size={18} />
             Login
           </button>
           <button 
-            onClick={() => setActiveTab('signup')}
+            onClick={() => navigate('/register')}
             type="button"
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${activeTab === 'signup' ? 'bg-gray-100 font-semibold text-gray-900' : 'text-gray-500 hover:bg-gray-50'}`}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all text-gray-500 hover:bg-gray-50`}
           >
             <UserPlus size={18} />
             Sign Up

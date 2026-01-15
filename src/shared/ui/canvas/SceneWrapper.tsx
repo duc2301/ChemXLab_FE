@@ -1,5 +1,6 @@
 import { Canvas } from '@react-three/fiber';
 import { Suspense, useEffect, useState, type ReactNode } from 'react';
+import * as THREE from 'three';
 
 interface SceneWrapperProps {
   children: ReactNode;
@@ -42,7 +43,11 @@ export const SceneWrapper = ({ children, className }: SceneWrapperProps) => {
         shadows
         camera={{ position: [5, 5, 5], fov: 50 }} // Góc nhìn camera mặc định
         dpr={[1, 2]} // Tối ưu pixel ratio cho màn hình retina
-        gl={{ preserveDrawingBuffer: true }} // Hỗ trợ chụp màn hình nếu cần
+        gl={{
+          toneMapping: THREE.ACESFilmicToneMapping, // Chuẩn điện ảnh
+          toneMappingExposure: 0.9, // Độ phơi sáng
+          antialias: true // Khử răng cưa
+        }}
       >
         {/* Suspense để chờ load các tài nguyên 3D nặng */}
         <Suspense fallback={null}>
