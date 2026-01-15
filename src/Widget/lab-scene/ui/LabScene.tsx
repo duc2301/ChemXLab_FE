@@ -22,30 +22,20 @@ export const LabScene = () => {
 
         {/* === KHÔNG GIAN PHÒNG THÍ NGHIỆM === */}
 
-        {/* 1. Cái Bàn (Gốc) */}
+        {/* 1. Lab room */}
         <GenericModel 
-          path="/models/table.glb"
-          position={[0, 0, 0]} 
+          path="/models/phongthinghiem.glb"
+          position={[0, 0.1, 0]} 
           scale={1.5}
         />
 
-        {/* 2. Cái Bàn thứ 2 (Tái sử dụng) - Xoay đi một chút */}
+        {/* 2. Table */}
         <GenericModel 
           path="/models/table.glb"
-          position={[5, 0, -3]} 
-          rotation={[0, Math.PI / 2, 0]} 
+          position={[-2.5, 0, -1.25]} 
+          rotation={[0, Math.PI / 4, 0]} 
           scale={1.5}
         />
-
-        {/* 3. Ví dụ nhập thêm các file khác sau này */}
-        {/* <GenericModel path="/models/chair.glb" position={[0, 0, 1]} /> */}
-        {/* <GenericModel path="/models/microscope.glb" position={[0, 0.8, 0]} /> */}
-
-        {/* Sàn nhà */}
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
-          <planeGeometry args={[100, 100]} />
-          <meshStandardMaterial color="#333" />
-        </mesh>
 
       </SceneWrapper>
     </KeyboardControls>

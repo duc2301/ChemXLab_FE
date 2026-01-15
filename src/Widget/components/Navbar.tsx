@@ -1,8 +1,11 @@
-import { ChevronDown, Menu, X, ChevronRight, Box, BookOpen, Users, Gem } from "lucide-react";
+import { 
+  ChevronDown, Menu, X, ChevronRight, Box, BookOpen, Users, Gem, 
+  ChartArea, Settings, LogOut, User 
+} from "lucide-react";
 import { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
-import logo from "../../shared/assets/Logo/LogoChemX.png"; // Đảm bảo đường dẫn đúng
-
+import { Link, useNavigate } from "react-router-dom"; // Thêm useNavigate để redirect khi logout
+import logo from "../../shared/assets/Logo/LogoChemX.png"; 
+import { Logout } from "../../features/Auth";
 
 interface NavItem {
   name: string;
@@ -16,7 +19,6 @@ interface NavGroup {
   items: NavItem[];
 }
 
-// --- 2. Dữ liệu Menu (Có Type Safety) ---
 const NAV_DATA: NavGroup[] = [
   {
     label: "Sản phẩm",
@@ -47,21 +49,38 @@ const NAV_DATA: NavGroup[] = [
 ];
 
 const Navbar = () => {
-  // --- 3. State Management với Types ---
-  // activeDropdown có thể là string (tên menu) hoặc null
+  const navigate = useNavigate();
+  
+  // --- STATE ---
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState<boolean>(false); // State cho User Dropdown
   const [scrolled, setScrolled] = useState<boolean>(false);
 
-  // useRef cần định nghĩa rõ kiểu Element (HTMLDivElement)
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  // --- REFS ---
+  const navDropdownRef = useRef<HTMLDivElement>(null);
+  const userDropdownRef = useRef<HTMLDivElement>(null); // Ref riêng cho User Menu
 
-  // --- 4. Effects ---
+  // --- USER DATA FROM LOCAL STORAGE ---
+  // Lấy dữ liệu mỗi khi component render để đảm bảo cập nhật
+  const token = localStorage.getItem("token") || localStorage.getItem("jwtToken"); 
+  const userImageUrl = localStorage.getItem("imageUrl");
+  const userEmail = localStorage.getItem("email");
+  const userRole = localStorage.getItem("role");
+
+  // --- EFFECTS ---
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      // Ép kiểu event.target về Node để kiểm tra contains
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      
+      // Xử lý đóng Main Menu Dropdown
+      if (navDropdownRef.current && !navDropdownRef.current.contains(target)) {
         setActiveDropdown(null);
+      }
+
+      // Xử lý đóng User Dropdown
+      if (userDropdownRef.current && !userDropdownRef.current.contains(target)) {
+        setIsUserMenuOpen(false);
       }
     };
 
@@ -77,12 +96,9 @@ const Navbar = () => {
   }, []);
 
   const toggleDropdown = (label: string) => {
-    if (activeDropdown === label) {
-      setActiveDropdown(null);
-    } else {
-      setActiveDropdown(label);
-    }
+    setActiveDropdown(activeDropdown === label ? null : label);
   };
+  
 
   return (
     <header
@@ -90,7 +106,8 @@ const Navbar = () => {
         scrolled ? "shadow-md border-b border-gray-100" : "border-b border-transparent"
       }`}
     >
-      <div className="container mx-auto px-6 h-20 flex items-center justify-between" ref={dropdownRef}>
+      {/* Thêm ref vào container cha hoặc nav để bắt click outside cho nav chính */}
+      <div className="container mx-auto px-6 h-20 flex items-center justify-between" ref={navDropdownRef}>
         
         {/* LOGO */}
         <Link to="/" className="flex items-center gap-2 group">
@@ -151,21 +168,121 @@ const Navbar = () => {
           ))}
         </nav>
 
-        {/* RIGHT ACTIONS */}
+        {/* RIGHT ACTIONS - LOGIN STATE CHECK */}
         <div className="hidden md:flex items-center gap-4">
-          <Link
-            to="/login"
-            className="text-sm font-bold text-slate-600 hover:text-blue-600 transition-colors"
-          >
-            Đăng nhập
-          </Link>
-          <Link
-            to="/experience"
-            className="flex items-center gap-2 bg-slate-900 text-white px-5 py-2.5 rounded-full text-sm font-bold hover:bg-blue-600 transition-all shadow-lg hover:shadow-blue-600/30"
-          >
-            <Gem className="w-4 h-4" />
-            Gói Premium
-          </Link>
+          
+          {token ? (
+            // --- UI KHI ĐÃ ĐĂNG NHẬP ---
+            <div className="relative" ref={userDropdownRef}>
+              {/* Avatar Button */}
+              <button
+                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                className="flex items-center space-x-2 px-2 py-1.5 rounded-full hover:bg-gray-100 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+              >
+                <div className="relative">
+                  {userImageUrl ? (
+                    <img
+                      src={userImageUrl}
+                      alt="User Avatar"
+                      className="w-9 h-9 rounded-full object-cover border-2 border-gray-200"
+                    />
+                  ) : (
+                    <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center border-2 border-gray-200">
+                        <User className="w-5 h-5 text-gray-400" />
+                    </div>
+                  )}
+                  <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
+                </div>
+                <ChevronDown
+                  className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${
+                    isUserMenuOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+
+              {/* Dropdown Menu */}
+              {isUserMenuOpen && (
+                <div className="absolute right-0 mt-2 w-[270px] bg-white rounded-lg shadow-lg border border-gray-200 py-2 px-2 z-50 animate-in fade-in slide-in-from-top-2">
+                  {/* User Info Header */}
+                  <div className="px-4 py-3 border-b border-gray-100">
+                    <div className="flex items-center space-x-3">
+                      {userImageUrl ? (
+                        <img
+                          src={userImageUrl}
+                          alt="User Avatar"
+                          className="w-8 h-8 rounded-full object-cover border-2 border-gray-200"
+                        />
+                      ) : (
+                        <User className="w-8 h-8 text-gray-400" />
+                      )}
+                      <div className="overflow-hidden">
+                          <p className="text-xs text-gray-500 font-medium">Xin chào,</p>
+                          <p className="text-sm font-bold text-gray-900 truncate">{userEmail || "User"}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Menu Items */}
+                  <div className="py-1">
+                    {userRole === "Admin" && (
+                      <Link
+                        to="/admin"
+                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-150 rounded-lg mb-1"
+                      >
+                        <ChartArea className="w-4 h-4 mr-3" />
+                        Admin Dashboard
+                      </Link>
+                    )}
+
+                    <Link
+                      to="/profile"
+                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-150 rounded-lg mb-1"
+                    >
+                      <User className="w-4 h-4 mr-3" />
+                      Hồ sơ cá nhân
+                    </Link>
+
+                    <Link
+                      to="/settings"
+                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-150 rounded-lg"
+                    >
+                      <Settings className="w-4 h-4 mr-3" />
+                      Cài đặt
+                    </Link>
+                  </div>
+
+                  {/* Divider */}
+                  <div className="border-t border-gray-100 my-1"></div>
+
+                  {/* Logout */}
+                  <button
+                    onClick={Logout}
+                    className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors duration-150 rounded-lg"
+                  >
+                    <LogOut className="w-4 h-4 mr-3" />
+                    Đăng xuất
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            // --- UI KHI CHƯA ĐĂNG NHẬP (GUEST) ---
+            <>
+              <Link
+                to="/login"
+                className="text-sm font-bold text-slate-600 hover:text-blue-600 transition-colors"
+              >
+                Đăng nhập
+              </Link>
+              <Link
+                to="/experience"
+                className="flex items-center gap-2 bg-slate-900 text-white px-5 py-2.5 rounded-full text-sm font-bold hover:bg-blue-600 transition-all shadow-lg hover:shadow-blue-600/30"
+              >
+                <Gem className="w-4 h-4" />
+                Gói Premium
+              </Link>
+            </>
+          )}
         </div>
 
         {/* MOBILE TOGGLE */}
@@ -181,6 +298,22 @@ const Navbar = () => {
       {isMobileMenuOpen && (
         <div className="md:hidden absolute top-20 left-0 w-full bg-white border-b border-gray-100 shadow-xl h-[calc(100vh-80px)] overflow-y-auto">
           <div className="p-4 space-y-6">
+            
+            {/* Hiển thị thông tin User trên Mobile nếu đã login */}
+            {token && (
+               <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg mb-4">
+                  {userImageUrl ? (
+                    <img src={userImageUrl} alt="Avatar" className="w-10 h-10 rounded-full object-cover"/>
+                  ) : (
+                     <User className="w-10 h-10 p-2 bg-white rounded-full text-gray-500" />
+                  )}
+                  <div>
+                    <div className="font-bold text-slate-900">{userEmail}</div>
+                    <div className="text-xs text-slate-500">Thành viên</div>
+                  </div>
+               </div>
+            )}
+
             {NAV_DATA.map((group) => (
               <div key={group.label} className="space-y-3">
                 <h3 className="font-bold text-slate-900 uppercase text-xs tracking-wider px-2 flex items-center gap-2">
@@ -201,10 +334,22 @@ const Navbar = () => {
                 <div className="border-b border-gray-100 mx-2"></div>
               </div>
             ))}
-            <div className="pt-4">
-                 <Link to="/experience" className="block w-full text-center bg-blue-600 text-white py-3 rounded-lg font-bold">
-                    Đăng ký ngay
-                 </Link>
+
+            <div className="pt-4 space-y-3">
+               {!token ? (
+                  <>
+                    <Link to="/login" className="block w-full text-center border border-slate-200 text-slate-700 py-3 rounded-lg font-bold">
+                      Đăng nhập
+                    </Link>
+                    <Link to="/experience" className="block w-full text-center bg-blue-600 text-white py-3 rounded-lg font-bold">
+                      Gói Premium
+                    </Link>
+                  </>
+               ) : (
+                  <button onClick={handleLogout} className="block w-full text-center bg-red-50 text-red-600 py-3 rounded-lg font-bold">
+                     Đăng xuất
+                  </button>
+               )}
             </div>
           </div>
         </div>

@@ -9,6 +9,7 @@ import SupportPage from "../../pages/Support";
 import LabPage from "../../pages/Lab";
 import LabTest from "../../pages/Lab/Temp";
 import LoginPage from "../../pages/Auth/Login";
+import RegisterPage from "../../pages/Auth/Register";
 
 export const AppRoutes = () => {
   return (
@@ -24,6 +25,7 @@ export const AppRoutes = () => {
       <Route path="lab" element={<LabPage/>} />
       <Route path="labtest" element={<LabTest />} />
       <Route path="login" element={<LoginPage />} />
+      <Route path="register" element={< RegisterPage/>} />
     </Routes>
   );
 };
