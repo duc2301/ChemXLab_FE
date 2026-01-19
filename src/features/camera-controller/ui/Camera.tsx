@@ -1,83 +1,84 @@
-import { useKeyboardControls, PointerLockControls } from '@react-three/drei';
+// features/camera-controller/ui/PlayerController.tsx
+import { useKeyboardControls } from '@react-three/drei';
 import { useFrame, useThree } from '@react-three/fiber';
+import { CapsuleCollider, RigidBody, RapierRigidBody, useRapier } from '@react-three/rapier';
 import { useRef } from 'react';
-import { Vector3, Object3D } from 'three';
+import { Vector3 } from 'three';
 import type { ControlsState } from '../models/controls';
 
-const MOVEMENT_SPEED = 4; // units per second
+const MOVEMENT_SPEED = 5;
+const JUMP_FORCE = 5;
 
-export const FreeCameraController = () => {
-  const [, get] = useKeyboardControls<ControlsState>();
+export const UserCamera = () => {
   const { camera } = useThree();
+  const [, get] = useKeyboardControls<ControlsState>();
+  const rigidBodyRef = useRef<RapierRigidBody>(null);
+  const { world } = useRapier();
 
-  // Invisible player capsule / pivot that represents the character
-  const playerRef = useRef<Object3D | null>(null);
+  // Vectors - tạo 1 lần duy nhất để tránh garbage collection
+  const directionRef = useRef(new Vector3());
+  const frontVectorRef = useRef(new Vector3());
+  const sideVectorRef = useRef(new Vector3());
 
-  // tmp vectors to avoid allocations
-  const forwardVec = new Vector3();
-  const rightVec = new Vector3();
-  const moveVec = new Vector3();
+  useFrame((state) => {
+    if (!rigidBodyRef.current) return;
 
-  useFrame((_, delta) => {
-    if (!playerRef.current) return;
+    const { forward, backward, left, right, up } = get();
+    const vel = rigidBodyRef.current.linvel();
 
-    const { forward, backward, left, right, up, down } = get();
+    // Tính hướng di chuyển
+    const direction = directionRef.current;
+    const frontVector = frontVectorRef.current;
+    const sideVector = sideVectorRef.current;
 
-    // Calculate horizontal forward direction from camera (ignore pitch)
-    camera.getWorldDirection(forwardVec);
-    forwardVec.y = 0;
-    forwardVec.normalize();
+    frontVector.set(0, 0, Number(backward) - Number(forward));
+    sideVector.set(Number(left) - Number(right), 0, 0);
 
-    // Right vector (horizontal)
-    rightVec.crossVectors(forwardVec, camera.up).normalize();
+    direction
+      .subVectors(frontVector, sideVector)
+      .normalize()
+      .multiplyScalar(MOVEMENT_SPEED)
+      .applyEuler(state.camera.rotation);
 
-    // Compose movement from keyboard input (WASD) — strafing left/right, moving forward/back
-    moveVec.set(0, 0, 0);
-    if (forward) moveVec.add(forwardVec);
-    if (backward) moveVec.sub(forwardVec);
-    if (right) moveVec.add(rightVec);
-    if (left) moveVec.sub(rightVec);
+    // Áp dụng vận tốc (giữ nguyên Y cho trọng lực)
+    rigidBodyRef.current.setLinvel(
+      { x: direction.x, y: vel.y, z: direction.z },
+      true
+    );
 
-    // Horizontal movement (WASD) — keep controlling X/Z directly
-    if (moveVec.lengthSq() > 0) {
-      moveVec.normalize().multiplyScalar(MOVEMENT_SPEED * delta);
-      playerRef.current.position.add(moveVec);
-    }
-
-    // Jump: request an impulse from the Physics system rather than directly setting Y
+    // Xử lý nhảy với ground check
     if (up) {
-      // Only request jump if grounded
-      if (playerRef.current.userData.grounded) {
-        playerRef.current.userData.jump = true;
-        // optional custom jump velocity
-        playerRef.current.userData.jumpVelocity = 5;
+      const origin = rigidBodyRef.current.translation();
+      const ray = world.castRay(
+        { 
+          origin: { x: origin.x, y: origin.y, z: origin.z },
+          dir: { x: 0, y: -1, z: 0 }
+        } as any,
+        1.1,
+        true
+      );
+
+      if (ray) {
+        rigidBodyRef.current.setLinvel({ x: vel.x, y: JUMP_FORCE, z: vel.z }, true);
       }
     }
 
-    // Always sync camera to player head (so gravity affects view)
-    const headOffset = 2.2;
-    camera.position.copy(playerRef.current.position).add(new Vector3(0, headOffset, 0));
+    const translation = rigidBodyRef.current.translation();
+    camera.position.set(translation.x, translation.y + 0.8, translation.z);
   });
 
   return (
-    <>
-      <PointerLockControls makeDefault selector="#r3f-canvas" />
-
-      {/* Invisible player pivot (keeps position and can cast/receive if needed) */}
-      <mesh
-        ref={playerRef as any}
-        position={[0, 0, 0]}
-        visible={false}
-        // enable physics for this object (gravity + ground collision)
-        onUpdate={(self) => {
-          self.userData.physics = true;
-          self.userData.heightOffset = 0; // player's feet at object.position.y
-          self.userData.kinematic = false;
-        }}
-      >
-        <capsuleGeometry args={[0.35, 1.0, 4, 8]} />
-        <meshStandardMaterial transparent opacity={0} />
-      </mesh>
-    </>
+    <RigidBody
+      ref={rigidBodyRef}
+      colliders={false}
+      mass={1}
+      type="dynamic"
+      position={[0, 5, 0]}
+      enabledRotations={[false, false, false]}
+      linearDamping={0.5}
+      friction={0}
+    >
+      <CapsuleCollider args={[0.75, 0.35]} />
+    </RigidBody>
   );
 };

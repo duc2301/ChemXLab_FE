@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { LoginForm, RegisterForm } from "../../../entities/Auth/Login";
+import type { LoginForm, RegisterForm } from "../../../entities/Auth";
 import { Login, register } from "../../../features/Auth";
 import { useNavigate } from "react-router-dom";
 import { message } from "antd";

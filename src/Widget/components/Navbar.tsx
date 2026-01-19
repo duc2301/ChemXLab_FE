@@ -64,9 +64,9 @@ const Navbar = () => {
   // --- USER DATA FROM LOCAL STORAGE ---
   // Lấy dữ liệu mỗi khi component render để đảm bảo cập nhật
   const token = localStorage.getItem("token") || localStorage.getItem("jwtToken"); 
-  const userImageUrl = localStorage.getItem("imageUrl");
-  const userEmail = localStorage.getItem("email");
-  const userRole = localStorage.getItem("role");
+  const userImageUrl = localStorage.getItem("AvatarUrl");
+  const userEmail = localStorage.getItem("Email");
+  const userRole = localStorage.getItem("Role");
 
   // --- EFFECTS ---
   useEffect(() => {

@@ -9,3 +9,13 @@ export interface RegisterForm {
     confirmPassword: string;
     fullName: string;
 }
+
+export interface JwtDecode {
+    sub: string;
+    email: string;
+    exp: number;
+    iss: string;
+    aud: string;
+    AvatarUrl: string;
+    Role: string;
+}
