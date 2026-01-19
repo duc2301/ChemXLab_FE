@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { LoginForm } from "../../../entities/Auth/Login";
+import type { LoginForm } from "../../../entities/Auth";
 import { Login } from "../../../features/Auth";
 import { useNavigate } from "react-router-dom";
 import { message } from "antd";
@@ -27,14 +27,13 @@ const LoginPage = () => {
       email,
       password
     };
-    
-    const result = await Login(loginData);      
-    if (result === "success") {
-      message.success("Login successful");
+
+    const result : boolean | null = await Login(loginData);      
+    if (result) {
+      navigate('/');
     } 
     else {
       message.error("Login failed");
-      setIsLoading(false);
     }
     setIsLoading(false);
 

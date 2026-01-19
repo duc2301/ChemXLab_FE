@@ -1,42 +1,48 @@
+// scenes/LabScene.tsx
 import { SceneWrapper } from '../../../shared/ui/canvas/SceneWrapper';
 import { LabEnvironment } from '../../../features/lab-environment/ui/LabEnvironment';
-import { KeyboardControls } from '@react-three/drei';
+import { KeyboardControls, PointerLockControls } from '@react-three/drei';
 import { controlMap } from '../../../features/camera-controller/models/controls';
-import { FreeCameraController } from '../../../features/camera-controller/ui/Camera';
-import { Physics } from '../../../features/camera-controller/ui/Physics';
-import { GenericModel } from '../../../shared/ui/3d/GenericModel';
-import { Button } from 'antd';
+import { CuboidCollider, Physics, RigidBody } from '@react-three/rapier';
+import { PhysicsModel } from '../../../shared/ui/3d/PhysicsModel';
+import { Suspense } from 'react';
+import { UserCamera } from '../../../features/camera-controller/ui/Camera';
 
 export const LabScene = () => {
   return (
     <KeyboardControls map={controlMap}>
       <SceneWrapper>
-        {/* Layer 1: Môi trường & Ánh sáng */}
-        <LabEnvironment enableControls={false} />
+        <PointerLockControls />
 
-        {/* Camera controller (first-person style movement) */}
-        <FreeCameraController />
+        <Suspense fallback={null}>
+          <Physics gravity={[0, -9.8, 0]} debug={false}>
 
-        {/* Physics (gravity + ground collision) */}
-        <Physics gravity={9.8} groundY={0} />
+            {/* Môi trường & Ánh sáng */}
+            <LabEnvironment enableControls={false} />
 
-        {/* === KHÔNG GIAN PHÒNG THÍ NGHIỆM === */}
+            <UserCamera />
 
-        {/* 1. Lab room */}
-        <GenericModel 
-          path="/models/phongthinghiem.glb"
-          position={[0, 0.1, 0]} 
-          scale={1.5}
-        />
+            {/* Sàn */}
+            <RigidBody type="fixed" position={[0, -0.1, 0]}>
+              <CuboidCollider args={[50, 0.1, 50]} />
+            </RigidBody>
 
-        {/* 2. Table */}
-        <GenericModel 
-          path="/models/table.glb"
-          position={[-2.5, 0, -1.25]} 
-          rotation={[0, Math.PI / 4, 0]} 
-          scale={1.5}
-        />
+            <PhysicsModel
+              path="/models/phongthinghiem.glb"
+              position={[0, 0, 0]}
+              colliders="trimesh" 
+              isStatic={true}
+            />
 
+            <PhysicsModel
+              path="/models/table.glb"
+              position={[-2, 0, 2]}
+              colliders="hull"
+              isStatic={true}
+            />
+
+          </Physics>
+        </Suspense>
       </SceneWrapper>
     </KeyboardControls>
   );

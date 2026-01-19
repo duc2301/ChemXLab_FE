@@ -9,36 +9,36 @@ interface LabEnvironmentProps {
 export const LabEnvironment = ({ enableControls = true }: LabEnvironmentProps) => {
   const config = useControls({
     'Lab Atmosphere': folder({
-      bgColor: { value: '#f0f2f5' }, // Màu xám trắng đặc trưng của phòng lab
-      ambientIntensity: { value: 0.8, min: 0, max: 2 }, // Phòng lab cần rất sáng
+      bgColor: { value: '#f0f2f5' }, 
+      ambientIntensity: { value: 0.12, min: 0, max: 2 }, 
     }),
     
     'Lighting': folder({
       envPreset: {
         options: ['city', 'studio', 'warehouse', 'apartment'],
-        value: 'city' // City hoặc Studio cho ánh sáng trung tính tốt nhất
+        value: 'apartment' 
       },
-      envBlur: { value: 1, min: 0, max: 1 }, // Blur tối đa để ánh sáng mềm
-      lightIntensity: { value: 2, min: 0, max: 10 }, // Độ mạnh của đèn trần
+      envBlur: { value: 1, min: 0, max: 1 }, 
+      lightIntensity: { value: 2, min: 0, max: 10 }, 
     }),
 
     'Shadows': folder({
-      shadowOpacity: { value: 0.4, min: 0, max: 1 }, // Bóng nhạt thôi cho sạch
-      shadowBlur: { value: 2, min: 0, max: 10 },
-      shadowColor: '#8a8a8a', // Bóng màu xám thay vì đen kịt
+      shadowOpacity: { value: 0, min: 0, max: 1 }, 
+      shadowBlur: { value: 0, min: 0, max: 10 },
+      shadowColor: '#8a8a8a', 
     }),
 
     'Post Processing': folder({
       enableEffects: true,
-      bloomIntensity: { value: 0.2, min: 0, max: 2 }, // Bloom rất nhẹ cho kim loại
-      bloomThreshold: { value: 0.95, min: 0, max: 1 },
+      bloomIntensity: { value: 0.05, min: 0, max: 2 }, 
+      bloomThreshold: { value: 1, min: 0, max: 1 },
     })
   });
 
   return (
     <>
       {/* 1. Nền sạch sẽ */}
-      <color attach="background" args={[config.bgColor]} />
+      {/* <color attach="background" args={[config.bgColor]} /> */}
 
       {/* 2. Ánh sáng môi trường */}
       {/* Phòng lab cần ánh sáng đều, không góc chết */}
@@ -56,7 +56,7 @@ export const LabEnvironment = ({ enableControls = true }: LabEnvironmentProps) =
         />
 
         {/* Hai dải đèn dài song song - Tạo vệt phản chiếu đẹp trên kính/kim loại */}
-        <group rotation={[0, -0.5, 0]}>
+        {/* <group rotation={[0, -0.5, 0]}>
             <Lightformer 
                 intensity={config.lightIntensity} 
                 rotation-x={Math.PI / 2} 
@@ -71,16 +71,16 @@ export const LabEnvironment = ({ enableControls = true }: LabEnvironmentProps) =
                 scale={[10, 1, 1]} 
                 color="white"
             />
-        </group>
+        </group> */}
         
         {/* Một chút ánh sáng lạnh từ bên cạnh để tạo khối Clean */}
-        <Lightformer 
+        {/* <Lightformer 
             intensity={2} 
             rotation-y={Math.PI / 2} 
             position={[-5, 1, -1]} 
             scale={[10, 5, 1]} 
             color="#e6f0ff" // Hơi xanh nhẹ
-        />
+        /> */}
       </Environment>
 
       {/* 4. Bóng đổ mềm mại trên sàn trắng */}
