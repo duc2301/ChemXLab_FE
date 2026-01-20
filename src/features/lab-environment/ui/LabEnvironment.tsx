@@ -37,11 +37,8 @@ export const LabEnvironment = ({ enableControls = true }: LabEnvironmentProps) =
 
   return (
     <>
-      {/* 1. Nền sạch sẽ */}
-      {/* <color attach="background" args={[config.bgColor]} /> */}
 
       {/* 2. Ánh sáng môi trường */}
-      {/* Phòng lab cần ánh sáng đều, không góc chết */}
       <ambientLight intensity={config.ambientIntensity} />
 
       {/* 3. Setup đèn trần giả lập đèn Huỳnh Quang (Fluorescent) */}
@@ -55,32 +52,6 @@ export const LabEnvironment = ({ enableControls = true }: LabEnvironmentProps) =
           color="white"
         />
 
-        {/* Hai dải đèn dài song song - Tạo vệt phản chiếu đẹp trên kính/kim loại */}
-        {/* <group rotation={[0, -0.5, 0]}>
-            <Lightformer 
-                intensity={config.lightIntensity} 
-                rotation-x={Math.PI / 2} 
-                position={[0, 5, -2]} 
-                scale={[10, 1, 1]} // Dạng thanh dài
-                color="white"
-            />
-            <Lightformer 
-                intensity={config.lightIntensity} 
-                rotation-x={Math.PI / 2} 
-                position={[0, 5, 2]} 
-                scale={[10, 1, 1]} 
-                color="white"
-            />
-        </group> */}
-        
-        {/* Một chút ánh sáng lạnh từ bên cạnh để tạo khối Clean */}
-        {/* <Lightformer 
-            intensity={2} 
-            rotation-y={Math.PI / 2} 
-            position={[-5, 1, -1]} 
-            scale={[10, 5, 1]} 
-            color="#e6f0ff" // Hơi xanh nhẹ
-        /> */}
       </Environment>
 
       {/* 4. Bóng đổ mềm mại trên sàn trắng */}
@@ -92,7 +63,7 @@ export const LabEnvironment = ({ enableControls = true }: LabEnvironmentProps) =
         far={1.5} 
         color={config.shadowColor}
         resolution={512} 
-        smooth={true} // Làm bóng mượt hơn
+        smooth={true} 
       />
 
       {/* 5. Hậu kỳ tối giản */}
