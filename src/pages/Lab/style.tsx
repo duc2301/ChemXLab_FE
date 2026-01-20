@@ -154,7 +154,7 @@ export const LabStyle = () => {
         height: 100%;
         display: block;
       }
-      
+
       #atom-model canvas {
         width: 100% !important;
         height: 100% !important;
@@ -282,9 +282,9 @@ export const LabStyle = () => {
         }
 
         #toggle-rotation {
-           /* Điều chỉnh vị trí trên mobile nếu cần */
-           bottom: 10px;
-           right: 10px;
+          /* Điều chỉnh vị trí trên mobile nếu cần */
+          bottom: 10px;
+          right: 10px;
         }
       }
 
@@ -381,9 +381,11 @@ export const LabStyle = () => {
         max-width: 340px;
         max-height: calc(100vh - 40px);
         overflow-y: auto;
-        background: linear-gradient(135deg,
+        background: linear-gradient(
+          135deg,
           rgba(255, 255, 255, 0.95),
-          rgba(245, 248, 250, 0.95));
+          rgba(245, 248, 250, 0.95)
+        );
         backdrop-filter: blur(15px);
         -webkit-backdrop-filter: blur(15px);
         border-radius: 16px;
@@ -424,11 +426,11 @@ export const LabStyle = () => {
         align-items: center;
         gap: 8px;
       }
-      
+
       /* Riêng nút View Atoms đổi màu cho khác biệt */
       #info-panel #btn-view-atoms {
-         background: linear-gradient(135deg, #3b82f6, #2563eb);
-         box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
       }
 
       #info-panel #btn-run-molecular-animation:hover,

@@ -1,8 +1,16 @@
-import { ChevronDown, Menu, X, ChevronRight, Box, BookOpen, Users, Gem } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import {
+  BookOpen,
+  Box,
+  ChevronDown,
+  ChevronRight,
+  Gem,
+  Menu,
+  Users,
+  X,
+} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import logo from "../../shared/assets/Logo/LogoChemX.png"; // Đảm bảo đường dẫn đúng
-
 
 interface NavItem {
   name: string;
@@ -22,10 +30,22 @@ const NAV_DATA: NavGroup[] = [
     label: "Sản phẩm",
     icon: <Box className="w-4 h-4" />,
     items: [
-      { name: "Tính năng nổi bật", path: "/features", desc: "Khám phá công nghệ 3D" },
-      { name: "Gói trải nghiệm", path: "/experience", desc: "Dùng thử miễn phí 3 ngày" },
-      { name: "Thư viện thí nghiệm", path: "/library", desc: "Kho dữ liệu hóa học" },
-    ]
+      {
+        name: "Tính năng nổi bật",
+        path: "/features",
+        desc: "Khám phá công nghệ 3D",
+      },
+      {
+        name: "Gói trải nghiệm",
+        path: "/experience",
+        desc: "Dùng thử miễn phí 3 ngày",
+      },
+      {
+        name: "Thư viện thí nghiệm",
+        path: "/library",
+        desc: "Kho dữ liệu hóa học",
+      },
+    ],
   },
   {
     label: "Tài nguyên",
@@ -33,8 +53,12 @@ const NAV_DATA: NavGroup[] = [
     items: [
       { name: "Blog học thuật", path: "/blog", desc: "Kiến thức & tin tức" },
       { name: "Trung tâm hỗ trợ", path: "/support", desc: "Giải đáp thắc mắc" },
-      { name: "Hướng dẫn sử dụng", path: "/tutorials", desc: "Video & tài liệu" },
-    ]
+      {
+        name: "Hướng dẫn sử dụng",
+        path: "/tutorials",
+        desc: "Video & tài liệu",
+      },
+    ],
   },
   {
     label: "Công ty",
@@ -42,7 +66,7 @@ const NAV_DATA: NavGroup[] = [
     items: [
       { name: "Về ChemXLab", path: "/about", desc: "Sứ mệnh & Tầm nhìn" },
       { name: "Liên hệ", path: "/contact", desc: "Kết nối với chúng tôi" },
-    ]
+    ],
   },
 ];
 
@@ -60,7 +84,10 @@ const Navbar = () => {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       // Ép kiểu event.target về Node để kiểm tra contains
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setActiveDropdown(null);
       }
     };
@@ -69,7 +96,7 @@ const Navbar = () => {
 
     document.addEventListener("mousedown", handleClickOutside);
     window.addEventListener("scroll", handleScroll);
-    
+
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
       window.removeEventListener("scroll", handleScroll);
@@ -87,15 +114,23 @@ const Navbar = () => {
   return (
     <header
       className={`fixed top-0 w-full z-[100] transition-all duration-300 bg-white/95 backdrop-blur-md ${
-        scrolled ? "shadow-md border-b border-gray-100" : "border-b border-transparent"
+        scrolled
+          ? "shadow-md border-b border-gray-100"
+          : "border-b border-transparent"
       }`}
     >
-      <div className="container mx-auto px-6 h-20 flex items-center justify-between" ref={dropdownRef}>
-        
+      <div
+        className="container mx-auto px-6 h-20 flex items-center justify-between"
+        ref={dropdownRef}
+      >
         {/* LOGO */}
         <Link to="/" className="flex items-center gap-2 group">
-           <img src={logo} alt="ChemXLab" className="h-10 w-auto object-contain" />
-           <span className="text-xl font-bold text-slate-900 tracking-tight hidden sm:block">
+          <img
+            src={logo}
+            alt="ChemXLab"
+            className="h-10 w-auto object-contain"
+          />
+          <span className="text-xl font-bold text-slate-900 tracking-tight hidden sm:block">
             ChemX<span className="text-blue-600">Lab</span>
           </span>
         </Link>
@@ -107,8 +142,8 @@ const Navbar = () => {
               <button
                 onClick={() => toggleDropdown(group.label)}
                 className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all ${
-                  activeDropdown === group.label 
-                    ? "bg-blue-50 text-blue-600" 
+                  activeDropdown === group.label
+                    ? "bg-blue-50 text-blue-600"
                     : "text-slate-600 hover:text-blue-600 hover:bg-slate-50"
                 }`}
               >
@@ -132,7 +167,7 @@ const Navbar = () => {
                         className="flex items-start gap-3 p-3 rounded-lg hover:bg-slate-50 transition-colors group/item"
                       >
                         <div className="mt-1 text-slate-400 group-hover/item:text-blue-600 transition-colors">
-                           <ChevronRight size={16} />
+                          <ChevronRight size={16} />
                         </div>
                         <div>
                           <p className="text-sm font-bold text-slate-800 group-hover/item:text-blue-600">
@@ -184,7 +219,7 @@ const Navbar = () => {
             {NAV_DATA.map((group) => (
               <div key={group.label} className="space-y-3">
                 <h3 className="font-bold text-slate-900 uppercase text-xs tracking-wider px-2 flex items-center gap-2">
-                    {group.icon} {group.label}
+                  {group.icon} {group.label}
                 </h3>
                 <div className="space-y-1">
                   {group.items.map((item) => (
@@ -202,9 +237,12 @@ const Navbar = () => {
               </div>
             ))}
             <div className="pt-4">
-                 <Link to="/experience" className="block w-full text-center bg-blue-600 text-white py-3 rounded-lg font-bold">
-                    Đăng ký ngay
-                 </Link>
+              <Link
+                to="/experience"
+                className="block w-full text-center bg-blue-600 text-white py-3 rounded-lg font-bold"
+              >
+                Đăng ký ngay
+              </Link>
             </div>
           </div>
         </div>

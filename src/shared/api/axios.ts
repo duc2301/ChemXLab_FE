@@ -50,11 +50,10 @@ const processQueue = (error: any, token: string | null = null) => {
   failedQueue = [];
 };
 
-
 const handleTokenRefresh = async (
   originalRequest: any,
   error: AxiosError<unknown, any>,
-  axiosInstance: typeof api 
+  axiosInstance: typeof api
 ) => {
   if (isRefreshing) {
     return new Promise(function (resolve, reject) {
@@ -108,9 +107,7 @@ const handleTokenRefresh = async (
   }
 };
 
-const createResponseInterceptor = (
-  axiosInstance: typeof api 
-) => {
+const createResponseInterceptor = (axiosInstance: typeof api) => {
   return async (error: AxiosError) => {
     const originalRequest = error.config as typeof error.config & {
       _retry?: boolean;
@@ -142,6 +139,5 @@ api.interceptors.response.use(
   (response) => response,
   createResponseInterceptor(api)
 );
-
 
 export default api;

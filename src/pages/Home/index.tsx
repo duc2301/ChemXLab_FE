@@ -1,10 +1,15 @@
-import { ArrowRight, Box, FlaskConical, Layers, PlayCircle, ShieldCheck } from "lucide-react";
+import {
+  ArrowRight,
+  Box,
+  FlaskConical,
+  Layers,
+  PlayCircle,
+} from "lucide-react";
 import { Link } from "react-router-dom";
 
 const HomePage = () => {
   return (
     <div className="min-h-screen bg-white font-sans text-slate-900">
-
       {/* --- HERO SECTION --- */}
       <section className="pt-32 pb-20 md:pt-40 md:pb-32 bg-slate-50 relative overflow-hidden">
         {/* Background Elements (Subtle) */}
@@ -12,10 +17,8 @@ const HomePage = () => {
 
         <div className="container mx-auto px-6 relative z-10">
           <div className="flex flex-col md:flex-row items-center gap-12 lg:gap-20">
-
             {/* Left Content */}
             <div className="w-full md:w-5/12 space-y-8 ">
-
               <h1 className="text-5xl lg:text-6xl font-extrabold leading-[1.1] tracking-tight text-slate-900">
                 Phòng thí nghiệm <br />
                 <span className="text-blue-600">3D Tương tác</span>
@@ -23,7 +26,8 @@ const HomePage = () => {
 
               <p className="text-lg text-slate-600 leading-relaxed max-w-lg">
                 ChemXLab biến các lý thuyết hóa học trừu tượng thành trải nghiệm
-                trực quan sống động. Khám phá, tương tác và hiểu sâu hơn về thế giới nguyên tử ngay trên trình duyệt của bạn.
+                trực quan sống động. Khám phá, tương tác và hiểu sâu hơn về thế
+                giới nguyên tử ngay trên trình duyệt của bạn.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4">
@@ -65,7 +69,10 @@ const HomePage = () => {
                   <div className="relative w-64 h-64">
                     <div className="absolute inset-0 border-2 border-blue-500/30 rounded-full animate-[spin_10s_linear_infinite]"></div>
                     <div className="absolute inset-4 border-2 border-cyan-400/30 rounded-full animate-[spin_15s_linear_infinite_reverse]"></div>
-                    <FlaskConical className="absolute inset-0 m-auto text-blue-400 w-32 h-32 drop-shadow-[0_0_30px_rgba(59,130,246,0.5)]" strokeWidth={1} />
+                    <FlaskConical
+                      className="absolute inset-0 m-auto text-blue-400 w-32 h-32 drop-shadow-[0_0_30px_rgba(59,130,246,0.5)]"
+                      strokeWidth={1}
+                    />
                   </div>
                 </div>
 
@@ -76,7 +83,6 @@ const HomePage = () => {
                   </button>
                 </div>
               </div>
-
             </div>
           </div>
         </div>
@@ -90,7 +96,8 @@ const HomePage = () => {
               Công nghệ mô phỏng tiên tiến
             </h2>
             <p className="text-slate-600 text-lg">
-              ChemXLab cung cấp bộ công cụ toàn diện giúp giáo viên và học sinh tiếp cận hóa học theo cách hoàn toàn mới.
+              ChemXLab cung cấp bộ công cụ toàn diện giúp giáo viên và học sinh
+              tiếp cận hóa học theo cách hoàn toàn mới.
             </p>
           </div>
 
@@ -100,9 +107,12 @@ const HomePage = () => {
               <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 mb-6 group-hover:scale-110 transition-transform">
                 <Box className="w-6 h-6" />
               </div>
-              <h3 className="text-xl font-bold text-slate-900 mb-3">Mô hình 3D Interactive</h3>
+              <h3 className="text-xl font-bold text-slate-900 mb-3">
+                Mô hình 3D Interactive
+              </h3>
               <p className="text-slate-600 leading-relaxed">
-                Xoay, phóng to và bóc tách cấu trúc phân tử. Trải nghiệm không gian ba chiều chân thực thay vì hình ảnh 2D tĩnh.
+                Xoay, phóng to và bóc tách cấu trúc phân tử. Trải nghiệm không
+                gian ba chiều chân thực thay vì hình ảnh 2D tĩnh.
               </p>
             </div>
 
@@ -111,9 +121,12 @@ const HomePage = () => {
               <div className="w-12 h-12 bg-cyan-100 rounded-xl flex items-center justify-center text-cyan-600 mb-6 group-hover:scale-110 transition-transform">
                 <Layers className="w-6 h-6" />
               </div>
-              <h3 className="text-xl font-bold text-slate-900 mb-3">Phản ứng thời gian thực</h3>
+              <h3 className="text-xl font-bold text-slate-900 mb-3">
+                Phản ứng thời gian thực
+              </h3>
               <p className="text-slate-600 leading-relaxed">
-                Quan sát quá trình phá vỡ liên kết và hình thành chất mới ngay trước mắt bạn với tốc độ tùy chỉnh.
+                Quan sát quá trình phá vỡ liên kết và hình thành chất mới ngay
+                trước mắt bạn với tốc độ tùy chỉnh.
               </p>
             </div>
 
@@ -122,9 +135,12 @@ const HomePage = () => {
               <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center text-purple-600 mb-6 group-hover:scale-110 transition-transform">
                 <FlaskConical className="w-6 h-6" />
               </div>
-              <h3 className="text-xl font-bold text-slate-900 mb-3">Thư viện thí nghiệm</h3>
+              <h3 className="text-xl font-bold text-slate-900 mb-3">
+                Thư viện thí nghiệm
+              </h3>
               <p className="text-slate-600 leading-relaxed">
-                Truy cập kho dữ liệu khổng lồ với hàng trăm bài thí nghiệm mẫu chuẩn chương trình giáo dục.
+                Truy cập kho dữ liệu khổng lồ với hàng trăm bài thí nghiệm mẫu
+                chuẩn chương trình giáo dục.
               </p>
             </div>
           </div>
@@ -137,30 +153,62 @@ const HomePage = () => {
           <div className="flex justify-between items-end mb-12">
             <div>
               <h2 className="text-3xl font-bold mb-2">Thư viện phổ biến</h2>
-              <p className="text-slate-400">Các mô hình được truy cập nhiều nhất tuần qua</p>
+              <p className="text-slate-400">
+                Các mô hình được truy cập nhiều nhất tuần qua
+              </p>
             </div>
-            <Link to="/library" className="text-blue-400 hover:text-blue-300 flex items-center gap-1 font-semibold">
+            <Link
+              to="/library"
+              className="text-blue-400 hover:text-blue-300 flex items-center gap-1 font-semibold"
+            >
               Xem tất cả <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { title: "Cấu trúc H2O", cat: "Phân tử vô cơ", imgColor: "bg-blue-500" },
-              { title: "Phản ứng Oxy hóa", cat: "Thí nghiệm", imgColor: "bg-orange-500" },
-              { title: "Bảng tuần hoàn 3D", cat: "Công cụ", imgColor: "bg-purple-600" },
-              { title: "Cấu trúc DNA", cat: "Hóa sinh", imgColor: "bg-emerald-500" },
+              {
+                title: "Cấu trúc H2O",
+                cat: "Phân tử vô cơ",
+                imgColor: "bg-blue-500",
+              },
+              {
+                title: "Phản ứng Oxy hóa",
+                cat: "Thí nghiệm",
+                imgColor: "bg-orange-500",
+              },
+              {
+                title: "Bảng tuần hoàn 3D",
+                cat: "Công cụ",
+                imgColor: "bg-purple-600",
+              },
+              {
+                title: "Cấu trúc DNA",
+                cat: "Hóa sinh",
+                imgColor: "bg-emerald-500",
+              },
             ].map((item, i) => (
-              <div key={i} className="group bg-slate-800 rounded-xl overflow-hidden hover:ring-2 hover:ring-blue-500 transition-all cursor-pointer">
+              <div
+                key={i}
+                className="group bg-slate-800 rounded-xl overflow-hidden hover:ring-2 hover:ring-blue-500 transition-all cursor-pointer"
+              >
                 {/* Image Placeholder */}
-                <div className={`h-40 w-full ${item.imgColor} relative overflow-hidden`}>
+                <div
+                  className={`h-40 w-full ${item.imgColor} relative overflow-hidden`}
+                >
                   <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-all"></div>
-                  <div className="absolute bottom-3 right-3 bg-black/60 backdrop-blur px-2 py-1 rounded text-xs font-mono">3D VIEW</div>
+                  <div className="absolute bottom-3 right-3 bg-black/60 backdrop-blur px-2 py-1 rounded text-xs font-mono">
+                    3D VIEW
+                  </div>
                 </div>
                 {/* Content */}
                 <div className="p-4">
-                  <p className="text-xs text-slate-400 font-semibold uppercase mb-1">{item.cat}</p>
-                  <h4 className="text-lg font-bold group-hover:text-blue-400 transition-colors">{item.title}</h4>
+                  <p className="text-xs text-slate-400 font-semibold uppercase mb-1">
+                    {item.cat}
+                  </p>
+                  <h4 className="text-lg font-bold group-hover:text-blue-400 transition-colors">
+                    {item.title}
+                  </h4>
                 </div>
               </div>
             ))}

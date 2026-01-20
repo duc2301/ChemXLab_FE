@@ -1,6 +1,6 @@
-import { useFrame, useThree } from '@react-three/fiber';
-import { useRef } from 'react';
-import { Vector3, Object3D } from 'three';
+import { useFrame, useThree } from "@react-three/fiber";
+import { useRef } from "react";
+import { Object3D, Vector3 } from "three";
 
 interface PhysicsProps {
   gravity?: number; // positive value, m/s^2
@@ -27,7 +27,10 @@ export const Physics = ({ gravity = 9.8, groundY = 0 }: PhysicsProps) => {
 
       // Handle jump requests (impulse)
       if (obj.userData.jump) {
-        const jumpVel = typeof obj.userData.jumpVelocity === 'number' ? obj.userData.jumpVelocity : 5;
+        const jumpVel =
+          typeof obj.userData.jumpVelocity === "number"
+            ? obj.userData.jumpVelocity
+            : 5;
         vel.y = jumpVel;
         obj.userData.jump = false;
         obj.userData.grounded = false;
@@ -36,7 +39,10 @@ export const Physics = ({ gravity = 9.8, groundY = 0 }: PhysicsProps) => {
       // If object is kinematic, skip gravity integration (kinematic can still be moved externally)
       if (obj.userData.kinematic) {
         // ensure grounded flag consistent when exactly on ground
-        if (obj.position.y <= groundY + (obj.userData.heightOffset || 0) + 1e-4) {
+        if (
+          obj.position.y <=
+          groundY + (obj.userData.heightOffset || 0) + 1e-4
+        ) {
           obj.userData.grounded = true;
         }
         return;

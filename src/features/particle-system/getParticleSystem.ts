@@ -1,4 +1,4 @@
-import * as THREE from 'three';
+import * as THREE from "three";
 
 // ============ TYPE DEFINITIONS ============
 export interface ParticleSystemOptions {
@@ -13,7 +13,7 @@ export interface ParticleSystemOptions {
   blending?: THREE.Blending;
   depthTest?: boolean;
   depthWrite?: boolean;
-  velocityType?: 'uniform' | 'radial';
+  velocityType?: "uniform" | "radial";
   radialSpeed?: number;
   velocity?: THREE.Vector3;
   spawnRadiusY?: number | null;
@@ -98,7 +98,9 @@ void main() {
 }`;
 
 // ============ HELPER FUNCTIONS ============
-function getLinearSpline<T>(lerp: (t: number, a: T, b: T) => T): LinearSpline<T> {
+function getLinearSpline<T>(
+  lerp: (t: number, a: T, b: T) => T
+): LinearSpline<T> {
   const points: [number, T][] = [];
 
   function addPoint(t: number, d: T): void {
@@ -132,7 +134,9 @@ function getLinearSpline<T>(lerp: (t: number, a: T, b: T) => T): LinearSpline<T>
 }
 
 // ============ MAIN PARTICLE SYSTEM FUNCTION ============
-export function getParticleSystem(params: ParticleSystemOptions): ParticleSystem {
+export function getParticleSystem(
+  params: ParticleSystemOptions
+): ParticleSystem {
   const {
     camera,
     emitter,
@@ -147,7 +151,7 @@ export function getParticleSystem(params: ParticleSystemOptions): ParticleSystem
     depthTest = false,
     depthWrite = false,
 
-    velocityType = 'uniform',
+    velocityType = "uniform",
     radialSpeed = 0.5,
     velocity = new THREE.Vector3(0, 1.5, 0),
 
@@ -155,35 +159,40 @@ export function getParticleSystem(params: ParticleSystemOptions): ParticleSystem
 
     colorSplinePoints = [
       [0.0, new THREE.Color(0xffffff)],
-      [1.0, new THREE.Color(0xff8080)]
+      [1.0, new THREE.Color(0xff8080)],
     ],
     alphaSplinePoints = [
       [0.0, 0.0],
       [0.6, 1.0],
-      [1.0, 0.0]
+      [1.0, 0.0],
     ],
     sizeSplinePoints = [
       [0.0, 0.0],
       [0.4, 1.0],
-      [1.0, 0.0]
+      [1.0, 0.0],
     ],
     maxLife = 1.5,
     maxSize = 1.0,
     radius = 0.1,
     rotationRate = Math.random() * 0.01 - 0.005,
-    velocityRandomness = 0.0
+    velocityRandomness = 0.0,
   } = params;
 
   // Uniforms
   const uniforms = {
     diffuseTexture: {
-      value: new THREE.TextureLoader().load(texture)
+      value: new THREE.TextureLoader().load(texture),
     },
     pointMultiplier: {
-      value: window.innerHeight / (2.0 * Math.tan((camera as THREE.PerspectiveCamera).fov * 0.5 * Math.PI / 180.0))
+      value:
+        window.innerHeight /
+        (2.0 *
+          Math.tan(
+            ((camera as THREE.PerspectiveCamera).fov * 0.5 * Math.PI) / 180.0
+          )),
     },
     clippingPlaneY: { value: clippingPlaneY },
-    clipBox: { value: clipBox }
+    clipBox: { value: clipBox },
   };
 
   // Material
@@ -195,7 +204,7 @@ export function getParticleSystem(params: ParticleSystemOptions): ParticleSystem
     depthTest: depthTest,
     depthWrite: depthWrite,
     transparent: true,
-    vertexColors: true
+    vertexColors: true,
   });
 
   let particles: Particle[] = [];
@@ -203,26 +212,26 @@ export function getParticleSystem(params: ParticleSystemOptions): ParticleSystem
 
   // Geometry
   const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute('position', new THREE.Float32BufferAttribute([], 3));
-  geometry.setAttribute('size', new THREE.Float32BufferAttribute([], 1));
-  geometry.setAttribute('aColor', new THREE.Float32BufferAttribute([], 4));
-  geometry.setAttribute('angle', new THREE.Float32BufferAttribute([], 1));
+  geometry.setAttribute("position", new THREE.Float32BufferAttribute([], 3));
+  geometry.setAttribute("size", new THREE.Float32BufferAttribute([], 1));
+  geometry.setAttribute("aColor", new THREE.Float32BufferAttribute([], 4));
+  geometry.setAttribute("angle", new THREE.Float32BufferAttribute([], 1));
 
   const points = new THREE.Points(geometry, material);
   parent.add(points);
 
   // Splines
   const alphaSpline = getLinearSpline<number>((t, a, b) => a + t * (b - a));
-  alphaSplinePoints.forEach(p => alphaSpline.addPoint(p[0], p[1]));
+  alphaSplinePoints.forEach((p) => alphaSpline.addPoint(p[0], p[1]));
 
   const colorSpline = getLinearSpline<THREE.Color>((t, a, b) => {
     const c = a.clone();
     return c.lerp(b, t);
   });
-  colorSplinePoints.forEach(p => colorSpline.addPoint(p[0], p[1]));
+  colorSplinePoints.forEach((p) => colorSpline.addPoint(p[0], p[1]));
 
   const sizeSpline = getLinearSpline<number>((t, a, b) => a + t * (b - a));
-  sizeSplinePoints.forEach(p => sizeSpline.addPoint(p[0], p[1]));
+  sizeSplinePoints.forEach((p) => sizeSpline.addPoint(p[0], p[1]));
 
   let accumulatedTime = 0.0;
 
@@ -243,7 +252,7 @@ export function getParticleSystem(params: ParticleSystemOptions): ParticleSystem
       const life = (Math.random() * 0.75 + 0.25) * maxLife;
 
       let p_velocity: THREE.Vector3;
-      if (velocityType === 'radial') {
+      if (velocityType === "radial") {
         const angle = Math.random() * Math.PI * 2;
         p_velocity = new THREE.Vector3(
           Math.cos(angle) * radialSpeed,
@@ -273,7 +282,7 @@ export function getParticleSystem(params: ParticleSystemOptions): ParticleSystem
         rotation: Math.random() * 2.0 * Math.PI,
         rotationRate: rotationRate,
         velocity: p_velocity,
-        currentSize: 0
+        currentSize: 0,
       });
     }
   }
@@ -291,10 +300,16 @@ export function getParticleSystem(params: ParticleSystemOptions): ParticleSystem
       angles.push(p.rotation);
     }
 
-    geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-    geometry.setAttribute('size', new THREE.Float32BufferAttribute(sizes, 1));
-    geometry.setAttribute('aColor', new THREE.Float32BufferAttribute(colours, 4));
-    geometry.setAttribute('angle', new THREE.Float32BufferAttribute(angles, 1));
+    geometry.setAttribute(
+      "position",
+      new THREE.Float32BufferAttribute(positions, 3)
+    );
+    geometry.setAttribute("size", new THREE.Float32BufferAttribute(sizes, 1));
+    geometry.setAttribute(
+      "aColor",
+      new THREE.Float32BufferAttribute(colours, 4)
+    );
+    geometry.setAttribute("angle", new THREE.Float32BufferAttribute(angles, 1));
 
     geometry.attributes.position.needsUpdate = true;
     geometry.attributes.size.needsUpdate = true;
@@ -307,7 +322,7 @@ export function getParticleSystem(params: ParticleSystemOptions): ParticleSystem
       p.life -= timeElapsed;
     }
 
-    particles = particles.filter(p => p.life > 0.0);
+    particles = particles.filter((p) => p.life > 0.0);
 
     for (const p of particles) {
       const t = 1.0 - p.life / p.maxLife;
@@ -320,9 +335,15 @@ export function getParticleSystem(params: ParticleSystemOptions): ParticleSystem
 
       const drag = p.velocity.clone();
       drag.multiplyScalar(timeElapsed * 0.1);
-      drag.x = Math.sign(p.velocity.x) * Math.min(Math.abs(drag.x), Math.abs(p.velocity.x));
-      drag.y = Math.sign(p.velocity.y) * Math.min(Math.abs(drag.y), Math.abs(p.velocity.y));
-      drag.z = Math.sign(p.velocity.z) * Math.min(Math.abs(drag.z), Math.abs(p.velocity.z));
+      drag.x =
+        Math.sign(p.velocity.x) *
+        Math.min(Math.abs(drag.x), Math.abs(p.velocity.x));
+      drag.y =
+        Math.sign(p.velocity.y) *
+        Math.min(Math.abs(drag.y), Math.abs(p.velocity.y));
+      drag.z =
+        Math.sign(p.velocity.z) *
+        Math.min(Math.abs(drag.z), Math.abs(p.velocity.z));
       p.velocity.sub(drag);
     }
 
@@ -357,7 +378,7 @@ export function getParticleSystem(params: ParticleSystemOptions): ParticleSystem
   return {
     update,
     start,
-    stop
+    stop,
   };
 }
 

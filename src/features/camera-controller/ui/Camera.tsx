@@ -1,8 +1,8 @@
-import { useKeyboardControls, PointerLockControls } from '@react-three/drei';
-import { useFrame, useThree } from '@react-three/fiber';
-import { useRef } from 'react';
-import { Vector3, Object3D } from 'three';
-import type { ControlsState } from '../models/controls';
+import { PointerLockControls, useKeyboardControls } from "@react-three/drei";
+import { useFrame, useThree } from "@react-three/fiber";
+import { useRef } from "react";
+import { Object3D, Vector3 } from "three";
+import type { ControlsState } from "../models/controls";
 
 const MOVEMENT_SPEED = 4; // units per second
 
@@ -56,7 +56,9 @@ export const FreeCameraController = () => {
 
     // Always sync camera to player head (so gravity affects view)
     const headOffset = 2.2;
-    camera.position.copy(playerRef.current.position).add(new Vector3(0, headOffset, 0));
+    camera.position
+      .copy(playerRef.current.position)
+      .add(new Vector3(0, headOffset, 0));
   });
 
   return (
