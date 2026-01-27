@@ -25,7 +25,7 @@ interface NavItem {
 }
 
 const NAV_DATA: NavItem[] = [
-  { name: "Sản phẩm", path: "/features" },
+  { name: "Sản phẩm", path: "/products" },
   { name: "Về ChemXLab", path: "/about" },
   { name: "Blog", path: "/blog" },
   { name: "Hỗ trợ", path: "/support" },
@@ -79,8 +79,8 @@ const Navbar = () => {
 
   return (
     <header
-      className={`fixed top-0 w-full z-[100] transition-all duration-300 h-20 
-        ${scrolled ? "bg-white shadow-md" : "bg-transparent"}`}
+      className={`fixed top-0 w-full z-[100] transition-all duration-300 h-14 
+        ${scrolled ? "bg-white shadow-sm" : "bg-transparent"}`}
     >
       <div className="container mx-auto px-6 h-full flex items-center justify-between">
 
@@ -90,7 +90,7 @@ const Navbar = () => {
                If logo is dark and bg is dark, it might clash. Assuming logo has white outline or is visible.
                If not, we might need a white version of the logo for the hero state. 
                For now, using the standard one. */}
-          <img src={logo} alt="ChemXLab" className="h-12 w-auto object-contain" />
+          <img src={logo} alt="ChemXLab" className="h-8 w-auto object-contain" />
         </Link>
 
         {/* DESKTOP NAV */}
@@ -121,7 +121,7 @@ const Navbar = () => {
               <Link to="/login" className={`text-sm font-bold transition-colors ${textColorClass} ${hoverColorClass}`}>
                 Đăng nhập
               </Link>
-              <Link to="/register" className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold px-5 py-2 rounded-full transition-all shadow-lg shadow-blue-500/30">
+              <Link to="/register" className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-1.5 rounded-full transition-all shadow-md shadow-blue-500/20">
                 Đăng ký
               </Link>
             </>
@@ -173,7 +173,7 @@ const Navbar = () => {
 
       {/* MOBILE MENU */}
       {isMobileMenuOpen && (
-        <div className="md:hidden absolute top-20 left-0 w-full bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-xl py-6 flex flex-col items-center space-y-6 animate-in slide-in-from-top-5">
+        <div className="md:hidden absolute top-14 left-0 w-full bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-xl py-4 flex flex-col items-center space-y-4 animate-in slide-in-from-top-5">
           {NAV_DATA.map((item) => (
             <Link
               key={item.name}

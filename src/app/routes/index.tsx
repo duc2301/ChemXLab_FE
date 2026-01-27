@@ -8,6 +8,7 @@ import ProductsPage from "../../pages/Products";
 import SupportPage from "../../pages/Support";
 import LabPage from "../../pages/Lab";
 import LabTest from "../../pages/Lab/Temp";
+import PeriodicTablePage from "../../pages/PeriodicTable";
 import LoginPage from "../../pages/Auth/Login";
 import RegisterPage from "../../pages/Auth/Register";
 
@@ -20,12 +21,13 @@ export const AppRoutes = () => {
         <Route path="about" element={<AboutPage />} />
         <Route path="blog" element={<BlogPage />} />
         <Route path="support" element={<SupportPage />} />
-        <Route path="experience" element={<ExperiencePage />} />        
+        <Route path="experience" element={<ExperiencePage />} />
       </Route>
-      <Route path="lab" element={<LabPage/>} />
+      <Route path="lab" element={<LabPage />} />
       <Route path="labtest" element={<LabTest />} />
+      <Route path="periodic-table" element={<PeriodicTablePage />} />
       <Route path="login" element={<LoginPage />} />
-      <Route path="register" element={< RegisterPage/>} />
+      <Route path="register" element={< RegisterPage />} />
     </Routes>
   );
 };

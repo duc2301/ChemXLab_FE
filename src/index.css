@@ -1,1 +1,19 @@
 @import "tailwindcss";
+@import "./fonts.css";
+
+@theme {
+    --font-google: "Google Sans", sans-serif;
+    --font-roboto: "Roboto", sans-serif;
+    --font-condensed: "Roboto Condensed", sans-serif;
+
+    /* Custom Grid for Periodic Table (18 columns) */
+    --grid-cols-18: repeat(18, minmax(0, 1fr));
+}
+
+.font-google {
+    font-family: var(--font-google);
+}
+
+.font-roboto {
+    font-family: var(--font-roboto);
+}
