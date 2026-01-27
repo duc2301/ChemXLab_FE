@@ -3,19 +3,18 @@ import {
   Globe2, Layers, Play, ShieldCheck, Zap
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import MoleculeViewer from "../../components/ThreeD/MoleculeViewer";
 
 const HomePage = () => {
   return (
     <div className="min-h-screen bg-white font-sans text-slate-900">
 
       {/* --- 1. HERO SECTION --- */}
-      <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden bg-[#0F172A]">
+      <section className="relative pt-16 pb-12 lg:pt-24 lg:pb-16 overflow-hidden bg-[#0F172A]">
         {/* Abstract Background Shapes */}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
           <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-[120px] animate-pulse"></div>
           <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-cyan-500/10 rounded-full blur-[100px]"></div>
-          <div className="absolute top-[20%] left-[10%] w-4 h-4 bg-blue-400 rounded-full animate-bounce"></div>
-          <div className="absolute top-[40%] right-[20%] w-3 h-3 bg-cyan-400 rounded-full animate-ping"></div>
         </div>
 
         <div className="container mx-auto px-6 relative z-10">
@@ -62,46 +61,15 @@ const HomePage = () => {
               </div>
             </div>
 
-            {/* Right Visual - 3D Mockup */}
+            {/* Right Visual - 3D Molecule Viewer */}
             <div className="w-full lg:w-1/2 relative perspective-1000">
-              <div className="relative w-full aspect-square max-w-[600px] mx-auto animate-float">
+              <div className="relative w-full aspect-square max-w-[550px] mx-auto">
                 {/* Main Glowing Circle */}
-                <div className="absolute inset-0 bg-gradient-to-tr from-blue-600/20 to-cyan-500/20 rounded-full blur-3xl"></div>
+                <div className="absolute inset-0 bg-gradient-to-tr from-blue-600/30 to-cyan-500/20 rounded-full blur-3xl"></div>
 
-                {/* Central Platform */}
-                <div className="absolute inset-4 md:inset-10 bg-slate-900/80 backdrop-blur-xl border border-slate-700 rounded-3xl shadow-2xl overflow-hidden flex flex-col">
-                  {/* Fake Browser Header */}
-                  <div className="h-10 border-b border-slate-700 bg-slate-800/50 flex items-center px-4 gap-2">
-                    <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                    <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                    <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                    <div className="ml-4 h-5 w-48 bg-slate-700 rounded-full opacity-50"></div>
-                  </div>
-                  {/* Content */}
-                  <div className="flex-1 relative flex items-center justify-center bg-gradient-to-b from-slate-900 to-[#0B1120]">
-                    <div className="relative z-10">
-                      <FlaskConical size={120} className="text-blue-500 drop-shadow-[0_0_30px_rgba(59,130,246,0.8)]" strokeWidth={1} />
-                      {/* Floating Particles */}
-                      <div className="absolute -top-10 -right-10 animate-bounce delay-100">
-                        <div className="w-8 h-8 rounded-full bg-cyan-500 blur-sm opacity-60"></div>
-                      </div>
-                      <div className="absolute -bottom-5 -left-10 animate-bounce delay-700">
-                        <div className="w-6 h-6 rounded-full bg-purple-500 blur-sm opacity-60"></div>
-                      </div>
-                    </div>
-                    {/* Grid Lines */}
-                    <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
-                    <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.1) 1px, transparent 0)', backgroundSize: '20px 20px' }}></div>
-                  </div>
-                  {/* Floating UI Elements */}
-                  <div className="absolute bottom-6 left-6 right-6 h-16 bg-slate-800/90 backdrop-blur border border-slate-600 rounded-xl flex items-center justify-between px-4 shadow-lg animate-slide-up">
-                    <div className="flex gap-4 text-blue-400">
-                      <Box size={20} />
-                      <Layers size={20} />
-                      <Zap size={20} />
-                    </div>
-                    <div className="px-3 py-1 bg-blue-600 rounded-lg text-xs font-bold text-white">SIMULATING...</div>
-                  </div>
+                {/* Clean 3D Viewer Frame */}
+                <div className="absolute inset-4 md:inset-8 bg-slate-800/60 backdrop-blur-xl border border-slate-600/50 rounded-3xl shadow-2xl overflow-hidden">
+                  <MoleculeViewer modelPath="/models/elements/element_006_carbon.glb" autoRotate={true} />
                 </div>
               </div>
             </div>
@@ -221,7 +189,7 @@ const HomePage = () => {
               { title: "Phản ứng Oxy hóa", color: "from-orange-500 to-red-500", icon: <FlaskConical className="text-white w-8 h-8" /> },
               { title: "Liên kết Hóa học", color: "from-emerald-500 to-teal-500", icon: <Beaker className="text-white w-8 h-8" /> },
             ].map((item, idx) => (
-              <div key={idx} className="group relative h-80 rounded-2xl overflow-hidden cursor-pointer shadow-lg">
+              <Link to={item.title === "Bảng Tuần hoàn" ? "/periodic-table" : "/library"} key={idx} className="group relative h-80 rounded-2xl overflow-hidden cursor-pointer shadow-lg block">
                 <div className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-90 transition-transform duration-500 group-hover:scale-110`}></div>
                 <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors"></div>
 
@@ -236,7 +204,7 @@ const HomePage = () => {
                     Khám phá ngay <ArrowRight size={16} />
                   </span>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
 
