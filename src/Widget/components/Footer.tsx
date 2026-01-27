@@ -1,98 +1,80 @@
-import { Facebook, Github, Linkedin, Twitter, Youtube } from "lucide-react";
-import logo from "../../shared/assets/Logo/LogoChemX.png";
-import { Link } from "react-router-dom";
+import { Facebook, Youtube, Mail } from "lucide-react";
+import logo from "../../shared/assets/Logo/logo.png";
 
 const Footer = () => {
   return (
-    <footer className="bg-white pt-20 pb-10 border-t border-slate-100 font-sans">
-      <div className="container mx-auto px-6">
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 mb-16">
-          
-          {/* Cột 1 & 2: Logo & Socials (Chiếm 2 cột trên màn hình lớn) */}
-          <div className="col-span-2 lg:col-span-2 pr-8">
-            <Link to="/" className="flex items-center gap-2 mb-6">
-               <img src={logo} alt="ChemXLab" className="h-8 w-auto object-contain " />
-               <span className="text-xl font-bold text-slate-800">ChemXLab</span>
-            </Link>
-            
-            {/* Social Icons (Nhỏ, xám) */}
-            <div className="flex gap-4 mt-6">
-              <SocialIcon icon={<Twitter size={18} />} />
-              <SocialIcon icon={<Youtube size={18} />} />
-              <SocialIcon icon={<Linkedin size={18} />} />
-              <SocialIcon icon={<Github size={18} />} />
+    <footer className="font-sans pt-12 bg-[#0B3B69]">
+      {/* Main Footer Container - Rounded Top, Light Blue */}
+      <div className="w-full bg-[#EAF5FF] rounded-t-[60px] md:rounded-t-[80px] pt-16 pb-12 px-6 md:px-12 relative overflow-hidden">
+
+        <div className="container mx-auto">
+          <div className="flex flex-col lg:flex-row items-center lg:items-start justify-between gap-12 lg:gap-8">
+
+            {/* COLUMN 1: Newsletter */}
+            <div className="w-full lg:w-1/3 flex flex-col items-center lg:items-start text-center lg:text-left">
+              <h3 className="text-[#0B3B69] font-bold text-xl md:text-2xl mb-3">Đăng ký thông tin</h3>
+              <p className="text-slate-500 text-sm mb-6 max-w-xs leading-relaxed">
+                Đăng ký thông tin để nhận ngay thông tin mới nhất từ ChemXLab nhé!
+              </p>
+
+              <form className="relative w-full max-w-xs sm:max-w-sm flex items-center shadow-lg rounded-full">
+                <input
+                  type="email"
+                  placeholder="Email"
+                  className="w-full bg-white/70 backdrop-blur-sm border border-blue-100 rounded-full py-3.5 pl-6 pr-24 text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all placeholder:text-slate-400"
+                />
+                <button
+                  type="button"
+                  className="absolute right-2 top-1.5 bottom-1.5 bg-[#EAF5FF] hover:bg-white text-[#0B3B69] text-xs font-bold px-4 rounded-full transition-all border border-blue-100 shadow-sm"
+                >
+                  Đăng ký
+                </button>
+              </form>
             </div>
-          </div>
 
-          {/* Các cột Links - Typography nhỏ, đậm tiêu đề */}
-          <div className="col-span-1">
-            <h4 className="text-xs font-bold text-slate-900 uppercase tracking-widest mb-6">Sản phẩm</h4>
-            <ul className="space-y-3">
-              <FooterLink to="/3d-models" label="Mô hình 3D" />
-              <FooterLink to="/studio" label="Human Studio" />
-              <FooterLink to="/mobile" label="Ứng dụng Mobile" />
-              <FooterLink to="/vr" label="Thực tế ảo (VR)" />
-            </ul>
-          </div>
+            {/* COLUMN 2: Logo - Centered */}
+            <div className="w-full lg:w-1/3 flex justify-center items-center">
+              <div className="relative z-10 p-4">
+                {/* Glow effect behind logo */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-blue-400/20 blur-3xl rounded-full -z-10"></div>
+                <img src={logo} alt="ChemXLab" className="h-24 md:h-32 w-auto object-contain drop-shadow-xl hover:scale-105 transition-transform duration-300 ease-out" />
+              </div>
+            </div>
 
-          <div className="col-span-1">
-            <h4 className="text-xs font-bold text-slate-900 uppercase tracking-widest mb-6">Tìm hiểu</h4>
-            <ul className="space-y-3">
-              <FooterLink to="/customers" label="Khách hàng" />
-              <FooterLink to="/case-studies" label="Câu chuyện thành công" />
-              <FooterLink to="/blog" label="Blog Giáo dục" />
-              <FooterLink to="/events" label="Sự kiện & Webinar" />
-            </ul>
-          </div>
+            {/* COLUMN 3: Contact */}
+            <div className="w-full lg:w-1/3 flex flex-col items-center lg:items-end text-center lg:text-right">
+              <h3 className="text-[#0B3B69] font-bold text-xl md:text-2xl mb-8">Liên hệ</h3>
+              <div className="flex gap-6">
+                <SocialIcon icon={<Facebook size={22} />} href="https://facebook.com" />
+                <SocialIcon icon={<Mail size={22} />} href="mailto:contact@chemxlab.vn" />
+                <SocialIcon icon={<Youtube size={22} />} href="https://youtube.com" />
+              </div>
+            </div>
 
-          <div className="col-span-1">
-            <h4 className="text-xs font-bold text-slate-900 uppercase tracking-widest mb-6">Công ty</h4>
-            <ul className="space-y-3">
-              <FooterLink to="/about" label="Về chúng tôi" />
-              <FooterLink to="/careers" label="Tuyển dụng" />
-              <FooterLink to="/press" label="Báo chí" />
-              <FooterLink to="/contact" label="Liên hệ" />
-            </ul>
-          </div>
-
-          <div className="col-span-1">
-            <h4 className="text-xs font-bold text-slate-900 uppercase tracking-widest mb-6">Tài nguyên</h4>
-            <ul className="space-y-3">
-              <FooterLink to="/help" label="Trung tâm hỗ trợ" />
-              <FooterLink to="/api" label="Tài liệu API" />
-              <FooterLink to="/status" label="System Status" />
-              <FooterLink to="/privacy" label="Chính sách bảo mật" />
-            </ul>
           </div>
         </div>
+      </div>
 
-        {/* Bottom Bar */}
-        <div className="pt-8 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-xs text-slate-400 font-medium">
-            &copy; {new Date().getFullYear()} ChemXLab Inc. Bản quyền đã được bảo hộ.
-          </p>
-          <div className="flex gap-6">
-            <Link to="/terms" className="text-xs text-slate-400 hover:text-slate-800 transition-colors">Điều khoản</Link>
-            <Link to="/privacy" className="text-xs text-slate-400 hover:text-slate-800 transition-colors">Bảo mật</Link>
-            <Link to="/cookies" className="text-xs text-slate-400 hover:text-slate-800 transition-colors">Cookies</Link>
-          </div>
-        </div>
+      {/* BOTTOM BAR - Dark Blue */}
+      <div className="bg-[#0B3B69] py-4 text-center relative z-20">
+        <p className="text-white/90 text-xs md:text-sm font-bold tracking-[0.3em] uppercase">
+          CHEMXLAB
+        </p>
       </div>
     </footer>
   );
 };
 
-// Component con để code gọn hơn
-const FooterLink = ({ to, label }) => (
-  <li>
-    <Link to={to} className="text-sm text-slate-500 hover:text-blue-600 font-medium transition-colors">
-      {label}
-    </Link>
-  </li>
-);
+interface SocialIconProps {
+  icon: React.ReactNode;
+  href?: string;
+}
 
-const SocialIcon = ({ icon }) => (
-  <a href="#" className="text-slate-400 hover:text-blue-600 transition-colors">
+const SocialIcon = ({ icon, href }: SocialIconProps) => (
+  <a
+    href={href || "#"}
+    className="w-12 h-12 flex items-center justify-center rounded-xl bg-[#0B3B69] text-white hover:bg-[#0EA5E9] hover:-translate-y-1 transition-all duration-300 shadow-lg shadow-blue-900/20"
+  >
     {icon}
   </a>
 );
