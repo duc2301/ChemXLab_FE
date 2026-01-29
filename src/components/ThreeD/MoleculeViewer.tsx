@@ -36,8 +36,6 @@ const MoleculeViewer = ({ modelPath }: MoleculeViewerProps) => {
                 <OrbitControls
                     autoRotate
                     autoRotateSpeed={0.5}
-                    minPolarAngle={Math.PI / 3}
-                    maxPolarAngle={Math.PI / 2.2}
                     enableZoom={true}
                     enablePan={false}
                 />

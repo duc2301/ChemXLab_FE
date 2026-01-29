@@ -3,7 +3,7 @@ import logo from "../../shared/assets/Logo/logo.png";
 
 const Footer = () => {
   return (
-    <footer className="font-sans pt-8 bg-[#0B3B69]">
+    <footer className="font-sans -mt-10 relative z-20">
       {/* Main Footer Container - Rounded Top, Light Blue */}
       <div className="w-full bg-[#EAF5FF] rounded-t-[40px] md:rounded-t-[50px] pt-10 pb-8 px-6 md:px-10 relative overflow-hidden">
 

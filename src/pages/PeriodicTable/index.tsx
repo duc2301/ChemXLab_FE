@@ -2,8 +2,10 @@ import { useState, useMemo } from 'react';
 import ElementCard from './components/ElementCard';
 import ElementDetail from './components/ElementDetail';
 import periodicData from './elements.json';
+import { vietnameseElements } from './vietnamese_data';
 import { ArrowLeft, Search } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import logo from "../../shared/assets/Logo/logo.png";
 
 const PeriodicTablePage = () => {
     const [selectedElement, setSelectedElement] = useState<any>(null);
@@ -17,10 +19,14 @@ const PeriodicTablePage = () => {
         return elements
             .filter(el => el.number <= 118)
             .map(el => {
+                const viData = vietnameseElements[el.number];
+                // Enrich data for searching in Vietnamese too
+                const enriched = viData ? { ...el, ...viData } : el;
+
                 // Fix positions for 57 (La) and 89 (Ac) to match Google's layout
-                if (el.number === 57) return { ...el, xpos: 3, ypos: 6 };
-                if (el.number === 89) return { ...el, xpos: 3, ypos: 7 };
-                return el;
+                if (enriched.number === 57) return { ...enriched, xpos: 3, ypos: 6 };
+                if (enriched.number === 89) return { ...enriched, xpos: 3, ypos: 7 };
+                return enriched;
             })
             .filter(el =>
                 el.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -32,7 +38,13 @@ const PeriodicTablePage = () => {
     const getModelPath = (element: any) => {
         if (!element) return null;
         const num = element.number.toString().padStart(3, '0');
-        let name = element.name.toLowerCase().trim();
+        // We need the original English name for the model file path usually
+        // But since valid Vietnamese keys are numbers, we can look up English name from original json if needed
+        // However, the 'element' passed here might have Vietnamese name now.
+        // Let's rely on 'periodicData' to find English name for filename if name changed
+
+        const originalElement = periodicData.elements.find(e => e.number === element.number);
+        let name = (originalElement?.name || element.name).toLowerCase().trim();
 
         // Handle Map for filename mismatches
         const nameMap: Record<string, string> = {
@@ -58,8 +70,8 @@ const PeriodicTablePage = () => {
                     <div className="hidden md:block text-xl font-medium text-slate-500">Bảng tuần hoàn hoá học 3D</div>
                 </div>
 
-                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 font-bold text-2xl text-slate-700">
-                    ChemXLab
+                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+                    <img src={logo} alt="ChemXLab" className="h-10 w-auto object-contain" />
                 </div>
 
                 <div className="flex items-center gap-4">
@@ -67,13 +79,12 @@ const PeriodicTablePage = () => {
                         <Search size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                         <input
                             type="text"
-                            placeholder="Tìm kiếm..."
+                            placeholder="Tìm kiếm nguyên tố..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-10 pr-4 py-2 bg-slate-100 rounded-full text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 w-48 transition-all"
+                            className="pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-full text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64 transition-all shadow-sm"
                         />
                     </div>
-                    <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm">C</div>
                 </div>
             </div>
 

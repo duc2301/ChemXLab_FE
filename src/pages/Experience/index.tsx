@@ -132,60 +132,57 @@ const ExperiencePage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-950 via-blue-900 to-blue-800 pt-20 text-white">
-      <div className="container mx-auto px-6 py-16">
+    <div className="min-h-screen bg-gradient-to-b from-blue-950 via-blue-900 to-blue-800 pt-16 text-white">
+      <div className="container mx-auto px-6 py-12">
         {/* Header */}
-        <section className="text-center mb-16">
-          <h1 className="text-5xl md:text-6xl font-bold mb-6">
+        <section className="text-center mb-12">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">
             Nâng cấp trải nghiệm
           </h1>
-          <p className="text-blue-200 text-xl mb-10 max-w-3xl mx-auto">
+          <p className="text-blue-200 text-lg mb-8 max-w-3xl mx-auto">
             Chọn gói phù hợp với nhu cầu của bạn
           </p>
 
           {/* Toggle Button */}
           <button
             onClick={() => setShowEnterprise(!showEnterprise)}
-            className="bg-cyan-500 hover:bg-cyan-600 text-white px-10 py-4 rounded-full font-bold transition-all shadow-xl hover:shadow-2xl hover:scale-105"
+            className="bg-cyan-500 hover:bg-cyan-600 text-white px-8 py-3 rounded-full font-bold transition-all shadow-xl hover:shadow-2xl hover:scale-105"
           >
             {showEnterprise ? "Xem gói cá nhân" : "Xem gói doanh nghiệp"}
           </button>
         </section>
 
         {/* Pricing Plans */}
-        <section className="mb-28">
+        <section className="mb-20">
           {!showEnterprise ? (
-            <div className="grid md:grid-cols-3 gap-8 max-w-7xl mx-auto">
+            <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
               {standardPlans.map((plan, i) => (
                 <div
                   key={i}
-                  className={`rounded-3xl p-10 transition-all duration-300 ${
-                    plan.highlighted
-                      ? "bg-gradient-to-br from-cyan-500 to-blue-600 transform scale-105 shadow-2xl"
+                  className={`rounded-3xl p-6 md:p-8 transition-all duration-300 ${plan.highlighted
+                      ? "bg-gradient-to-br from-cyan-500 to-blue-600 transform scale-105 shadow-2xl z-10"
                       : "bg-blue-800/40 backdrop-blur-xl shadow-xl hover:shadow-2xl"
-                  } border-2 ${
-                    plan.highlighted ? "border-cyan-400" : "border-blue-600/30"
-                  }`}
+                    } border-2 ${plan.highlighted ? "border-cyan-400" : "border-blue-600/30"
+                    }`}
                 >
-                  <h3 className="text-3xl font-bold mb-3">{plan.name}</h3>
-                  <p className="text-blue-200 text-sm mb-6">{plan.period}</p>
-                  <div className="mb-8">
-                    <span className="text-5xl font-bold">{plan.price}</span>
+                  <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
+                  <p className="text-blue-100 text-sm mb-4">{plan.period}</p>
+                  <div className="mb-6">
+                    <span className="text-4xl font-bold">{plan.price}</span>
                   </div>
-                  <ul className="space-y-4 mb-10">
+                  <ul className="space-y-3 mb-8">
                     {plan.features.map((feature, j) => (
                       <li key={j} className="flex items-start gap-3">
-                        <Check className="w-6 h-6 text-cyan-300 flex-shrink-0 mt-0.5" />
-                        <span className="text-blue-50">{feature}</span>
+                        <Check className="w-5 h-5 text-cyan-300 flex-shrink-0 mt-0.5" />
+                        <span className="text-blue-50 text-sm">{feature}</span>
                       </li>
                     ))}
                   </ul>
                   <button
-                    className={`w-full py-4 rounded-full font-bold transition-all shadow-lg hover:shadow-xl hover:scale-105 ${
-                      plan.highlighted
+                    className={`w-full py-3.5 rounded-full font-bold transition-all shadow-lg hover:shadow-xl hover:scale-105 ${plan.highlighted
                         ? "bg-white text-blue-900 hover:bg-blue-50"
                         : "bg-blue-600 text-white hover:bg-blue-700"
-                    }`}
+                      }`}
                   >
                     Chọn gói
                   </button>
@@ -193,25 +190,25 @@ const ExperiencePage = () => {
               ))}
             </div>
           ) : (
-            <div className="max-w-3xl mx-auto">
-              <div className="bg-gradient-to-br from-blue-700 via-blue-800 to-blue-900 rounded-3xl p-12 border-2 border-cyan-400/40 shadow-2xl">
-                <div className="text-center mb-10">
-                  <h3 className="text-4xl font-bold mb-3">
+            <div className="max-w-4xl mx-auto">
+              <div className="bg-gradient-to-br from-blue-700 via-blue-800 to-blue-900 rounded-3xl p-8 md:p-12 border-2 border-cyan-400/40 shadow-2xl">
+                <div className="text-center mb-8">
+                  <h3 className="text-3xl font-bold mb-2">
                     {enterprisePlan.name}
                   </h3>
                   <p className="text-blue-200 text-lg">
                     {enterprisePlan.subtitle}
                   </p>
                 </div>
-                <ul className="space-y-5 mb-12">
+                <ul className="grid md:grid-cols-2 gap-4 mb-10">
                   {enterprisePlan.features.map((feature, i) => (
-                    <li key={i} className="flex items-start gap-4">
-                      <Check className="w-7 h-7 text-cyan-300 flex-shrink-0 mt-0.5" />
-                      <span className="text-blue-50 text-lg">{feature}</span>
+                    <li key={i} className="flex items-start gap-3">
+                      <Check className="w-6 h-6 text-cyan-300 flex-shrink-0 mt-0.5" />
+                      <span className="text-blue-50 text-base">{feature}</span>
                     </li>
                   ))}
                 </ul>
-                <button className="w-full bg-white text-blue-900 py-5 rounded-full font-bold text-lg hover:bg-blue-50 transition-all shadow-xl hover:shadow-2xl hover:scale-105">
+                <button className="w-full bg-white text-blue-900 py-4 rounded-full font-bold text-lg hover:bg-blue-50 transition-all shadow-xl hover:shadow-2xl hover:scale-105">
                   Liên hệ tư vấn
                 </button>
               </div>
@@ -220,20 +217,20 @@ const ExperiencePage = () => {
         </section>
 
         {/* Features Section */}
-        <section className="mb-28">
-          <h2 className="text-4xl font-bold text-center mb-16">
+        <section className="mb-20">
+          <h2 className="text-3xl font-bold text-center mb-12">
             Khám phá các tính năng
           </h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {features.map((feature, i) => (
               <div
                 key={i}
-                className="bg-blue-800/30 backdrop-blur-xl rounded-2xl p-8 border border-blue-600/30 hover:bg-blue-700/40 hover:border-cyan-400/50 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105"
+                className="bg-blue-800/30 backdrop-blur-xl rounded-2xl p-6 border border-blue-600/30 hover:bg-blue-700/40 hover:border-cyan-400/50 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105"
               >
-                <h3 className="font-bold mb-3 text-xl text-cyan-300">
+                <h3 className="font-bold mb-2 text-lg text-cyan-300">
                   {feature.title}
                 </h3>
-                <p className="text-blue-200 leading-relaxed">
+                <p className="text-blue-200 leading-relaxed text-sm">
                   {feature.description}
                 </p>
               </div>
@@ -242,33 +239,33 @@ const ExperiencePage = () => {
         </section>
 
         {/* FAQ Section */}
-        <section className="mb-28">
-          <h2 className="text-4xl font-bold text-center mb-16">
+        <section className="mb-20">
+          <h2 className="text-3xl font-bold text-center mb-12">
             Các câu hỏi thường gặp
           </h2>
-          <div className="max-w-4xl mx-auto space-y-6">
+          <div className="max-w-4xl mx-auto space-y-4">
             {faqs.map((faq, i) => (
               <div
                 key={i}
-                className="bg-blue-800/30 backdrop-blur-xl rounded-2xl p-8 border border-blue-600/30 hover:border-cyan-400/50 transition-all shadow-xl hover:shadow-2xl"
+                className="bg-blue-800/30 backdrop-blur-xl rounded-2xl p-6 border border-blue-600/30 hover:border-cyan-400/50 transition-all shadow-xl hover:shadow-2xl"
               >
-                <h3 className="font-bold mb-3 text-xl text-cyan-300">
+                <h3 className="font-bold mb-2 text-lg text-cyan-300">
                   {faq.question}
                 </h3>
-                <p className="text-blue-200 leading-relaxed">{faq.answer}</p>
+                <p className="text-blue-200 leading-relaxed text-sm">{faq.answer}</p>
               </div>
             ))}
           </div>
         </section>
 
         {/* Footer CTA */}
-        <section className="text-center py-16">
-          <h3 className="text-4xl font-bold mb-6">Sẵn sàng bắt đầu?</h3>
-          <p className="text-blue-200 text-xl mb-10 max-w-2xl mx-auto">
+        <section className="text-center py-12">
+          <h3 className="text-3xl font-bold mb-4">Sẵn sàng bắt đầu?</h3>
+          <p className="text-blue-200 text-lg mb-8 max-w-xl mx-auto">
             Đăng ký ngay để trải nghiệm ChemXLab
           </p>
-          <button className="bg-white text-blue-900 px-12 py-5 rounded-full font-bold text-lg hover:bg-blue-50 transition-all shadow-xl hover:shadow-2xl hover:scale-105 inline-flex items-center gap-3">
-            Bắt đầu ngay <ArrowRight className="w-6 h-6" />
+          <button className="bg-white text-blue-900 px-10 py-4 rounded-full font-bold text-lg hover:bg-blue-50 transition-all shadow-xl hover:shadow-2xl hover:scale-105 inline-flex items-center gap-3">
+            Bắt đầu ngay <ArrowRight className="w-5 h-5" />
           </button>
         </section>
       </div>
