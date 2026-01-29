@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 const FeatureSection = () => {
     return (
-        <section className="mb-20">
+        <section className="mb-16">
             <div className="grid md:grid-cols-2 gap-8">
                 {/* Methane Card */}
                 <div className="bg-gradient-to-br from-blue-900 to-slate-900 rounded-[2.5rem] p-10 relative overflow-hidden text-white group cursor-pointer hover:shadow-2xl transition-all">

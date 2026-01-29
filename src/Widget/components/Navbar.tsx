@@ -11,7 +11,7 @@ const ActiveAtom = () => (
     className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80px] h-[80px] -z-10 animate-spin-slow pointer-events-none"
     fill="none"
     stroke="currentColor"
-    strokeWidth="6"
+    strokeWidth="3"
     style={{ color: "#7EA6F4" }}
   >
     <ellipse cx="50" cy="50" rx="45" ry="14" transform="rotate(45 50 50)" />
@@ -71,7 +71,7 @@ const Navbar = () => {
   // If at top (transparent) => White text (assuming dark hero bg). If scrolled => Dark text.
   // HOWEVER, user image shows transparent navbar with WHITE text on blue background. 
   // When scrolled, background becomes white, text becomes dark.
-  const isTransparent = !scrolled && location.pathname === "/";
+  const isTransparent = !scrolled && (location.pathname === "/" || location.pathname === "/experience");
   const textColorClass = isTransparent ? "text-white" : "text-slate-700";
   const hoverColorClass = isTransparent ? "hover:text-blue-200" : "hover:text-blue-600";
   const activeColorClass = isTransparent ? "text-white" : "text-slate-900";

@@ -13,7 +13,7 @@ const PeriodicTableSection = () => {
     ];
 
     return (
-        <section className="mb-28">
+        <section className="mb-16">
             <div className="text-center mb-16">
                 <div className="inline-flex items-center justify-center p-3 bg-blue-50 rounded-2xl mb-4">
                     <Atom className="w-8 h-8 text-blue-600" />

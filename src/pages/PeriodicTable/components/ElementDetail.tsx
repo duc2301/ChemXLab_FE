@@ -105,7 +105,21 @@ const ElementDetail = ({ element, modelPath }: ElementDetailProps) => {
                 {/* Stats & Info */}
                 <div className="p-8 space-y-6 bg-white shrink-0 font-roboto">
                     <div className="prose prose-sm prose-slate max-w-none">
-                        <p>{element.summary}</p>
+                        <p className="text-base leading-relaxed">{element.summary}</p>
+
+                        {element.appearance && (
+                            <div className="mt-4">
+                                <span className="font-bold text-slate-700 block mb-1">Trạng thái tự nhiên:</span>
+                                <p className="m-0 text-slate-600">{element.appearance}</p>
+                            </div>
+                        )}
+
+                        {element.uses && (
+                            <div className="mt-4">
+                                <span className="font-bold text-slate-700 block mb-1">Ứng dụng:</span>
+                                <p className="m-0 text-slate-600">{element.uses}</p>
+                            </div>
+                        )}
                     </div>
 
                     <div className="space-y-4 pt-4 border-t border-slate-100">

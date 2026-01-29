@@ -1,187 +1,321 @@
-import { ArrowRight, Calendar, User } from "lucide-react";
+import { useState } from "react";
+import {
+  RefreshCw, Search, TrendingUp, Sparkles,
+  FlaskConical, ChevronRight,
+  Filter, X, ExternalLink
+} from "lucide-react";
 import { Link } from "react-router-dom";
+import type { NewsCategory } from "../../features/blog";
+import { useChemistryNews, NewsCard, NewsSkeleton } from "../../features/blog";
 
 const BlogPage = () => {
+  const {
+    articles,
+    featuredArticle,
+    loading,
+    error,
+    selectedCategory,
+    categories,
+    selectCategory,
+    refresh,
+  } = useChemistryNews();
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
+
+  // Get articles excluding featured for the grid
+  const gridArticles = featuredArticle
+    ? articles.filter((a) => a.article_id !== featuredArticle.article_id)
+    : articles;
+
+  // Filter articles by search query
+  const filteredArticles = searchQuery
+    ? gridArticles.filter(
+      (a) =>
+        a.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        a.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    : gridArticles;
+
+  // Format date helper
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("vi-VN", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white via-blue-50 to-white pt-20">
-      <div className="container mx-auto px-6 py-16">
-        {/* Hero Section */}
-        <section className="mb-28 relative rounded-3xl overflow-hidden shadow-2xl">
-          <div className="bg-gradient-to-br from-slate-900 to-slate-800 aspect-[21/9] relative">
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent z-10"></div>
-            <div className="absolute inset-0 flex items-center justify-center z-20">
-              <div className="text-center text-white space-y-6 px-6">
-                <h1 className="text-5xl md:text-7xl font-bold drop-shadow-2xl">
-                  Hội thảo Hóa học Ẩm thực
-                </h1>
-                <p className="text-blue-200 text-xl max-w-3xl mx-auto">
-                  Khám phá những bài viết mới nhất về hóa học và khoa học
-                </p>
+    <div className="min-h-screen bg-slate-50 pt-16">
+      {/* Modern Minimal Header */}
+      <header className="bg-white border-b border-slate-100 py-8 mb-8">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="text-center md:text-left">
+              <div className="flex items-center justify-center md:justify-start gap-2 text-blue-600 font-semibold text-sm mb-3 uppercase tracking-wider">
+                <Sparkles className="w-4 h-4" />
+                <span>ChemXLab Blog</span>
               </div>
-            </div>
-            {/* Placeholder for hero image */}
-            <div className="w-full h-full bg-gradient-to-br from-blue-900 via-purple-900 to-pink-900"></div>
-          </div>
-        </section>
-
-        {/* Featured Article */}
-        <section className="mb-28">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl aspect-video overflow-hidden shadow-2xl">
-              <div className="w-full h-full bg-gradient-to-br from-blue-800 via-purple-800 to-pink-800 flex items-center justify-center">
-                <div className="text-white text-center space-y-4">
-                  <div className="w-32 h-32 bg-white/20 backdrop-blur rounded-3xl mx-auto flex items-center justify-center border-2 border-white/30 shadow-xl">
-                    <Calendar className="w-16 h-16" />
-                  </div>
-                  <p className="text-2xl font-bold">Bài viết nổi bật</p>
-                </div>
-              </div>
-            </div>
-            <div className="space-y-6">
-              <div className="flex items-center gap-4 text-sm text-slate-600">
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  <span>21 Tháng 11, 2024</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <User className="w-4 h-4" />
-                  <span>Admin</span>
-                </div>
-              </div>
-              <h2 className="text-4xl font-bold text-slate-900 leading-tight">
-                Khám phá các phản ứng hóa học trong nấu ăn
-              </h2>
-              <p className="text-slate-600 text-lg leading-relaxed">
-                Hóa học không chỉ tồn tại trong phòng thí nghiệm mà còn hiện
-                diện trong mọi món ăn chúng ta nấu hàng ngày. Từ việc làm bánh
-                mì nở đến việc tạo ra màu sắc hấp dẫn cho món ăn, tất cả đều là
-                những phản ứng hóa học thú vị.
+              <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 mb-4 tracking-tight">
+                News & Insights
+              </h1>
+              <p className="text-lg text-slate-500 max-w-lg">
+                Cập nhật tin tức hóa học, công nghệ mới và các nghiên cứu khoa học từ khắp nơi trên thế giới.
               </p>
-              <Link
-                to="#"
-                className="inline-flex items-center gap-3 bg-blue-600 text-white px-8 py-4 rounded-full font-bold hover:bg-blue-700 transition-all shadow-xl hover:shadow-2xl hover:scale-105"
+            </div>
+
+            {/* Right side actions */}
+            <div className="flex flex-col items-end gap-4 w-full md:w-auto">
+              {/* Search */}
+              <div className="relative w-full md:w-80">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Tìm kiếm..."
+                  className="w-full pl-10 pr-4 py-3 rounded-full bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-all"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+
+              <button
+                onClick={refresh}
+                disabled={loading}
+                className="text-sm font-medium text-slate-500 hover:text-blue-600 flex items-center gap-2 transition-colors px-2"
               >
-                Đọc thêm <ArrowRight className="w-5 h-5" />
-              </Link>
+                <RefreshCw className={`w-3 h-3 ${loading ? "animate-spin" : ""}`} />
+                {loading ? "Đang cập nhật..." : "Làm mới dữ liệu"}
+              </button>
             </div>
           </div>
-        </section>
+        </div>
+      </header>
 
-        {/* Research Techniques Section */}
-        <section className="mb-28">
-          <h2 className="text-4xl font-bold text-slate-900 mb-12">
-            Kỹ thuật nghiên cứu
-          </h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                title: "Phương pháp phân tích",
-                color: "from-blue-600 to-blue-800",
-                icon: "🔬",
-              },
-              {
-                title: "Kỹ thuật tổng hợp",
-                color: "from-purple-600 to-purple-800",
-                icon: "⚗️",
-              },
-              {
-                title: "Nghiên cứu ứng dụng",
-                color: "from-pink-600 to-pink-800",
-                icon: "🧪",
-              },
-            ].map((item, i) => (
-              <div
-                key={i}
-                className={`bg-gradient-to-br ${item.color} rounded-3xl p-10 text-white relative overflow-hidden group cursor-pointer shadow-xl hover:shadow-2xl transition-all hover:scale-105`}
-              >
-                <div className="relative z-10 space-y-6">
-                  <div className="text-6xl">{item.icon}</div>
-                  <h3 className="text-2xl font-bold">{item.title}</h3>
-                  <p className="text-white/80">
-                    Tìm hiểu các phương pháp và kỹ thuật nghiên cứu hiện đại
-                  </p>
-                  <div className="inline-flex items-center gap-3 font-bold group-hover:gap-5 transition-all">
-                    Xem thêm <ArrowRight className="w-5 h-5" />
-                  </div>
-                </div>
-                <div className="absolute bottom-0 right-0 w-48 h-48 bg-white/10 rounded-full transform translate-x-1/3 translate-y-1/3 blur-2xl"></div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Categories Section */}
-        <section className="mb-28">
-          <h2 className="text-4xl font-bold text-slate-900 mb-12 text-center">
-            Danh mục bài viết
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {[
-              "Hóa học hữu cơ",
-              "Hóa học vô cơ",
-              "Hóa học phân tích",
-              "Hóa học lý thuyết",
-              "Hóa sinh học",
-              "Hóa học môi trường",
-              "Hóa học ứng dụng",
-              "Thí nghiệm",
-            ].map((category, i) => (
-              <button
-                key={i}
-                className="bg-white border-2 border-blue-200 hover:border-blue-600 text-slate-800 hover:text-blue-600 px-6 py-4 rounded-full font-bold transition-all shadow-md hover:shadow-xl hover:scale-105"
-              >
-                {category}
-              </button>
-            ))}
-          </div>
-        </section>
-
-        {/* Registration Section */}
-        <section className="mb-28 bg-gradient-to-br from-blue-600 to-blue-800 rounded-3xl p-16 text-center text-white shadow-2xl">
-          <h3 className="text-4xl font-bold mb-6">
-            Đăng nhập để trải nghiệm đầy đủ
-          </h3>
-          <p className="text-blue-100 text-lg mb-10 max-w-2xl mx-auto">
-            Truy cập tất cả các bài viết, tài liệu và tính năng độc quyền
-          </p>
-          <Link
-            to="/experience"
-            className="inline-flex items-center gap-3 bg-white text-blue-900 px-12 py-5 rounded-full font-bold text-lg hover:bg-blue-50 transition-all shadow-xl hover:shadow-2xl hover:scale-105"
+      {/* Mobile Filter Toggle */}
+      <div className="lg:hidden sticky top-16 z-20 bg-white/80 backdrop-blur-md border-b border-slate-200">
+        <div className="container mx-auto px-4 py-3">
+          <button
+            onClick={() => setShowMobileFilters(!showMobileFilters)}
+            className="flex items-center gap-2 text-slate-700 font-semibold"
           >
-            Đăng nhập ngay <ArrowRight className="w-6 h-6" />
-          </Link>
-        </section>
+            <Filter className="w-4 h-4" />
+            Danh mục
+            <ChevronRight className={`w-4 h-4 transition-transform ${showMobileFilters ? "rotate-90" : ""}`} />
+          </button>
+        </div>
+      </div>
 
-        {/* Gallery Section */}
-        <section className="mb-28">
-          <h2 className="text-4xl font-bold text-slate-900 mb-12">
-            Vật liệu và Công nghệ
-          </h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              { title: "Vật liệu nano", color: "from-cyan-600 to-blue-700" },
-              {
-                title: "Polymer sinh học",
-                color: "from-purple-600 to-pink-700",
-              },
-              { title: "Vật liệu xanh", color: "from-green-600 to-teal-700" },
-            ].map((item, i) => (
-              <div
-                key={i}
-                className={`bg-gradient-to-br ${item.color} rounded-3xl aspect-[4/5] relative overflow-hidden group cursor-pointer shadow-2xl hover:shadow-3xl transition-all hover:scale-105`}
-              >
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent z-10"></div>
-                <div className="absolute bottom-8 left-8 z-20 text-white space-y-2">
-                  <p className="text-xs font-bold opacity-80">CHEMXLAB</p>
-                  <h3 className="text-2xl font-bold">{item.title}</h3>
-                  <div className="inline-flex items-center gap-2 text-sm font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
-                    Xem chi tiết <ArrowRight className="w-4 h-4" />
-                  </div>
-                </div>
+      <div className="container mx-auto px-4 pb-12">
+        <div className="flex flex-col lg:flex-row gap-12">
+          {/* Sidebar - Modern & Clean */}
+          <aside className={`
+            ${showMobileFilters ? "block" : "hidden"} lg:block
+            w-full lg:w-64 flex-shrink-0
+            fixed lg:sticky top-28 lg:top-20 left-0 right-0 lg:left-auto lg:right-auto
+            bg-white lg:bg-transparent z-10 lg:z-0
+            p-4 lg:p-0 max-h-[calc(100vh-7rem)] lg:max-h-[calc(100vh-5rem)]
+            overflow-y-auto
+            shadow-xl lg:shadow-none border-b lg:border-none border-slate-100
+          `}>
+            <div className="mb-10">
+              <h3 className="font-bold text-slate-900 uppercase text-xs tracking-wider mb-6 px-2">
+                Danh mục tin tức
+              </h3>
+              <nav className="space-y-1">
+                <button
+                  onClick={() => {
+                    selectCategory(null);
+                    setShowMobileFilters(false);
+                  }}
+                  className={`w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-all ${!selectedCategory
+                    ? "bg-slate-900 text-white shadow-md"
+                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                    }`}
+                >
+                  📰 Tất cả tin tức
+                </button>
+                {categories.map((cat: NewsCategory) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => {
+                      selectCategory(cat);
+                      setShowMobileFilters(false);
+                    }}
+                    className={`w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-all flex items-center justify-between group ${selectedCategory?.id === cat.id
+                      ? "bg-white text-blue-600 shadow-md border border-slate-100"
+                      : "text-slate-600 hover:bg-white hover:shadow-sm hover:text-slate-900"
+                      }`}
+                  >
+                    <span className="flex items-center gap-3">
+                      <span className="opacity-70 group-hover:opacity-100 transition-opacity">{cat.icon}</span>
+                      {cat.nameVi}
+                    </span>
+                    {selectedCategory?.id === cat.id && <ChevronRight className="w-3 h-3" />}
+                  </button>
+                ))}
+              </nav>
+            </div>
+
+            {/* Quick Links - Minimalist */}
+            <div>
+              <h3 className="font-bold text-slate-900 uppercase text-xs tracking-wider mb-6 px-2">
+                Khám phá
+              </h3>
+              <div className="space-y-3">
+                {[
+                  { title: "Phòng thí nghiệm ảo", link: "/labtest", icon: "🧪", color: "text-purple-600", bg: "bg-purple-50" },
+                  { title: "Bảng tuần hoàn", link: "/periodic-table", icon: "⚛️", color: "text-blue-600", bg: "bg-blue-50" },
+                  { title: "Thư viện phân tử", link: "/library", icon: "🧬", color: "text-rose-600", bg: "bg-rose-50" },
+                ].map((item) => (
+                  <Link
+                    key={item.link}
+                    to={item.link}
+                    className="flex items-center gap-3 p-3 rounded-xl bg-white border border-slate-100 hover:border-blue-200 hover:shadow-md transition-all group"
+                  >
+                    <div className={`w-8 h-8 rounded-lg ${item.bg} ${item.color} flex items-center justify-center text-sm`}>
+                      {item.icon}
+                    </div>
+                    <span className="text-sm font-semibold text-slate-700 group-hover:text-slate-900">{item.title}</span>
+                  </Link>
+                ))}
               </div>
-            ))}
-          </div>
-        </section>
+            </div>
+          </aside>
+
+          {/* Main Content */}
+          <main className="flex-1 min-w-0">
+            {/* Error State */}
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 flex items-center justify-between">
+                <p className="text-red-600 font-medium">{error}</p>
+                <button
+                  onClick={refresh}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700"
+                >
+                  Thử lại
+                </button>
+              </div>
+            )}
+
+            {/* Featured Article */}
+            {featuredArticle && !searchQuery && (
+              <section className="mb-8">
+                <div className="flex items-center gap-2 mb-4">
+                  <TrendingUp className="w-5 h-5 text-orange-500" />
+                  <h2 className="font-bold text-slate-900">Nổi bật</h2>
+                </div>
+                <a
+                  href={featuredArticle.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group block bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-lg transition-shadow"
+                >
+                  <div className="md:flex">
+                    {featuredArticle.image_url && (
+                      <div className="md:w-1/2">
+                        <img
+                          src={featuredArticle.image_url}
+                          alt=""
+                          className="w-full h-48 md:h-64 object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=800&q=80";
+                          }}
+                        />
+                      </div>
+                    )}
+                    <div className="md:w-1/2 p-6 flex flex-col justify-center">
+                      <div className="flex items-center gap-2 text-sm text-slate-500 mb-3">
+                        <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded font-medium">
+                          {featuredArticle.source_name}
+                        </span>
+                        <span>•</span>
+                        <span>{formatDate(featuredArticle.pubDate)}</span>
+                      </div>
+                      <h3 className="text-xl md:text-2xl font-bold text-slate-900 mb-3 group-hover:text-blue-600 transition-colors line-clamp-2">
+                        {featuredArticle.title}
+                      </h3>
+                      <p className="text-slate-600 line-clamp-2 mb-4">
+                        {featuredArticle.description}
+                      </p>
+                      <span className="inline-flex items-center gap-2 text-blue-600 font-medium group-hover:gap-3 transition-all">
+                        Đọc tiếp <ExternalLink className="w-4 h-4" />
+                      </span>
+                    </div>
+                  </div>
+                </a>
+              </section>
+            )}
+
+            {/* Articles Grid */}
+            <section>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-bold text-slate-900 flex items-center gap-2">
+                  <FlaskConical className="w-5 h-5 text-blue-600" />
+                  {searchQuery
+                    ? `Kết quả tìm kiếm "${searchQuery}"`
+                    : selectedCategory
+                      ? selectedCategory.nameVi
+                      : "Tin tức mới nhất"}
+                </h2>
+                <span className="text-sm text-slate-500">
+                  {filteredArticles.length} bài viết
+                </span>
+              </div>
+
+              {loading && gridArticles.length === 0 ? (
+                <div className="grid md:grid-cols-2 gap-6">
+                  <NewsSkeleton variant="default" count={6} />
+                </div>
+              ) : filteredArticles.length > 0 ? (
+                <div className="grid md:grid-cols-2 gap-6">
+                  {filteredArticles.map((article) => (
+                    <NewsCard key={article.article_id} article={article} />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-16 bg-white rounded-2xl border border-slate-100">
+                  <FlaskConical className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                  <h3 className="font-bold text-slate-600 mb-2">
+                    {searchQuery ? "Không tìm thấy kết quả" : "Không có bài viết"}
+                  </h3>
+                  <p className="text-slate-500 text-sm">
+                    {searchQuery
+                      ? "Thử tìm kiếm với từ khóa khác"
+                      : "Thử chọn danh mục khác hoặc làm mới trang"}
+                  </p>
+                </div>
+              )}
+            </section>
+
+            {/* Newsletter */}
+            <section className="mt-12 bg-gradient-to-r from-slate-900 to-slate-800 rounded-2xl p-8 text-center text-white">
+              <h3 className="text-2xl font-bold mb-2">📧 Đăng ký nhận tin</h3>
+              <p className="text-slate-300 mb-6 max-w-md mx-auto">
+                Cập nhật tin tức hóa học và cuộc thi Olympic mỗi tuần
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+                <input
+                  type="email"
+                  placeholder="Email của bạn"
+                  className="flex-1 px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+                <button className="px-6 py-3 bg-blue-600 hover:bg-blue-500 font-bold rounded-lg transition-colors">
+                  Đăng ký
+                </button>
+              </div>
+            </section>
+          </main>
+        </div>
       </div>
     </div>
   );
