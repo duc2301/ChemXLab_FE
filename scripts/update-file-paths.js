@@ -1,5 +1,5 @@
-import fs from 'node:fs';
-import path from 'node:path';
+const fs = require('fs');
+const path = require('path');
 
 const INDEX_JS_PATH = './index.js';
 const ASSETS_DIR = './assets';
