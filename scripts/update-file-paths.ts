@@ -1,13 +1,10 @@
-// Script để tự động cập nhật đường dẫn file từ USDZ sang GLB
-// Chạy script này sau khi đã convert file USDZ sang GLB
-
-const fs = require('fs');
-const path = require('path');
+import fs from 'node:fs';
+import path from 'node:path';
 
 const INDEX_JS_PATH = './index.js';
 const ASSETS_DIR = './assets';
 
-// Mapping từ USDZ sang GLB
+
 const fileMapping = {
     'element_019_potassium.usdz': 'element_019_potassium.glb',
     'element_001_hydrogen.usdz': 'element_001_hydrogen.glb', 
@@ -38,7 +35,7 @@ function updateFilePaths() {
         console.log('🎉 Đã cập nhật thành công file index.js!');
         
     } catch (error) {
-        console.error('❌ Lỗi:', error.message);
+        console.error('❌ Lỗi:', error);
     }
 }
 

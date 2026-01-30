@@ -29,3 +29,5 @@ sonar-project.properties
 
 # test
 # src/service/geminiAPI.ts
+.vercel
+.env*.local

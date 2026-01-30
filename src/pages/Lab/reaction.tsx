@@ -283,7 +283,7 @@ function removeAllBondsFromScene(scene: THREE.Scene) {
 }
 
 // --- MAIN REACT COMPONENT ---
-const Reaction = React.forwardRef((props, ref) => {
+const Reaction = React.forwardRef((_, ref) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const startReactionRef = useRef<(() => void) | null>(null);
   const openMolecularRef = useRef<(() => void) | null>(null);
@@ -485,7 +485,7 @@ const Reaction = React.forwardRef((props, ref) => {
     // --- PARTICLES ---
     const actualWaterLevelInWorld = waterLevelY;
     const tubeInnerRadius = tubeRadius * 0.95;
-    const steamMaxSize = 0.3; const steamMaxSpline = 2.0; const fireMaxSize = 1.0; const fireMaxSpline = 1.5; const bubbleMaxSize = 0.6; const boilingMaxSize = 0.4; const h2FlameMaxSize = 1.0;
+    const steamMaxSize = 0.3; const steamMaxSpline = 2.0; /*const fireMaxSize = 1.0; const fireMaxSpline = 1.5; const bubbleMaxSize = 0.6; const boilingMaxSize = 0.4; const h2FlameMaxSize = 1.0;*/
     const particleClipRadius = tubeInnerRadius * 0.55;
     const sodiumMoveRadius = tubeInnerRadius - (sodiumSize * 1.0);
     const minX = -particleClipRadius; const maxX = particleClipRadius; const minZ = -particleClipRadius; const maxZ = particleClipRadius;

@@ -2,7 +2,16 @@ import * as THREE from "three";
 
 const loader = new THREE.TextureLoader();
 
-function getSprite({ hasFog, color, opacity, path, pos, size }) {
+type SpriteOptions = {
+  hasFog: boolean;
+  color: THREE.Color;
+  opacity: number;
+  path: string;
+  pos: THREE.Vector3;
+  size: number;
+};
+
+function getSprite({ hasFog, color, opacity, path, pos, size }: SpriteOptions) {
   const spriteMat = new THREE.SpriteMaterial({
     color,
     fog: hasFog,
@@ -38,7 +47,7 @@ function getLayer({
       Math.sin(angle) * Math.random() * radius,
       z + Math.random()
     );
-    const length = new THREE.Vector3(pos.x, pos.y, 0).length();
+    // const length = new THREE.Vector3(pos.x, pos.y, 0).length();
 
     let color = new THREE.Color().setHSL(hue, 1, sat);
     const sprite = getSprite({ hasFog, color, opacity, path, pos, size });

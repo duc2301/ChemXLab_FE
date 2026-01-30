@@ -56,6 +56,8 @@ const Atom3DViewer = ({ src, isRotating, id, style }: { src: string, isRotating:
     // Tăng cường độ đèn AmbientLight từ 0.8 lên 1.2
     const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
 
+    dirLight || ambientLight;
+
     const backLight = new THREE.DirectionalLight(0xffffff, 2);
     backLight.position.set(-5, 5, -5); // Đèn hắt từ phía sau để tạo khối
     scene.add(backLight);
@@ -298,7 +300,10 @@ const Lab = () => {
         <div id="molecular-card">
           <div id="molecular-label-renderer"></div>
           <canvas id="molecular-canvas"></canvas>
-          <button id="molecular-card-close" onClick={(e) => (e.target as HTMLElement).closest('#molecular-modal-overlay')!.style.display = 'none'}>&times;</button>
+          <button id="molecular-card-close" onClick={(e) => {
+            const modal = (e.target as HTMLElement).closest('#molecular-modal-overlay') as HTMLElement | null;
+            if (modal) modal.style.display = 'none';
+          }}>&times;</button>
         </div>
       </div>
 

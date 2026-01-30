@@ -1,6 +1,6 @@
 export const LabStyle = () => {
   return (
-    <style jsx global>{`
+    <style>{`
       body {
         margin: 0;
         background-color: #111;

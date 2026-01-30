@@ -1,8 +1,23 @@
-// Complete periodic table data for all 118 elements
-const completeElementsData = [
+interface Element {
+    number: number;
+    symbol: string;
+    name: string;
+    category: string;
+    mass?: string;
+    position: number[];
+    density?: string;
+    meltingPoint?: string;
+    boilingPoint?: string;
+    discoverer?: string;
+    yearDiscovered?: string;
+    description?: string;
+    applications?: string;
+}
+
+const completeElementsData: Element[] = [
     // Period 1
-    {number: 1, symbol: 'H', name: 'Hydro', category: 'nonmetal', mass: '1.00784', position: [1, 1], 
-     density: '0.07099', meltingPoint: '-252.87', boilingPoint: '-259.16', 
+    {number: 1, symbol: 'H', name: 'Hydro', category: 'nonmetal', mass: '1.00784', position: [1, 1],
+     density: '0.07099', meltingPoint: '-252.87', boilingPoint: '-259.16',
      discoverer: 'Henry Cavendish', yearDiscovered: '1766',
      description: 'Nguyên tố phổ biến nhất trong vũ trụ, chiếm 75% khối lượng vũ trụ.',
      applications: 'Sản xuất amoniac, nhiên liệu tên lửa, pin nhiên liệu, thực phẩm (hydro hóa dầu)'},
@@ -11,7 +26,7 @@ const completeElementsData = [
      discoverer: 'Pierre Janssen', yearDiscovered: '1868',
      description: 'Khí hiếm nhẹ nhất thứ hai, không màu, không mùi và không cháy.',
      applications: 'Bóng bay, khí bảo vệ hàn, làm lạnh siêu dẫn, thở dưới nước'},
-    
+
     // Period 2
     {number: 3, symbol: 'Li', name: 'Liti', category: 'alkali-metal', mass: '6.94', position: [1, 2],
      density: '0.534', meltingPoint: '180.50', boilingPoint: '1342',
@@ -174,9 +189,9 @@ const completeElementsData = [
 ];
 
 // Add remaining elements 37-118 manually
-const remainingElements = [
+const remainingElements: Element[] = [
     // Period 5 continued
-    {number: 37, symbol: 'Rb', name: 'Rubiđi', category: 'alkali-metal', mass: '85.4678', position: [1, 5], 
+    {number: 37, symbol: 'Rb', name: 'Rubiđi', category: 'alkali-metal', mass: '85.4678', position: [1, 5],
      density: '1.532', meltingPoint: '39.31', boilingPoint: '688', discoverer: 'Robert Bunsen', yearDiscovered: '1861',
      description: 'Kim loại kiềm mềm, phản ứng mạnh với nước và không khí.'},
     {number: 38, symbol: 'Sr', name: 'Stronti', category: 'alkaline-earth', mass: '87.62', position: [2, 5],
@@ -209,8 +224,8 @@ const remainingElements = [
 ];
 
 // Accurate data functions based on scientific literature
-function getAccurateDensity(atomicNumber) {
-    const densities = {
+function getAccurateDensity(atomicNumber: number): string {
+    const densities: Record<number, string> = {
         47: '10.49', 48: '8.65', 49: '7.31', 50: '7.287', 51: '6.697', 52: '6.24', 53: '4.933', 54: '0.005887',
         55: '1.93', 56: '3.51', 57: '6.162', 72: '13.31', 73: '16.4', 74: '19.25', 75: '21.02', 76: '22.61',
         77: '22.56', 78: '21.46', 79: '19.282', 80: '13.534', 81: '11.85', 82: '11.342', 83: '9.807', 84: '9.32',
@@ -219,8 +234,8 @@ function getAccurateDensity(atomicNumber) {
     return densities[atomicNumber] || (atomicNumber >= 109 ? 'Chưa xác định tính chất hóa học' : (atomicNumber > 92 ? 'Chưa xác định' : '~' + (atomicNumber * 0.2).toFixed(1)));
 }
 
-function getAccurateMeltingPoint(atomicNumber) {
-    const meltingPoints = {
+function getAccurateMeltingPoint(atomicNumber: number): string {
+    const meltingPoints: Record<number, string> = {
         47: '961.78', 48: '321.07', 49: '156.60', 50: '231.93', 51: '630.63', 52: '449.51', 53: '113.7', 54: '-111.75',
         55: '28.44', 56: '727', 57: '920', 72: '2233', 73: '3017', 74: '3414', 75: '3185', 76: '3033',
         77: '2466', 78: '1768.2', 79: '1064.18', 80: '-38.83', 81: '304', 82: '327.46', 83: '271.4', 84: '254',
@@ -229,8 +244,8 @@ function getAccurateMeltingPoint(atomicNumber) {
     return meltingPoints[atomicNumber] || (atomicNumber >= 109 ? 'Chưa xác định tính chất hóa học' : (atomicNumber > 92 ? 'Chưa xác định' : '~' + (atomicNumber * 20).toString()));
 }
 
-function getAccurateBoilingPoint(atomicNumber) {
-    const boilingPoints = {
+function getAccurateBoilingPoint(atomicNumber: number): string {
+    const boilingPoints: Record<number, string> = {
         47: '2162', 48: '767', 49: '2072', 50: '2602', 51: '1587', 52: '988', 53: '184.3', 54: '-108.09',
         55: '671', 56: '1845', 57: '3464', 72: '4603', 73: '5458', 74: '5555', 75: '5596', 76: '5012',
         77: '4428', 78: '3825', 79: '2856', 80: '356.73', 81: '1473', 82: '1749', 83: '1564', 84: '962',
@@ -239,8 +254,8 @@ function getAccurateBoilingPoint(atomicNumber) {
     return boilingPoints[atomicNumber] || (atomicNumber >= 109 ? 'Chưa xác định tính chất hóa học' : (atomicNumber > 92 ? 'Chưa xác định' : '~' + (atomicNumber * 40).toString()));
 }
 
-function getAccurateDiscoverer(atomicNumber) {
-    const discoverers = {
+function getAccurateDiscoverer(atomicNumber: number): string {
+    const discoverers: Record<number, string> = {
         47: 'Đã biết từ thời cổ đại', 48: 'Karl Samuel Leberecht Hermann', 49: 'Ferdinand Reich', 50: 'Đã biết từ thời cổ đại',
         51: 'Thánh Albertus Magnus', 52: 'Franz-Joseph Müller von Reichenstein', 53: 'Bernard Courtois', 54: 'William Ramsay',
         55: 'Robert Bunsen', 56: 'Carl Wilhelm Scheele', 57: 'Carl Gustaf Mosander', 72: 'Dirk Coster', 73: 'Anders Gustaf Ekeberg',
@@ -253,8 +268,8 @@ function getAccurateDiscoverer(atomicNumber) {
     return discoverers[atomicNumber] || (atomicNumber > 92 ? 'Các nhà khoa học hiện đại' : 'Nhà khoa học');
 }
 
-function getAccurateYearDiscovered(atomicNumber) {
-    const years = {
+function getAccurateYearDiscovered(atomicNumber: number): string {
+    const years: Record<number, string> = {
         47: 'Cổ đại', 48: '1817', 49: '1863', 50: 'Cổ đại', 51: '1450', 52: '1782', 53: '1811', 54: '1898',
         55: '1860', 56: '1772', 57: '1839', 72: '1923', 73: '1802', 74: '1783', 75: '1925', 76: '1803',
         77: '1803', 78: '1735', 79: 'Cổ đại', 80: 'Cổ đại', 81: '1861', 82: 'Cổ đại', 83: '1753', 84: '1898',
@@ -263,8 +278,8 @@ function getAccurateYearDiscovered(atomicNumber) {
     return years[atomicNumber] || (atomicNumber > 92 ? (1940 + (atomicNumber - 93) * 2).toString() : '1800s');
 }
 
-function getAccurateMass(atomicNumber) {
-    const masses = {
+function getAccurateMass(atomicNumber: number): string {
+    const masses: Record<number, string> = {
         47: '107.8682', 48: '112.411', 49: '114.818', 50: '118.710', 51: '121.760', 52: '127.60', 53: '126.90447', 54: '131.293',
         55: '132.9054519', 56: '137.327', 57: '138.90547', 58: '140.116', 59: '140.90766', 60: '144.242', 61: '145', 62: '150.36',
         63: '151.964', 64: '157.25', 65: '158.92535', 66: '162.500', 67: '164.93033', 68: '167.259', 69: '168.93422', 70: '173.045',
@@ -279,82 +294,84 @@ function getAccurateMass(atomicNumber) {
 }
 
 // Add elements 47-118 with basic data
+type ElementSkeleton = { symbol: string; name: string; category: string; position: number[]; applications?: string; };
+
+const elementData: Record<number, ElementSkeleton> = {
+    47: {symbol: 'Ag', name: 'Bạc', category: 'transition-metal', position: [11, 5], applications: 'Trang sức, tiền xu, nhiếp ảnh, gương, chất kháng khuẩn, mạch điện tử'},
+    48: {symbol: 'Cd', name: 'Cadimi', category: 'transition-metal', position: [12, 5], applications: 'Pin sạc, mạ chống ăn mòn, sơn, hợp kim hàn, tế bào quang điện'},
+    49: {symbol: 'In', name: 'Inđi', category: 'post-transition', position: [13, 5]},
+    50: {symbol: 'Sn', name: 'Thiếc', category: 'post-transition', position: [14, 5], applications: 'Hộp đồ hộp, hàn điện tử, hợp kim đồng thau, lá thiếc, chống ăn mòn'},
+    51: {symbol: 'Sb', name: 'Antimon', category: 'metalloid', position: [15, 5]},
+    52: {symbol: 'Te', name: 'Telua', category: 'metalloid', position: [16, 5]},
+    53: {symbol: 'I', name: 'Iot', category: 'halogen', position: [17, 5], applications: 'Thuốc sát trùng, muối ăn có iod, chụp X-quang, thuốc tuyến giáp, nhiếp ảnh'},
+    54: {symbol: 'Xe', name: 'Xenon', category: 'noble-gas', position: [18, 5]},
+    55: {symbol: 'Cs', name: 'Xezi', category: 'alkali-metal', position: [1, 6]},
+    56: {symbol: 'Ba', name: 'Bari', category: 'alkaline-earth', position: [2, 6]},
+    57: {symbol: 'La', name: 'Lantan', category: 'lanthanide', position: [3, 6]},
+    58: {symbol: 'Ce', name: 'Xeri', category: 'lanthanide', position: [4, 9]},
+    59: {symbol: 'Pr', name: 'Praseođim', category: 'lanthanide', position: [5, 9]},
+    60: {symbol: 'Nd', name: 'Neođim', category: 'lanthanide', position: [6, 9]},
+    61: {symbol: 'Pm', name: 'Prometi', category: 'lanthanide', position: [7, 9]},
+    62: {symbol: 'Sm', name: 'Samari', category: 'lanthanide', position: [8, 9]},
+    63: {symbol: 'Eu', name: 'Europi', category: 'lanthanide', position: [9, 9]},
+    64: {symbol: 'Gd', name: 'Gadolini', category: 'lanthanide', position: [10, 9]},
+    65: {symbol: 'Tb', name: 'Terbi', category: 'lanthanide', position: [11, 9]},
+    66: {symbol: 'Dy', name: 'Đysprosi', category: 'lanthanide', position: [12, 9]},
+    67: {symbol: 'Ho', name: 'Holmi', category: 'lanthanide', position: [13, 9]},
+    68: {symbol: 'Er', name: 'Erbi', category: 'lanthanide', position: [14, 9]},
+    69: {symbol: 'Tm', name: 'Tuli', category: 'lanthanide', position: [15, 9]},
+    70: {symbol: 'Yb', name: 'Yterbi', category: 'lanthanide', position: [16, 9]},
+    71: {symbol: 'Lu', name: 'Luteti', category: 'lanthanide', position: [17, 9]},
+    72: {symbol: 'Hf', name: 'Hafni', category: 'transition-metal', position: [4, 6]},
+    73: {symbol: 'Ta', name: 'Tantal', category: 'transition-metal', position: [5, 6]},
+    74: {symbol: 'W', name: 'Vonfram', category: 'transition-metal', position: [6, 6]},
+    75: {symbol: 'Re', name: 'Reni', category: 'transition-metal', position: [7, 6]},
+    76: {symbol: 'Os', name: 'Osmi', category: 'transition-metal', position: [8, 6]},
+    77: {symbol: 'Ir', name: 'Iriđi', category: 'transition-metal', position: [9, 6]},
+    78: {symbol: 'Pt', name: 'Platin', category: 'transition-metal', position: [10, 6]},
+    79: {symbol: 'Au', name: 'Vàng', category: 'transition-metal', position: [11, 6], applications: 'Trang sức, dự trữ tiền tệ, mạch điện tử, nha khoa, đầu tư, linh kiện máy tính'},
+    80: {symbol: 'Hg', name: 'Thủy ngân', category: 'transition-metal', position: [12, 6]},
+    81: {symbol: 'Tl', name: 'Tali', category: 'post-transition', position: [13, 6]},
+    82: {symbol: 'Pb', name: 'Chì', category: 'post-transition', position: [14, 6], applications: 'Pin ô tô, chống tia X, đạn, hợp kim hàn, cân bằng bánh xe, sơn cũ'},
+    83: {symbol: 'Bi', name: 'Bismut', category: 'post-transition', position: [15, 6]},
+    84: {symbol: 'Po', name: 'Poloni', category: 'post-transition', position: [16, 6]},
+    85: {symbol: 'At', name: 'Astatin', category: 'halogen', position: [17, 6]},
+    86: {symbol: 'Rn', name: 'Radon', category: 'noble-gas', position: [18, 6]},
+    87: {symbol: 'Fr', name: 'Franxi', category: 'alkali-metal', position: [1, 7]},
+    88: {symbol: 'Ra', name: 'Raði', category: 'alkaline-earth', position: [2, 7]},
+    89: {symbol: 'Ac', name: 'Actini', category: 'actinide', position: [3, 7]},
+    90: {symbol: 'Th', name: 'Thori', category: 'actinide', position: [4, 10]},
+    91: {symbol: 'Pa', name: 'Protactini', category: 'actinide', position: [5, 10]},
+    92: {symbol: 'U', name: 'Urani', category: 'actinide', position: [6, 10], applications: 'Nhiên liệu hạt nhân, vũ khí hạt nhân, tàu ngầm hạt nhân, y học hạt nhân, đồng hồ phóng xạ'},
+    93: {symbol: 'Np', name: 'Neptuni', category: 'actinide', position: [7, 10]},
+    94: {symbol: 'Pu', name: 'Plutoni', category: 'actinide', position: [8, 10]},
+    95: {symbol: 'Am', name: 'Americi', category: 'actinide', position: [9, 10]},
+    96: {symbol: 'Cm', name: 'Curi', category: 'actinide', position: [10, 10]},
+    97: {symbol: 'Bk', name: 'Berkeli', category: 'actinide', position: [11, 10]},
+    98: {symbol: 'Cf', name: 'Californi', category: 'actinide', position: [12, 10]},
+    99: {symbol: 'Es', name: 'Einsteini', category: 'actinide', position: [13, 10]},
+    100: {symbol: 'Fm', name: 'Fermi', category: 'actinide', position: [14, 10]},
+    101: {symbol: 'Md', name: 'Mendelevi', category: 'actinide', position: [15, 10]},
+    102: {symbol: 'No', name: 'Nobeli', category: 'actinide', position: [16, 10]},
+    103: {symbol: 'Lr', name: 'Lorenxi', category: 'actinide', position: [17, 10]},
+    104: {symbol: 'Rf', name: 'Rutherfordi', category: 'transition-metal', position: [4, 7]},
+    105: {symbol: 'Db', name: 'Dubni', category: 'transition-metal', position: [5, 7]},
+    106: {symbol: 'Sg', name: 'Seaborgi', category: 'transition-metal', position: [6, 7]},
+    107: {symbol: 'Bh', name: 'Bohri', category: 'transition-metal', position: [7, 7]},
+    108: {symbol: 'Hs', name: 'Hassi', category: 'transition-metal', position: [8, 7]},
+    109: {symbol: 'Mt', name: 'Meitneri', category: 'unknown-properties', position: [9, 7]},
+    110: {symbol: 'Ds', name: 'Darmstadti', category: 'unknown-properties', position: [10, 7]},
+    111: {symbol: 'Rg', name: 'Roentgeni', category: 'unknown-properties', position: [11, 7]},
+    112: {symbol: 'Cn', name: 'Copernici', category: 'unknown-properties', position: [12, 7]},
+    113: {symbol: 'Nh', name: 'Nihoni', category: 'unknown-properties', position: [13, 7]},
+    114: {symbol: 'Fl', name: 'Flerovi', category: 'unknown-properties', position: [14, 7]},
+    115: {symbol: 'Mc', name: 'Moscovi', category: 'unknown-properties', position: [15, 7]},
+    116: {symbol: 'Lv', name: 'Livermori', category: 'unknown-properties', position: [16, 7]},
+    117: {symbol: 'Ts', name: 'Tennessi', category: 'unknown-properties', position: [17, 7]},
+    118: {symbol: 'Og', name: 'Oganeson', category: 'unknown-properties', position: [18, 7]}
+};
+
 for (let i = 47; i <= 118; i++) {
-    const elementData = {
-        47: {symbol: 'Ag', name: 'Bạc', category: 'transition-metal', position: [11, 5], applications: 'Trang sức, tiền xu, nhiếp ảnh, gương, chất kháng khuẩn, mạch điện tử'},
-        48: {symbol: 'Cd', name: 'Cadimi', category: 'transition-metal', position: [12, 5], applications: 'Pin sạc, mạ chống ăn mòn, sơn, hợp kim hàn, tế bào quang điện'},
-        49: {symbol: 'In', name: 'Inđi', category: 'post-transition', position: [13, 5]},
-        50: {symbol: 'Sn', name: 'Thiếc', category: 'post-transition', position: [14, 5], applications: 'Hộp đồ hộp, hàn điện tử, hợp kim đồng thau, lá thiếc, chống ăn mòn'},
-        51: {symbol: 'Sb', name: 'Antimon', category: 'metalloid', position: [15, 5]},
-        52: {symbol: 'Te', name: 'Telua', category: 'metalloid', position: [16, 5]},
-        53: {symbol: 'I', name: 'Iot', category: 'halogen', position: [17, 5], applications: 'Thuốc sát trùng, muối ăn có iod, chụp X-quang, thuốc tuyến giáp, nhiếp ảnh'},
-        54: {symbol: 'Xe', name: 'Xenon', category: 'noble-gas', position: [18, 5]},
-        55: {symbol: 'Cs', name: 'Xezi', category: 'alkali-metal', position: [1, 6]},
-        56: {symbol: 'Ba', name: 'Bari', category: 'alkaline-earth', position: [2, 6]},
-        57: {symbol: 'La', name: 'Lantan', category: 'lanthanide', position: [3, 6]},
-        58: {symbol: 'Ce', name: 'Xeri', category: 'lanthanide', position: [4, 9]},
-        59: {symbol: 'Pr', name: 'Praseođim', category: 'lanthanide', position: [5, 9]},
-        60: {symbol: 'Nd', name: 'Neođim', category: 'lanthanide', position: [6, 9]},
-        61: {symbol: 'Pm', name: 'Prometi', category: 'lanthanide', position: [7, 9]},
-        62: {symbol: 'Sm', name: 'Samari', category: 'lanthanide', position: [8, 9]},
-        63: {symbol: 'Eu', name: 'Europi', category: 'lanthanide', position: [9, 9]},
-        64: {symbol: 'Gd', name: 'Gadolini', category: 'lanthanide', position: [10, 9]},
-        65: {symbol: 'Tb', name: 'Terbi', category: 'lanthanide', position: [11, 9]},
-        66: {symbol: 'Dy', name: 'Đysprosi', category: 'lanthanide', position: [12, 9]},
-        67: {symbol: 'Ho', name: 'Holmi', category: 'lanthanide', position: [13, 9]},
-        68: {symbol: 'Er', name: 'Erbi', category: 'lanthanide', position: [14, 9]},
-        69: {symbol: 'Tm', name: 'Tuli', category: 'lanthanide', position: [15, 9]},
-        70: {symbol: 'Yb', name: 'Yterbi', category: 'lanthanide', position: [16, 9]},
-        71: {symbol: 'Lu', name: 'Luteti', category: 'lanthanide', position: [17, 9]},
-        72: {symbol: 'Hf', name: 'Hafni', category: 'transition-metal', position: [4, 6]},
-        73: {symbol: 'Ta', name: 'Tantal', category: 'transition-metal', position: [5, 6]},
-        74: {symbol: 'W', name: 'Vonfram', category: 'transition-metal', position: [6, 6]},
-        75: {symbol: 'Re', name: 'Reni', category: 'transition-metal', position: [7, 6]},
-        76: {symbol: 'Os', name: 'Osmi', category: 'transition-metal', position: [8, 6]},
-        77: {symbol: 'Ir', name: 'Iriđi', category: 'transition-metal', position: [9, 6]},
-        78: {symbol: 'Pt', name: 'Platin', category: 'transition-metal', position: [10, 6]},
-        79: {symbol: 'Au', name: 'Vàng', category: 'transition-metal', position: [11, 6], applications: 'Trang sức, dự trữ tiền tệ, mạch điện tử, nha khoa, đầu tư, linh kiện máy tính'},
-        80: {symbol: 'Hg', name: 'Thủy ngân', category: 'transition-metal', position: [12, 6]},
-        81: {symbol: 'Tl', name: 'Tali', category: 'post-transition', position: [13, 6]},
-        82: {symbol: 'Pb', name: 'Chì', category: 'post-transition', position: [14, 6], applications: 'Pin ô tô, chống tia X, đạn, hợp kim hàn, cân bằng bánh xe, sơn cũ'},
-        83: {symbol: 'Bi', name: 'Bismut', category: 'post-transition', position: [15, 6]},
-        84: {symbol: 'Po', name: 'Poloni', category: 'post-transition', position: [16, 6]},
-        85: {symbol: 'At', name: 'Astatin', category: 'halogen', position: [17, 6]},
-        86: {symbol: 'Rn', name: 'Radon', category: 'noble-gas', position: [18, 6]},
-        87: {symbol: 'Fr', name: 'Franxi', category: 'alkali-metal', position: [1, 7]},
-        88: {symbol: 'Ra', name: 'Raði', category: 'alkaline-earth', position: [2, 7]},
-        89: {symbol: 'Ac', name: 'Actini', category: 'actinide', position: [3, 7]},
-        90: {symbol: 'Th', name: 'Thori', category: 'actinide', position: [4, 10]},
-        91: {symbol: 'Pa', name: 'Protactini', category: 'actinide', position: [5, 10]},
-        92: {symbol: 'U', name: 'Urani', category: 'actinide', position: [6, 10], applications: 'Nhiên liệu hạt nhân, vũ khí hạt nhân, tàu ngầm hạt nhân, y học hạt nhân, đồng hồ phóng xạ'},
-        93: {symbol: 'Np', name: 'Neptuni', category: 'actinide', position: [7, 10]},
-        94: {symbol: 'Pu', name: 'Plutoni', category: 'actinide', position: [8, 10]},
-        95: {symbol: 'Am', name: 'Americi', category: 'actinide', position: [9, 10]},
-        96: {symbol: 'Cm', name: 'Curi', category: 'actinide', position: [10, 10]},
-        97: {symbol: 'Bk', name: 'Berkeli', category: 'actinide', position: [11, 10]},
-        98: {symbol: 'Cf', name: 'Californi', category: 'actinide', position: [12, 10]},
-        99: {symbol: 'Es', name: 'Einsteini', category: 'actinide', position: [13, 10]},
-        100: {symbol: 'Fm', name: 'Fermi', category: 'actinide', position: [14, 10]},
-        101: {symbol: 'Md', name: 'Mendelevi', category: 'actinide', position: [15, 10]},
-        102: {symbol: 'No', name: 'Nobeli', category: 'actinide', position: [16, 10]},
-        103: {symbol: 'Lr', name: 'Lorenxi', category: 'actinide', position: [17, 10]},
-        104: {symbol: 'Rf', name: 'Rutherfordi', category: 'transition-metal', position: [4, 7]},
-        105: {symbol: 'Db', name: 'Dubni', category: 'transition-metal', position: [5, 7]},
-        106: {symbol: 'Sg', name: 'Seaborgi', category: 'transition-metal', position: [6, 7]},
-        107: {symbol: 'Bh', name: 'Bohri', category: 'transition-metal', position: [7, 7]},
-        108: {symbol: 'Hs', name: 'Hassi', category: 'transition-metal', position: [8, 7]},
-        109: {symbol: 'Mt', name: 'Meitneri', category: 'unknown-properties', position: [9, 7]},
-        110: {symbol: 'Ds', name: 'Darmstadti', category: 'unknown-properties', position: [10, 7]},
-        111: {symbol: 'Rg', name: 'Roentgeni', category: 'unknown-properties', position: [11, 7]},
-        112: {symbol: 'Cn', name: 'Copernici', category: 'unknown-properties', position: [12, 7]},
-        113: {symbol: 'Nh', name: 'Nihoni', category: 'unknown-properties', position: [13, 7]},
-        114: {symbol: 'Fl', name: 'Flerovi', category: 'unknown-properties', position: [14, 7]},
-        115: {symbol: 'Mc', name: 'Moscovi', category: 'unknown-properties', position: [15, 7]},
-        116: {symbol: 'Lv', name: 'Livermori', category: 'unknown-properties', position: [16, 7]},
-        117: {symbol: 'Ts', name: 'Tennessi', category: 'unknown-properties', position: [17, 7]},
-        118: {symbol: 'Og', name: 'Oganeson', category: 'unknown-properties', position: [18, 7]}
-    };
-    
     const element = elementData[i];
     if (element) {
         remainingElements.push({
@@ -369,12 +386,15 @@ for (let i = 47; i <= 118; i++) {
             boilingPoint: getAccurateBoilingPoint(i),
             discoverer: getAccurateDiscoverer(i),
             yearDiscovered: getAccurateYearDiscovered(i),
-            description: i >= 109 ? `${element.name} là nguyên tố siêu nặng nhân tạo có số hiệu nguyên tử ${i}. Tính chất hóa học chưa được xác định đầy đủ do thời gian bán rã rất ngắn.` : `${element.name} là nguyên tố hóa học có số hiệu nguyên tử ${i}.`
+            description: i >= 109
+                ? `${element.name} là nguyên tố siêu nặng nhân tạo có số hiệu nguyên tử ${i}. Tính chất hóa học chưa được xác định đầy đủ do thời gian bán rã rất ngắn.`
+                : `${element.name} là nguyên tố hóa học có số hiệu nguyên tử ${i}.`,
+            applications: element.applications
         });
     }
 }
 
-// Add all remaining elements to the main array
 completeElementsData.push(...remainingElements);
 
-export { completeElementsData };
+export { completeElementsData };    export type { Element };
+
