@@ -4,4 +4,18 @@
     { "path": "./tsconfig.app.json" },
     { "path": "./tsconfig.node.json" }
   ],
+  "compilerOptions": {
+    "strict": false,
+    "noImplicitAny": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "skipLibCheck": true,
+    "types": ["node"],
+    "moduleResolution": "node"
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "scripts"
+  ]
 }

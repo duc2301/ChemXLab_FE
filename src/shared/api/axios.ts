@@ -53,7 +53,7 @@ const processQueue = (error: any, token: string | null = null) => {
 
 const handleTokenRefresh = async (
   originalRequest: any,
-  error: AxiosError<unknown, any>,
+  _error: AxiosError<unknown, any>,
   axiosInstance: typeof api 
 ) => {
   if (isRefreshing) {

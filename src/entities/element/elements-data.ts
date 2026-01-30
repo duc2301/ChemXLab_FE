@@ -355,17 +355,17 @@ const elementsData = [
 ];
 
 // Helper function to get element by atomic number
-function getElementById(number) {
+function getElementById(number : any) {
     return elementsData.find(element => element.number === number);
 }
 
 // Helper function to get elements by category
-function getElementsByCategory(category) {
+function getElementsByCategory(category : any) {
     return elementsData.filter(element => element.category === category);
 }
 
 // Helper function to get element by symbol
-function getElementBySymbol(symbol) {
+function getElementBySymbol(symbol : any) {
     return elementsData.find(element => element.symbol === symbol);
 }
 
