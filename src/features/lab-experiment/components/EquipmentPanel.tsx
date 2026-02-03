@@ -1,7 +1,7 @@
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useState } from 'react';
 import { getAllCategories, getEquipmentByCategory } from '../services/equipmentRegistry';
 import type { EquipmentItem } from '../types/equipment';
-import { ChevronDown, ChevronUp } from 'lucide-react';
 
 interface EquipmentPanelProps {
   onSelectEquipment: (equipment: EquipmentItem) => void;
@@ -75,11 +75,10 @@ export const EquipmentPanel = ({ onSelectEquipment, selectedId }: EquipmentPanel
                       onDragStart={(e) => {
                         e.dataTransfer?.setData('equipmentId', item.id);
                       }}
-                      className={`w-full px-3 py-2 text-left text-xs rounded transition-all flex items-start gap-2 ${
-                        selectedId === item.id
+                      className={`w-full px-3 py-2 text-left text-xs rounded transition-all flex items-start gap-2 ${selectedId === item.id
                           ? 'bg-blue-600 text-white'
                           : 'bg-gray-700 hover:bg-gray-600 text-gray-200'
-                      }`}
+                        }`}
                     >
                       <span className="text-lg">📦</span>
                       <div className="flex-1 min-w-0">

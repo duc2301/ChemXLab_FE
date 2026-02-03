@@ -1,7 +1,7 @@
 // features/camera-controller/ui/PlayerController.tsx
 import { useKeyboardControls } from '@react-three/drei';
 import { useFrame, useThree } from '@react-three/fiber';
-import { CapsuleCollider, RigidBody, RapierRigidBody, useRapier } from '@react-three/rapier';
+import { CapsuleCollider, RapierRigidBody, RigidBody, useRapier } from '@react-three/rapier';
 import { useRef } from 'react';
 import { Vector3 } from 'three';
 import type { ControlsState } from '../models/controls';
@@ -50,7 +50,7 @@ export const UserCamera = () => {
     if (up) {
       const origin = rigidBodyRef.current.translation();
       const ray = world.castRay(
-        { 
+        {
           origin: { x: origin.x, y: origin.y, z: origin.z },
           dir: { x: 0, y: -1, z: 0 }
         } as any,

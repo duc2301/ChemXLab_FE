@@ -1,16 +1,16 @@
 // scenes/LabScene.tsx
-import { SceneWrapper } from '../../../shared/ui/canvas/SceneWrapper';
-import { LabEnvironment } from '../../../features/lab-environment/ui/LabEnvironment';
 import { KeyboardControls, PointerLockControls } from '@react-three/drei';
-import { controlMap } from '../../../features/camera-controller/models/controls';
 import { CuboidCollider, Physics, RigidBody } from '@react-three/rapier';
-import { PhysicsModel } from '../../../shared/ui/3d/PhysicsModel';
-import { Suspense, useState, useEffect } from 'react';
+import { Suspense, useEffect, useState } from 'react';
+import { controlMap } from '../../../features/camera-controller/models/controls';
 import { UserCamera } from '../../../features/camera-controller/ui/Camera';
-import { ProximityDetector } from '../../../features/lab-experiment/components/ProximityDetector';
+import { LabEnvironment } from '../../../features/lab-environment/ui/LabEnvironment';
 import { InteractionPrompt } from '../../../features/lab-experiment/components/InteractionPrompt';
-import { ExperimentPopup } from '../../../features/lab-experiment/ui/ExperimentPopup';
+import { ProximityDetector } from '../../../features/lab-experiment/components/ProximityDetector';
 import { useExperimentStore } from '../../../features/lab-experiment/services/experimentStore';
+import { ExperimentPopup } from '../../../features/lab-experiment/ui/ExperimentPopup';
+import { PhysicsModel } from '../../../shared/ui/3d/PhysicsModel';
+import { SceneWrapper } from '../../../shared/ui/canvas/SceneWrapper';
 
 const TABLE_POSITION: [number, number, number] = [-2, 0, 2];
 const DETECTION_RADIUS = 3;
@@ -59,7 +59,7 @@ function LabSceneContent({
           <PhysicsModel
             path="/models/phongthinghiem.glb"
             position={[0, 0, 0]}
-            colliders="trimesh" 
+            colliders="trimesh"
             isStatic={true}
           />
 

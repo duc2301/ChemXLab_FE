@@ -1,5 +1,5 @@
 import {
-  ArrowRight, Beaker, Box, CheckCircle2, FlaskConical,
+  ArrowRight, Box, CheckCircle2, FlaskConical,
   Globe2, Layers, Play, ShieldCheck, Zap
 } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -181,248 +181,130 @@ const HomePage = () => {
             </Link>
           </div>
 
-          {/* Gallery Grid - Each card has unique theme-specific design */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          {/* Gallery Grid - 2 Cards: Periodic Table & Chemistry Library */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
 
-            {/* Card 1: Cấu trúc Nguyên tử - Elegant Bohr Model */}
-            <Link
-              to="/library"
-              className="group relative h-80 rounded-3xl overflow-hidden cursor-pointer block shadow-xl shadow-indigo-500/40 hover:shadow-indigo-400/60 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2"
-            >
-              {/* Premium gradient background */}
-              <div className="absolute inset-0 bg-gradient-to-br from-indigo-950 via-slate-900 to-violet-950"></div>
-
-              {/* Subtle grid pattern */}
-              <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.3) 1px, transparent 0)', backgroundSize: '24px 24px' }}></div>
-
-              {/* Glowing aura behind atom */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-gradient-to-r from-cyan-500/20 via-blue-500/20 to-purple-500/20 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-700"></div>
-
-              {/* Bohr Model Atom */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-44 h-44">
-                {/* Outer ring 3 */}
-                <div className="absolute inset-0 rounded-full border border-dashed border-violet-400/30 animate-[spin_12s_linear_infinite]">
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-violet-400 rounded-full shadow-[0_0_12px_rgba(167,139,250,0.9)] animate-pulse"></div>
-                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-2.5 h-2.5 bg-violet-400 rounded-full shadow-[0_0_12px_rgba(167,139,250,0.9)] animate-pulse delay-500"></div>
-                </div>
-
-                {/* Middle ring 2 */}
-                <div className="absolute inset-6 rounded-full border border-dashed border-blue-400/40 animate-[spin_8s_linear_infinite_reverse]">
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-blue-400 rounded-full shadow-[0_0_14px_rgba(96,165,250,0.9)] animate-pulse delay-200"></div>
-                  <div className="absolute right-0 top-1/2 translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-blue-400 rounded-full shadow-[0_0_14px_rgba(96,165,250,0.9)] animate-pulse delay-700"></div>
-                </div>
-
-                {/* Inner ring 1 */}
-                <div className="absolute inset-12 rounded-full border-2 border-cyan-400/50 animate-[spin_5s_linear_infinite]">
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-cyan-400 rounded-full shadow-[0_0_16px_rgba(34,211,238,1)] animate-pulse delay-300"></div>
-                </div>
-
-                {/* Nucleus - Protons & Neutrons */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10">
-                  <div className="absolute inset-0 bg-gradient-to-br from-rose-400 via-orange-400 to-amber-400 rounded-full shadow-[0_0_30px_rgba(251,146,60,0.8)] animate-pulse"></div>
-                  <div className="absolute inset-1 bg-gradient-to-tl from-rose-500/50 to-transparent rounded-full"></div>
-                  <div className="absolute top-1 left-1 w-2 h-2 bg-white/40 rounded-full blur-[1px]"></div>
-                </div>
-              </div>
-
-              {/* Icon */}
-              <div className="absolute top-6 left-6 p-3 bg-indigo-500/20 backdrop-blur-xl rounded-xl border border-indigo-400/30 group-hover:bg-indigo-500/30 group-hover:scale-110 transition-all duration-300">
-                <Box className="text-indigo-200 w-6 h-6" />
-              </div>
-
-              {/* Bottom Content */}
-              <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-slate-950/95 via-slate-900/70 to-transparent">
-                <p className="text-cyan-300/90 text-xs font-semibold uppercase tracking-widest mb-1">Khám phá thế giới vi mô</p>
-                <h4 className="text-xl font-bold text-white mb-2">Cấu trúc Nguyên tử</h4>
-                <span className="text-indigo-200/90 text-sm font-medium flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  Khám phá <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-                </span>
-              </div>
-            </Link>
-
-            {/* Card 2: Bảng Tuần hoàn - Element grid pattern */}
+            {/* Card 1: Bảng Tuần hoàn - Element grid pattern */}
             <Link
               to="/periodic-table"
-              className="group relative h-80 rounded-3xl overflow-hidden cursor-pointer block shadow-xl shadow-purple-500/30 hover:shadow-purple-500/50 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2"
+              className="group relative h-96 rounded-3xl overflow-hidden cursor-pointer block shadow-xl shadow-purple-500/30 hover:shadow-purple-500/50 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2"
             >
               {/* Gradient background */}
               <div className="absolute inset-0 bg-gradient-to-br from-violet-900 via-purple-800 to-fuchsia-900"></div>
 
               {/* Periodic table grid pattern */}
-              <div className="absolute inset-0 p-4 grid grid-cols-6 grid-rows-5 gap-1.5 opacity-60 group-hover:opacity-80 transition-opacity">
-                {[...Array(30)].map((_, i) => (
+              <div className="absolute inset-0 p-6 grid grid-cols-8 grid-rows-5 gap-2 opacity-60 group-hover:opacity-80 transition-opacity">
+                {[...Array(40)].map((_, i) => (
                   <div
                     key={i}
-                    className={`rounded-md border border-white/20 flex items-center justify-center text-[8px] font-bold text-white/70 transition-all duration-300 hover:bg-white/20
+                    className={`rounded-md border border-white/20 flex items-center justify-center text-[10px] font-bold text-white/70 transition-all duration-300 hover:bg-white/20
                       ${i === 0 ? 'bg-red-500/40' : ''}
-                      ${i === 5 ? 'bg-yellow-500/40' : ''}
-                      ${[1, 2, 7, 8].includes(i) ? 'bg-blue-500/30' : ''}
-                      ${[12, 13, 18, 19].includes(i) ? 'bg-green-500/30' : ''}
-                      ${[14, 15, 20, 21].includes(i) ? 'bg-orange-500/30' : ''}
+                      ${i === 7 ? 'bg-yellow-500/40' : ''}
+                      ${[1, 2, 9, 10].includes(i) ? 'bg-blue-500/30' : ''}
+                      ${[16, 17, 24, 25].includes(i) ? 'bg-green-500/30' : ''}
+                      ${[18, 19, 26, 27].includes(i) ? 'bg-orange-500/30' : ''}
+                      ${[32, 33, 34, 35].includes(i) ? 'bg-teal-500/30' : ''}
                     `}
-                    style={{ animationDelay: `${i * 50}ms` }}
+                    style={{ animationDelay: `${i * 40}ms` }}
                   >
-                    {['H', 'He', 'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne', 'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar', 'K', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Fe', 'Co', 'Ni', 'Cu', 'Zn'][i]}
+                    {['H', 'He', 'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne', 'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar', 'K', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Fe', 'Co', 'Ni', 'Cu', 'Zn', 'Ga', 'Ge', 'As', 'Se', 'Br', 'Kr', 'Rb', 'Sr', 'Y', 'Zr'][i]}
                   </div>
                 ))}
               </div>
 
               {/* Glowing orb */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 bg-gradient-to-br from-purple-400/30 to-fuchsia-600/30 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-gradient-to-br from-purple-400/30 to-fuchsia-600/30 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
 
               {/* Icon */}
               <div className="absolute top-6 left-6 p-3 bg-purple-500/20 backdrop-blur-xl rounded-xl border border-purple-400/30 group-hover:bg-purple-500/30 group-hover:scale-110 transition-all duration-300 z-10">
-                <Layers className="text-purple-200 w-6 h-6" />
+                <Layers className="text-purple-200 w-7 h-7" />
+              </div>
+
+              {/* 3D Model indicator */}
+              <div className="absolute top-6 right-6 px-3 py-1.5 bg-white/10 backdrop-blur-xl rounded-full border border-white/20 z-10">
+                <span className="text-white/90 text-xs font-semibold flex items-center gap-1.5">
+                  <Box className="w-3.5 h-3.5" />
+                  118 mô hình 3D
+                </span>
               </div>
 
               {/* Bottom Content */}
-              <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-violet-950/95 via-violet-900/60 to-transparent z-10">
-                <p className="text-purple-300/80 text-xs font-medium uppercase tracking-widest mb-1">118 nguyên tố hóa học</p>
-                <h4 className="text-xl font-bold text-white mb-2">Bảng Tuần hoàn</h4>
+              <div className="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-violet-950/95 via-violet-900/60 to-transparent z-10">
+                <p className="text-purple-300/80 text-sm font-medium uppercase tracking-widest mb-2">Tương tác 3D với mọi nguyên tố</p>
+                <h4 className="text-2xl md:text-3xl font-bold text-white mb-3">Bảng Tuần hoàn</h4>
+                <p className="text-purple-200/70 text-sm mb-4 max-w-md">Khám phá 118 nguyên tố với mô hình 3D chi tiết, thông tin đầy đủ và trực quan</p>
                 <span className="text-purple-200/80 text-sm font-medium flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  Khám phá <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                  Khám phá ngay <ArrowRight size={18} className="group-hover:translate-x-2 transition-transform" />
                 </span>
               </div>
             </Link>
 
-            {/* Card 3: Phản ứng Oxy hóa - Fire/bubbles effect */}
+            {/* Card 2: Thư viện Hóa học - Knowledge Library with molecules */}
             <Link
               to="/library"
-              className="group relative h-80 rounded-3xl overflow-hidden cursor-pointer block shadow-xl shadow-orange-500/30 hover:shadow-orange-500/50 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2"
-            >
-              {/* Gradient background */}
-              <div className="absolute inset-0 bg-gradient-to-b from-amber-600 via-orange-600 to-red-700"></div>
-
-              {/* Fire/heat waves */}
-              <div className="absolute inset-0 overflow-hidden">
-                <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-yellow-400/40 via-orange-500/20 to-transparent animate-pulse"></div>
-                <div className="absolute bottom-0 left-[10%] w-16 h-24 bg-gradient-to-t from-yellow-300/60 to-transparent rounded-t-full blur-sm animate-[pulse_1.5s_ease-in-out_infinite]"></div>
-                <div className="absolute bottom-0 left-[30%] w-12 h-20 bg-gradient-to-t from-orange-400/50 to-transparent rounded-t-full blur-sm animate-[pulse_2s_ease-in-out_infinite_0.3s]"></div>
-                <div className="absolute bottom-0 right-[25%] w-14 h-28 bg-gradient-to-t from-yellow-400/50 to-transparent rounded-t-full blur-sm animate-[pulse_1.8s_ease-in-out_infinite_0.5s]"></div>
-                <div className="absolute bottom-0 right-[10%] w-10 h-16 bg-gradient-to-t from-red-400/40 to-transparent rounded-t-full blur-sm animate-[pulse_2.2s_ease-in-out_infinite_0.7s]"></div>
-              </div>
-
-              {/* Rising bubbles/sparks */}
-              <div className="absolute inset-0">
-                <div className="absolute bottom-[20%] left-[20%] w-3 h-3 bg-yellow-300/70 rounded-full animate-[bounce_2s_ease-in-out_infinite] shadow-[0_0_10px_rgba(253,224,71,0.8)]"></div>
-                <div className="absolute bottom-[35%] left-[40%] w-2 h-2 bg-orange-300/60 rounded-full animate-[bounce_2.5s_ease-in-out_infinite_0.5s]"></div>
-                <div className="absolute bottom-[25%] right-[30%] w-2.5 h-2.5 bg-yellow-200/70 rounded-full animate-[bounce_1.8s_ease-in-out_infinite_0.3s] shadow-[0_0_8px_rgba(254,240,138,0.8)]"></div>
-                <div className="absolute bottom-[45%] right-[20%] w-1.5 h-1.5 bg-red-300/50 rounded-full animate-[bounce_2.2s_ease-in-out_infinite_0.8s]"></div>
-              </div>
-
-              {/* Flask silhouette */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-20 group-hover:opacity-30 transition-opacity">
-                <FlaskConical className="w-32 h-32 text-white" strokeWidth={1} />
-              </div>
-
-              {/* Icon */}
-              <div className="absolute top-6 left-6 p-3 bg-orange-500/30 backdrop-blur-xl rounded-xl border border-orange-300/30 group-hover:bg-orange-500/40 group-hover:scale-110 transition-all duration-300">
-                <FlaskConical className="text-orange-100 w-6 h-6" />
-              </div>
-
-              {/* Bottom Content */}
-              <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-red-900/90 via-orange-800/50 to-transparent">
-                <p className="text-orange-200/80 text-xs font-medium uppercase tracking-widest mb-1">Phản ứng hóa học cơ bản</p>
-                <h4 className="text-xl font-bold text-white mb-2">Phản ứng Oxy hóa</h4>
-                <span className="text-orange-100/80 text-sm font-medium flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  Khám phá <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-                </span>
-              </div>
-            </Link>
-
-            {/* Card 4: Liên kết Hóa học - Benzene/Hexagonal molecular structure */}
-            <Link
-              to="/library"
-              className="group relative h-80 rounded-3xl overflow-hidden cursor-pointer block shadow-xl shadow-teal-500/40 hover:shadow-teal-400/60 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2"
+              className="group relative h-96 rounded-3xl overflow-hidden cursor-pointer block shadow-xl shadow-blue-500/30 hover:shadow-blue-500/50 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2"
             >
               {/* Premium dark gradient background */}
-              <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-teal-950 to-emerald-950"></div>
+              <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950"></div>
 
-              {/* Hexagonal pattern overlay */}
-              <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'28\' height=\'49\' viewBox=\'0 0 28 49\'%3E%3Cg fill-rule=\'evenodd\'%3E%3Cg fill=\'%2310b981\' fill-opacity=\'0.4\'%3E%3Cpath d=\'M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.9v12.7l10.99 6.34 11-6.35V17.9l-11-6.34L3 17.9zM0 15l12.98-7.5V0h-2v6.35L0 12.69v2.3zm0 18.5L12.98 41v8h-2v-6.85L0 35.81v-2.3zM15 0v7.5L27.99 15H28v-2.31h-.01L17 6.35V0h-2zm0 49v-8l12.99-7.5H28v2.31h-.01L17 42.15V49h-2z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")' }}></div>
+              {/* Molecular structure pattern */}
+              <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'60\' height=\'60\' viewBox=\'0 0 60 60\'%3E%3Ccircle cx=\'30\' cy=\'30\' r=\'4\' fill=\'%233b82f6\' opacity=\'0.5\'/%3E%3Ccircle cx=\'10\' cy=\'10\' r=\'3\' fill=\'%2360a5fa\' opacity=\'0.3\'/%3E%3Ccircle cx=\'50\' cy=\'50\' r=\'3\' fill=\'%2360a5fa\' opacity=\'0.3\'/%3E%3Cline x1=\'10\' y1=\'10\' x2=\'30\' y2=\'30\' stroke=\'%233b82f6\' stroke-width=\'1\' opacity=\'0.2\'/%3E%3Cline x1=\'30\' y1=\'30\' x2=\'50\' y2=\'50\' stroke=\'%233b82f6\' stroke-width=\'1\' opacity=\'0.2\'/%3E%3C/svg%3E")' }}></div>
 
               {/* Glowing aura */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-52 h-52 bg-gradient-to-r from-emerald-500/15 via-teal-500/20 to-cyan-500/15 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-700"></div>
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-gradient-to-r from-blue-500/20 via-cyan-500/20 to-indigo-500/20 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-700"></div>
 
-              {/* Benzene Ring Structure - SVG */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                <svg width="160" height="160" viewBox="0 0 160 160" className="group-hover:scale-105 transition-transform duration-500">
-                  {/* Hexagon bonds */}
-                  <polygon
-                    points="80,20 130,45 130,95 80,120 30,95 30,45"
-                    fill="none"
-                    stroke="url(#bondGradient)"
-                    strokeWidth="3"
-                    className="drop-shadow-[0_0_8px_rgba(20,184,166,0.6)]"
-                  />
-
-                  {/* Inner hexagon (double bond representation) */}
-                  <polygon
-                    points="80,35 115,52 115,88 80,105 45,88 45,52"
-                    fill="none"
-                    stroke="rgba(94,234,212,0.4)"
-                    strokeWidth="2"
-                    strokeDasharray="8,4"
-                  />
-
-                  {/* Gradient definition */}
-                  <defs>
-                    <linearGradient id="bondGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#2dd4bf" />
-                      <stop offset="50%" stopColor="#34d399" />
-                      <stop offset="100%" stopColor="#22d3ee" />
-                    </linearGradient>
-                  </defs>
-
-                  {/* Carbon atoms at vertices */}
-                  <circle cx="80" cy="20" r="8" fill="url(#atomGradient1)" className="drop-shadow-[0_0_10px_rgba(45,212,191,0.8)] animate-pulse" />
-                  <circle cx="130" cy="45" r="8" fill="url(#atomGradient2)" className="drop-shadow-[0_0_10px_rgba(52,211,153,0.8)] animate-pulse" style={{ animationDelay: '0.2s' }} />
-                  <circle cx="130" cy="95" r="8" fill="url(#atomGradient1)" className="drop-shadow-[0_0_10px_rgba(45,212,191,0.8)] animate-pulse" style={{ animationDelay: '0.4s' }} />
-                  <circle cx="80" cy="120" r="8" fill="url(#atomGradient2)" className="drop-shadow-[0_0_10px_rgba(52,211,153,0.8)] animate-pulse" style={{ animationDelay: '0.6s' }} />
-                  <circle cx="30" cy="95" r="8" fill="url(#atomGradient1)" className="drop-shadow-[0_0_10px_rgba(45,212,191,0.8)] animate-pulse" style={{ animationDelay: '0.8s' }} />
-                  <circle cx="30" cy="45" r="8" fill="url(#atomGradient2)" className="drop-shadow-[0_0_10px_rgba(52,211,153,0.8)] animate-pulse" style={{ animationDelay: '1s' }} />
-
-                  <defs>
-                    <radialGradient id="atomGradient1" cx="30%" cy="30%">
-                      <stop offset="0%" stopColor="#5eead4" />
-                      <stop offset="100%" stopColor="#14b8a6" />
-                    </radialGradient>
-                    <radialGradient id="atomGradient2" cx="30%" cy="30%">
-                      <stop offset="0%" stopColor="#6ee7b7" />
-                      <stop offset="100%" stopColor="#10b981" />
-                    </radialGradient>
-                  </defs>
-
-                  {/* Hydrogen atoms extending outward */}
-                  <line x1="80" y1="20" x2="80" y2="4" stroke="rgba(167,243,208,0.6)" strokeWidth="2" />
-                  <circle cx="80" cy="2" r="4" fill="#a7f3d0" className="opacity-70" />
-
-                  <line x1="130" y1="45" x2="144" y2="37" stroke="rgba(167,243,208,0.6)" strokeWidth="2" />
-                  <circle cx="146" cy="36" r="4" fill="#a7f3d0" className="opacity-70" />
-
-                  <line x1="130" y1="95" x2="144" y2="103" stroke="rgba(167,243,208,0.6)" strokeWidth="2" />
-                  <circle cx="146" cy="105" r="4" fill="#a7f3d0" className="opacity-70" />
-                </svg>
-              </div>
-
-              {/* Floating electron clouds */}
-              <div className="absolute inset-0 pointer-events-none">
-                <div className="absolute top-[18%] left-[18%] w-3 h-3 bg-teal-400/30 rounded-full blur-sm animate-pulse"></div>
-                <div className="absolute top-[22%] right-[22%] w-2 h-2 bg-emerald-400/40 rounded-full blur-sm animate-pulse delay-300"></div>
-                <div className="absolute bottom-[28%] left-[20%] w-2 h-2 bg-cyan-300/30 rounded-full blur-sm animate-pulse delay-700"></div>
+              {/* Floating molecules animation */}
+              <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                {/* H2O molecule representation */}
+                <div className="absolute top-[15%] right-[20%] animate-[bounce_4s_ease-in-out_infinite]">
+                  <div className="relative">
+                    <div className="w-8 h-8 bg-gradient-to-br from-red-400 to-red-600 rounded-full shadow-[0_0_15px_rgba(239,68,68,0.6)]"></div>
+                    <div className="absolute -left-4 top-2 w-5 h-5 bg-gradient-to-br from-blue-300 to-blue-500 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>
+                    <div className="absolute -right-4 top-2 w-5 h-5 bg-gradient-to-br from-blue-300 to-blue-500 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>
+                  </div>
+                </div>
+                {/* CO2 molecule */}
+                <div className="absolute bottom-[25%] left-[15%] animate-[bounce_5s_ease-in-out_infinite_1s]">
+                  <div className="flex items-center gap-1">
+                    <div className="w-5 h-5 bg-gradient-to-br from-red-400 to-red-600 rounded-full opacity-80"></div>
+                    <div className="w-7 h-7 bg-gradient-to-br from-gray-600 to-gray-800 rounded-full"></div>
+                    <div className="w-5 h-5 bg-gradient-to-br from-red-400 to-red-600 rounded-full opacity-80"></div>
+                  </div>
+                </div>
+                {/* CH4 molecule */}
+                <div className="absolute top-[40%] left-[25%] animate-[bounce_3.5s_ease-in-out_infinite_0.5s]">
+                  <div className="relative">
+                    <div className="w-6 h-6 bg-gradient-to-br from-gray-500 to-gray-700 rounded-full"></div>
+                    <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-blue-400 rounded-full opacity-70"></div>
+                    <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-blue-400 rounded-full opacity-70"></div>
+                    <div className="absolute top-1/2 -left-2 -translate-y-1/2 w-3 h-3 bg-blue-400 rounded-full opacity-70"></div>
+                    <div className="absolute top-1/2 -right-2 -translate-y-1/2 w-3 h-3 bg-blue-400 rounded-full opacity-70"></div>
+                  </div>
+                </div>
               </div>
 
               {/* Icon */}
-              <div className="absolute top-6 left-6 p-3 bg-teal-500/20 backdrop-blur-xl rounded-xl border border-teal-400/30 group-hover:bg-teal-500/30 group-hover:scale-110 transition-all duration-300 z-10">
-                <Beaker className="text-teal-200 w-6 h-6" />
+              <div className="absolute top-6 left-6 p-3 bg-blue-500/20 backdrop-blur-xl rounded-xl border border-blue-400/30 group-hover:bg-blue-500/30 group-hover:scale-110 transition-all duration-300 z-10">
+                <FlaskConical className="text-blue-200 w-7 h-7" />
+              </div>
+
+              {/* Grade badges */}
+              <div className="absolute top-6 right-6 flex gap-2 z-10">
+                <span className="px-3 py-1.5 bg-emerald-500/20 backdrop-blur-xl rounded-full border border-emerald-400/30 text-emerald-200 text-xs font-semibold">
+                  THCS 6-9
+                </span>
+                <span className="px-3 py-1.5 bg-amber-500/20 backdrop-blur-xl rounded-full border border-amber-400/30 text-amber-200 text-xs font-semibold">
+                  THPT 10-12
+                </span>
               </div>
 
               {/* Bottom Content */}
-              <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-slate-950/95 via-teal-950/70 to-transparent z-10">
-                <p className="text-teal-300/90 text-xs font-semibold uppercase tracking-widest mb-1">Cộng hóa trị & ion</p>
-                <h4 className="text-xl font-bold text-white mb-2">Liên kết Hóa học</h4>
-                <span className="text-teal-200/90 text-sm font-medium flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  Khám phá <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+              <div className="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-slate-950/95 via-blue-950/70 to-transparent z-10">
+                <p className="text-blue-300/90 text-sm font-semibold uppercase tracking-widest mb-2">Kiến thức toàn diện từ lớp 6-12</p>
+                <h4 className="text-2xl md:text-3xl font-bold text-white mb-3">Thư viện Hóa học</h4>
+                <p className="text-blue-200/70 text-sm mb-4 max-w-md">Hệ thống kiến thức đầy đủ, mô phỏng 3D và phản ứng hóa học trực quan</p>
+                <span className="text-blue-200/90 text-sm font-medium flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  Khám phá ngay <ArrowRight size={18} className="group-hover:translate-x-2 transition-transform" />
                 </span>
               </div>
             </Link>

@@ -1,8 +1,8 @@
-import { Menu, X, User } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { Menu, User, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import logo from "../../shared/assets/Logo/logo.png";
 import { Logout } from "../../features/Auth";
+import logo from "../../shared/assets/Logo/logo.png";
 
 // --- CUSTOM ATOM ICON FOR ACTIVE STATE ---
 const ActiveAtom = () => (

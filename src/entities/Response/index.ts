@@ -8,5 +8,5 @@ export interface ResponseDTO<T> {
 export interface ValidationError {
   field: string;
   message: string;
-} 
+}
 

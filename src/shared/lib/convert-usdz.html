@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,12 +13,14 @@
             padding: 20px;
             background: #f5f5f5;
         }
+
         .container {
             background: white;
             padding: 30px;
             border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
+
         .upload-area {
             border: 2px dashed #ddd;
             border-radius: 10px;
@@ -27,17 +30,21 @@
             cursor: pointer;
             transition: all 0.3s ease;
         }
+
         .upload-area:hover {
             border-color: #4CAF50;
             background: #f9f9f9;
         }
+
         .upload-area.dragover {
             border-color: #4CAF50;
             background: #e8f5e8;
         }
+
         .file-input {
             display: none;
         }
+
         .btn {
             background: #4CAF50;
             color: white;
@@ -48,29 +55,35 @@
             font-size: 16px;
             margin: 10px 5px;
         }
+
         .btn:hover {
             background: #45a049;
         }
+
         .btn:disabled {
             background: #ccc;
             cursor: not-allowed;
         }
+
         .result {
             margin-top: 20px;
             padding: 15px;
             border-radius: 5px;
             display: none;
         }
+
         .success {
             background: #d4edda;
             border: 1px solid #c3e6cb;
             color: #155724;
         }
+
         .error {
             background: #f8d7da;
             border: 1px solid #f5c6cb;
             color: #721c24;
         }
+
         .info {
             background: #d1ecf1;
             border: 1px solid #bee5eb;
@@ -78,31 +91,36 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h1>🔄 USDZ to GLB Converter</h1>
-        <p><strong>Lưu ý:</strong> USDZ là format của Apple, không được hỗ trợ tốt trên Windows/Chrome. Cần convert sang GLB/GLTF.</p>
-        
+        <p><strong>Lưu ý:</strong> USDZ là format của Apple, không được hỗ trợ tốt trên Windows/Chrome. Cần convert sang
+            GLB/GLTF.</p>
+
         <div class="upload-area" onclick="document.getElementById('fileInput').click()">
             <h3>📁 Chọn file USDZ để convert</h3>
             <p>Click hoặc kéo thả file USDZ vào đây</p>
             <input type="file" id="fileInput" class="file-input" accept=".usdz" multiple>
         </div>
-        
+
         <div class="result info">
             <h3>💡 Hướng dẫn convert USDZ sang GLB:</h3>
             <ol>
                 <li><strong>Sử dụng Blender (Miễn phí):</strong>
                     <ul>
-                        <li>Tải Blender: <a href="https://www.blender.org/download/" target="_blank">blender.org</a></li>
+                        <li>Tải Blender: <a href="https://www.blender.org/download/" target="_blank">blender.org</a>
+                        </li>
                         <li>Import USDZ: File → Import → Universal Scene Description (.usd/.usdc/.usda)</li>
                         <li>Export GLB: File → Export → glTF 2.0 (.glb/.gltf)</li>
                     </ul>
                 </li>
                 <li><strong>Sử dụng Online Converter:</strong>
                     <ul>
-                        <li><a href="https://products.aspose.app/3d/conversion/usdz-to-glb" target="_blank">Aspose USDZ to GLB</a></li>
-                        <li><a href="https://imagetostl.com/convert/file/usdz/to/glb" target="_blank">ImageToSTL Converter</a></li>
+                        <li><a href="https://products.aspose.app/3d/conversion/usdz-to-glb" target="_blank">Aspose USDZ
+                                to GLB</a></li>
+                        <li><a href="https://imagetostl.com/convert/file/usdz/to/glb" target="_blank">ImageToSTL
+                                Converter</a></li>
                     </ul>
                 </li>
                 <li><strong>Sử dụng USD Python Tools:</strong>
@@ -114,15 +132,15 @@
                 </li>
             </ol>
         </div>
-        
+
         <div class="result success" id="successResult" style="display: none;">
             <h3>✅ Thành công!</h3>
             <p>Sau khi convert xong, copy file GLB vào thư mục assets/ và cập nhật tên file trong code.</p>
         </div>
-        
+
         <button class="btn" onclick="openBlender()">🎨 Mở Blender Download</button>
         <button class="btn" onclick="openConverter()">🌐 Mở Online Converter</button>
-        
+
         <div class="result info" style="display: block; margin-top: 30px;">
             <h3>🔧 Cập nhật code sau khi convert:</h3>
             <p>Trong file <code>index.js</code>, thay đổi extension từ <code>.usdz</code> sang <code>.glb</code>:</p>
@@ -141,46 +159,47 @@ const atomData = {
     <script>
         const uploadArea = document.querySelector('.upload-area');
         const fileInput = document.getElementById('fileInput');
-        
+
         // Drag and drop functionality
         uploadArea.addEventListener('dragover', (e) => {
             e.preventDefault();
             uploadArea.classList.add('dragover');
         });
-        
+
         uploadArea.addEventListener('dragleave', () => {
             uploadArea.classList.remove('dragover');
         });
-        
+
         uploadArea.addEventListener('drop', (e) => {
             e.preventDefault();
             uploadArea.classList.remove('dragover');
             const files = e.dataTransfer.files;
             handleFiles(files);
         });
-        
+
         fileInput.addEventListener('change', (e) => {
             handleFiles(e.target.files);
         });
-        
+
         function handleFiles(files) {
-            const usdzFiles = Array.from(files).filter(file => 
+            const usdzFiles = Array.from(files).filter(file =>
                 file.name.toLowerCase().endsWith('.usdz')
             );
-            
+
             if (usdzFiles.length > 0) {
                 document.getElementById('successResult').style.display = 'block';
                 console.log('USDZ files detected:', usdzFiles.map(f => f.name));
             }
         }
-        
+
         function openBlender() {
             window.open('https://www.blender.org/download/', '_blank');
         }
-        
+
         function openConverter() {
             window.open('https://products.aspose.app/3d/conversion/usdz-to-glb', '_blank');
         }
     </script>
 </body>
+
 </html>

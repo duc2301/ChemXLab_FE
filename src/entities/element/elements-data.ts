@@ -355,19 +355,19 @@ const elementsData = [
 ];
 
 // Helper function to get element by atomic number
-function getElementById(number : any) {
+function getElementById(number: any) {
     return elementsData.find(element => element.number === number);
 }
 
 // Helper function to get elements by category
-function getElementsByCategory(category : any) {
+function getElementsByCategory(category: any) {
     return elementsData.filter(element => element.category === category);
 }
 
 // Helper function to get element by symbol
-function getElementBySymbol(symbol : any) {
+function getElementBySymbol(symbol: any) {
     return elementsData.find(element => element.symbol === symbol);
 }
 
 // Export for use in other files
-export { elementsData, getElementById, getElementsByCategory, getElementBySymbol };
+export { elementsData, getElementById, getElementBySymbol, getElementsByCategory };

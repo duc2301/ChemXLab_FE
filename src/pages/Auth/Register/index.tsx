@@ -1,8 +1,8 @@
+import { message } from "antd";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import type { RegisterForm } from "../../../entities/Auth";
 import { register } from "../../../features/Auth";
-import { useNavigate } from "react-router-dom";
-import { message } from "antd";
 
 // Import icons
 import { Eye, EyeOff, LogIn, UserPlus } from "lucide-react";

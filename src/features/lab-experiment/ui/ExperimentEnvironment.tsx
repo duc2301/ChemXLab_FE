@@ -1,8 +1,8 @@
-import { Suspense, Component } from 'react';
-import type { ReactNode } from 'react';
+import { Environment, OrbitControls } from '@react-three/drei';
 import { Canvas, useThree } from '@react-three/fiber';
-import { OrbitControls, Environment } from '@react-three/drei';
-import { Physics, RigidBody, CuboidCollider } from '@react-three/rapier';
+import { CuboidCollider, Physics, RigidBody } from '@react-three/rapier';
+import type { ReactNode } from 'react';
+import { Component, Suspense } from 'react';
 import { EquipmentModel } from '../components/EquipmentModel';
 import type { DroppedItem } from '../types/equipment';
 

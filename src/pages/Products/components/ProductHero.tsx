@@ -1,4 +1,4 @@
-import { Beaker, FlaskConical, Atom, Sparkles, Play } from "lucide-react";
+import { Atom, Beaker, FlaskConical, Play, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import MoleculeViewer from "../../../components/ThreeD/MoleculeViewer";
 

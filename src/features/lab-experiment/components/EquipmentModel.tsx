@@ -1,8 +1,8 @@
-import { Suspense, useRef } from 'react';
-import { RigidBody, RapierRigidBody } from '@react-three/rapier';
 import { useGLTF } from '@react-three/drei';
-import type { DroppedItem } from '../types/equipment';
+import { RapierRigidBody, RigidBody } from '@react-three/rapier';
+import { Suspense, useRef } from 'react';
 import { getEquipmentById } from '../services/equipmentRegistry';
+import type { DroppedItem } from '../types/equipment';
 
 interface EquipmentModelProps {
   droppedItem: DroppedItem;

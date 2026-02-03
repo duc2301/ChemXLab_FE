@@ -1,64 +1,52 @@
+import { Button, Modal, Spin } from "antd";
 import { ArrowRight, Check } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import type { Package } from "../../entities/Package";
+import { getAllPackages } from "../../features/Package";
 
 const ExperiencePage = () => {
   const [showEnterprise, setShowEnterprise] = useState(false);
+  const [packages, setPackages] = useState<Package[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedPackage, setSelectedPackage] = useState<Package | null>(null);
 
-  const standardPlans = [
-    {
-      name: "FREE",
-      price: "0đ",
-      period: "Dùng thử miễn phí",
-      features: [
-        "Truy cập giới hạn vào thư viện thí nghiệm",
-        "Chỉ xem được 3 thí nghiệm cơ bản",
-        "Không có quyền tải xuống tài liệu",
-        "Hỗ trợ qua email trong 48h",
-        "Không có quyền truy cập vào các công cụ nâng cao",
-      ],
-      highlighted: false,
-    },
-    {
-      name: "SMART LAB",
-      price: "199,000đ",
-      period: "Hàng tháng / người",
-      features: [
-        "Truy cập đầy đủ thư viện thí nghiệm",
-        "Xem không giới hạn các thí nghiệm",
-        "Tải xuống tài liệu học tập",
-        "Hỗ trợ qua email ưu tiên trong 24h",
-        "Truy cập vào các công cụ phân tích cơ bản",
-      ],
-      highlighted: true,
-    },
-    {
-      name: "GENIUS LAB",
-      price: "499,000đ",
-      period: "Hàng tháng / người",
-      features: [
-        "Tất cả tính năng của Smart Lab",
-        "Truy cập vào các thí nghiệm nâng cao và chuyên sâu",
-        "Công cụ mô phỏng 3D tương tác",
-        "Hỗ trợ qua chat trực tiếp 24/7",
-        "Báo cáo và phân tích chi tiết",
-      ],
-      highlighted: false,
-    },
-  ];
+  useEffect(() => {
+    fetchPackages();
+  }, []);
 
-  const enterprisePlan = {
-    name: "DIAMOND",
-    subtitle: "Gói dành cho doanh nghiệp",
-    features: [
-      "Tất cả tính năng của Genius Lab",
-      "Quản lý nhiều người dùng với bảng điều khiển quản trị",
-      "Tùy chỉnh nội dung theo nhu cầu doanh nghiệp",
-      "Đào tạo và hỗ trợ triển khai chuyên sâu",
-      "API tích hợp với hệ thống hiện có",
-      "Báo cáo phân tích nâng cao và tùy chỉnh",
-    ],
+  const fetchPackages = async () => {
+    try {
+      setLoading(true);
+      const data = await getAllPackages();
+      setPackages(data);
+    } catch (error) {
+      console.error(error);
+      // Error message handled in feature layer
+    } finally {
+      setLoading(false);
+    }
   };
 
+  const standardPackages = packages.filter((p) => p.name !== "DIAMOND");
+  const enterprisePackage = packages.find((p) => p.name === "DIAMOND");
+
+  const formatPrice = (price: number) => {
+    if (price === 0) return "0đ";
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    }).format(price);
+  };
+
+  const handleOpenDetail = (pkg: Package) => {
+    setSelectedPackage(pkg);
+  };
+
+  const handleCloseDetail = () => {
+    setSelectedPackage(null);
+  };
+
+  // Static features for the "Features Section"
   const features = [
     {
       title: "Môi Trường Nâng Cao",
@@ -153,64 +141,105 @@ const ExperiencePage = () => {
         </section>
 
         {/* Pricing Plans */}
-        <section className="mb-20">
-          {!showEnterprise ? (
+        <section className="mb-20 min-h-[400px]">
+          {loading ? (
+            <div className="flex flex-col justify-center items-center h-64 gap-4">
+              <Spin size="large" />
+              <div className="text-blue-200">Đang tải dữ liệu...</div>
+            </div>
+          ) : !showEnterprise ? (
             <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
-              {standardPlans.map((plan, i) => (
-                <div
-                  key={i}
-                  className={`rounded-3xl p-6 md:p-8 transition-all duration-300 ${plan.highlighted
+              {standardPackages.map((plan) => {
+                const isHighlighted = plan.name === "SMART LAB"; // Example logic for highlighting
+                return (
+                  <div
+                    key={plan.id}
+                    className={`rounded-3xl p-6 md:p-8 transition-all duration-300 flex flex-col ${isHighlighted
                       ? "bg-gradient-to-br from-cyan-500 to-blue-600 transform scale-105 shadow-2xl z-10"
                       : "bg-blue-800/40 backdrop-blur-xl shadow-xl hover:shadow-2xl"
-                    } border-2 ${plan.highlighted ? "border-cyan-400" : "border-blue-600/30"
-                    }`}
-                >
-                  <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
-                  <p className="text-blue-100 text-sm mb-4">{plan.period}</p>
-                  <div className="mb-6">
-                    <span className="text-4xl font-bold">{plan.price}</span>
-                  </div>
-                  <ul className="space-y-3 mb-8">
-                    {plan.features.map((feature, j) => (
-                      <li key={j} className="flex items-start gap-3">
-                        <Check className="w-5 h-5 text-cyan-300 flex-shrink-0 mt-0.5" />
-                        <span className="text-blue-50 text-sm">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <button
-                    className={`w-full py-3.5 rounded-full font-bold transition-all shadow-lg hover:shadow-xl hover:scale-105 ${plan.highlighted
-                        ? "bg-white text-blue-900 hover:bg-blue-50"
-                        : "bg-blue-600 text-white hover:bg-blue-700"
+                      } border-2 ${isHighlighted ? "border-cyan-400" : "border-blue-600/30"
                       }`}
                   >
-                    Chọn gói
-                  </button>
-                </div>
-              ))}
+                    <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
+                    <p className="text-blue-100 text-sm mb-4">
+                      {plan.durationDays > 0 ? `${plan.durationDays} ngày` : "Vĩnh viễn/Liên hệ"}
+                    </p>
+                    <div className="mb-6">
+                      <span className="text-4xl font-bold">
+                        {formatPrice(plan.price)}
+                      </span>
+                    </div>
+
+                    {/* Features Preview - Limit to first 4 */}
+                    <ul className="space-y-3 mb-8 flex-grow">
+                      {plan.features.slice(0, 4).map((feature, j) => (
+                        <li key={j} className="flex items-start gap-3">
+                          <Check className="w-5 h-5 text-cyan-300 flex-shrink-0 mt-0.5" />
+                          <span className="text-blue-50 text-sm text-left">{feature}</span>
+                        </li>
+                      ))}
+                      {plan.features.length > 4 && (
+                        <li className="flex items-start gap-3">
+                          <span className="text-blue-200 text-sm italic ml-8">...và nhiều hơn nữa</span>
+                        </li>
+                      )}
+                    </ul>
+
+                    <div className="mt-auto space-y-3">
+                      <button
+                        onClick={() => handleOpenDetail(plan)}
+                        className={`w-full py-2 rounded-full font-semibold text-sm transition-all border ${isHighlighted
+                          ? "border-white text-white hover:bg-white/10"
+                          : "border-blue-400 text-blue-100 hover:bg-blue-700/50"
+                          }`}
+                      >
+                        Xem chi tiết
+                      </button>
+                      <button
+                        className={`w-full py-3.5 rounded-full font-bold transition-all shadow-lg hover:shadow-xl hover:scale-105 ${isHighlighted
+                          ? "bg-white text-blue-900 hover:bg-blue-50"
+                          : "bg-blue-600 text-white hover:bg-blue-700"
+                          }`}
+                      >
+                        Chọn gói
+                      </button>
+                    </div>
+
+                  </div>
+                );
+              })}
             </div>
           ) : (
             <div className="max-w-4xl mx-auto">
               <div className="bg-gradient-to-br from-blue-700 via-blue-800 to-blue-900 rounded-3xl p-8 md:p-12 border-2 border-cyan-400/40 shadow-2xl">
-                <div className="text-center mb-8">
-                  <h3 className="text-3xl font-bold mb-2">
-                    {enterprisePlan.name}
-                  </h3>
-                  <p className="text-blue-200 text-lg">
-                    {enterprisePlan.subtitle}
-                  </p>
-                </div>
-                <ul className="grid md:grid-cols-2 gap-4 mb-10">
-                  {enterprisePlan.features.map((feature, i) => (
-                    <li key={i} className="flex items-start gap-3">
-                      <Check className="w-6 h-6 text-cyan-300 flex-shrink-0 mt-0.5" />
-                      <span className="text-blue-50 text-base">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-                <button className="w-full bg-white text-blue-900 py-4 rounded-full font-bold text-lg hover:bg-blue-50 transition-all shadow-xl hover:shadow-2xl hover:scale-105">
-                  Liên hệ tư vấn
-                </button>
+                {enterprisePackage ? (
+                  <>
+                    <div className="text-center mb-8">
+                      <h3 className="text-3xl font-bold mb-2">
+                        {enterprisePackage.name}
+                      </h3>
+                      <p className="text-blue-200 text-lg">
+                        Gói dành cho doanh nghiệp
+                      </p>
+                    </div>
+                    <ul className="grid md:grid-cols-2 gap-4 mb-10">
+                      {enterprisePackage.features.map((feature, i) => (
+                        <li key={i} className="flex items-start gap-3">
+                          <Check className="w-6 h-6 text-cyan-300 flex-shrink-0 mt-0.5" />
+                          <span className="text-blue-50 text-base">{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <button onClick={() => handleOpenDetail(enterprisePackage)} className="w-full bg-white text-blue-900 py-4 rounded-full font-bold text-lg hover:bg-blue-50 transition-all shadow-xl hover:shadow-2xl hover:scale-105">
+                      Liên hệ tư vấn
+                    </button>
+                  </>
+                ) : (
+                  <div className="text-center py-10">
+                    <h3 className="text-2xl font-bold mb-2">Đang cập nhật gói doanh nghiệp</h3>
+                  </div>
+                )}
+
               </div>
             </div>
           )}
@@ -252,7 +281,9 @@ const ExperiencePage = () => {
                 <h3 className="font-bold mb-2 text-lg text-cyan-300">
                   {faq.question}
                 </h3>
-                <p className="text-blue-200 leading-relaxed text-sm">{faq.answer}</p>
+                <p className="text-blue-200 leading-relaxed text-sm">
+                  {faq.answer}
+                </p>
               </div>
             ))}
           </div>
@@ -269,6 +300,43 @@ const ExperiencePage = () => {
           </button>
         </section>
       </div>
+
+      {/* Detail Modal */}
+      <Modal
+        title={<div className="text-xl font-bold text-blue-900">{selectedPackage?.name}</div>}
+        open={!!selectedPackage}
+        onCancel={handleCloseDetail}
+        footer={[
+          <Button key="close" onClick={handleCloseDetail}>
+            Đóng
+          </Button>,
+          <Button key="buy" type="primary" className="bg-blue-600 hover:bg-blue-500">
+            {selectedPackage?.name === "DIAMOND" ? "Liên hệ tư vấn" : "Chọn gói này"}
+          </Button>
+        ]}
+        centered
+      >
+        <div className="py-4">
+          <div className="flex justify-between items-center mb-6">
+            <span className="text-2xl font-bold text-blue-600">
+              {selectedPackage ? formatPrice(selectedPackage.price) : ""}
+            </span>
+            <span className="text-gray-500 font-medium">
+              {selectedPackage?.durationDays && selectedPackage.durationDays > 0 ? `${selectedPackage.durationDays} ngày` : ""}
+            </span>
+          </div>
+
+          <h4 className="font-semibold mb-3 text-gray-800">Chi tiết tính năng:</h4>
+          <ul className="space-y-3">
+            {selectedPackage?.features.map((feature, idx) => (
+              <li key={idx} className="flex items-start gap-2 text-gray-700">
+                <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                <span>{feature}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </Modal>
     </div>
   );
 };

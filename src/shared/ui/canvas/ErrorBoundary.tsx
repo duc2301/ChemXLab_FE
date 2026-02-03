@@ -36,7 +36,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
         }}>
           <h3>Something went wrong in the 3D scene</h3>
           <p>{this.state.error?.message}</p>
-          <button 
+          <button
             onClick={() => this.setState({ hasError: false })}
             style={{
               padding: '10px 20px',

@@ -1,6 +1,6 @@
+import ScrollToTop from "../shared/components/ScrollToTop";
 import { AppProviders } from "./provider";
 import { AppRoutes } from "./routes";
-import ScrollToTop from "../shared/components/ScrollToTop";
 
 const App = () => {
   return (

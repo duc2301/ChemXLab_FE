@@ -1,12 +1,12 @@
-import React, { useRef, useEffect, useImperativeHandle } from 'react';
-import * as THREE from "three";
 import * as TWEEN from '@tweenjs/tween.js';
-import { CSS2DObject, CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
+import React, { useEffect, useImperativeHandle, useRef } from 'react';
+import * as THREE from "three";
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
+import { CSS2DObject, CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 import getParticleSystem from '../../features/particle-system/getParticleSystem';
 
 // --- SHADER CODE (Giữ nguyên) ---
@@ -197,12 +197,12 @@ function createAtomLabel(text: string) {
 
 function createAtom(type: string) {
   const props = ATOM_PROPS[type];
-  const mat = new THREE.MeshStandardMaterial({ 
-    color: props.color, 
-    roughness: 0.3, 
-    metalness: 0.0, 
-    emissive: props.color, 
-    emissiveIntensity: 0.05 
+  const mat = new THREE.MeshStandardMaterial({
+    color: props.color,
+    roughness: 0.3,
+    metalness: 0.0,
+    emissive: props.color,
+    emissiveIntensity: 0.05
   });
   const atom = new THREE.Mesh(atomGeo, mat);
   atom.scale.setScalar(props.radius);
@@ -222,7 +222,7 @@ function createBond(aObj: any, bObj: any, opts: any = {}) {
   const getWorldPos = (o: any) => {
     if (o instanceof THREE.Object3D) return o.getWorldPosition(new THREE.Vector3());
     if (o instanceof THREE.Vector3) return o.clone();
-    return new THREE.Vector3(0,0,0);
+    return new THREE.Vector3(0, 0, 0);
   };
   const getRadius = (o: any) => (o.userData && o.userData.radius) ? o.userData.radius : 0;
 
@@ -234,7 +234,7 @@ function createBond(aObj: any, bObj: any, opts: any = {}) {
   const vec = new THREE.Vector3().subVectors(pB, pA);
   const fullDist = vec.length();
   if (fullDist < 1e-6) return null;
-  
+
   const dir = vec.clone().normalize();
   const gap = fullDist - (rA - 0.15) - (rB - 0.15); // overlap 0.15
 
@@ -256,7 +256,7 @@ function createBond(aObj: any, bObj: any, opts: any = {}) {
 function detachAtomToScene(atom: any, scene: THREE.Scene) {
   const worldPos = new THREE.Vector3();
   atom.getWorldPosition(worldPos);
-  
+
   const wrap = new THREE.Object3D();
   wrap.position.copy(worldPos);
   scene.add(wrap);
@@ -264,7 +264,7 @@ function detachAtomToScene(atom: any, scene: THREE.Scene) {
   if (atom.parent) atom.parent.remove(atom);
 
   atom.position.set(0, 0, 0);
-  atom.quaternion.set(0,0,0,1);
+  atom.quaternion.set(0, 0, 0, 1);
   wrap.add(atom);
 
   return wrap;
@@ -357,13 +357,13 @@ const Reaction = React.forwardRef((_, ref) => {
     const bosshead = new THREE.Mesh(new THREE.BoxGeometry(2, 2.67, 2), metalMat); bosshead.position.set(-8.7, CLAMP_Y_LEVEL, 1.5); standGroup.add(bosshead);
     const clampGroup = new THREE.Group();
     const clampRod = new THREE.Mesh(new THREE.CylinderGeometry(0.267, 0.267, 7, 12), metalMat); clampRod.rotation.z = Math.PI / 2; clampRod.position.x = 3.5; clampGroup.add(clampRod);
-    const prong1 = new THREE.Mesh(new THREE.BoxGeometry(2, 0.33, 0.33), rubberMat); prong1.position.set(7, 0, -0.5); prong1.rotation.y = Math.PI/6; clampGroup.add(prong1);
-    const prong2 = new THREE.Mesh(new THREE.BoxGeometry(2, 0.33, 0.33), rubberMat); prong2.position.set(7, 0, 0.5); prong2.rotation.y = -Math.PI/6; clampGroup.add(prong2);
+    const prong1 = new THREE.Mesh(new THREE.BoxGeometry(2, 0.33, 0.33), rubberMat); prong1.position.set(7, 0, -0.5); prong1.rotation.y = Math.PI / 6; clampGroup.add(prong1);
+    const prong2 = new THREE.Mesh(new THREE.BoxGeometry(2, 0.33, 0.33), rubberMat); prong2.position.set(7, 0, 0.5); prong2.rotation.y = -Math.PI / 6; clampGroup.add(prong2);
     clampGroup.position.set(-7.7, CLAMP_Y_LEVEL, 1.5); standGroup.add(clampGroup);
     scene.add(standGroup);
 
     const tubeRadius = 0.6; const tubeBodyHeight = 6.0; const lipThickness = 0.04; const waterLevelY = -1.5;
-    
+
     // Khôi phục các biến trạng thái
     const REACTION_DURATION = 15.0;
     let reactionTimer = 0.0;
@@ -393,7 +393,7 @@ const Reaction = React.forwardRef((_, ref) => {
         u_sphere_velocity: { value: new THREE.Vector2(0.0, 0.0) },
         u_wave_decay: { value: 1.0 },
         u_color: { value: new THREE.Color(0x99ccff) },
-        u_opacity: { value: 0.45 }, 
+        u_opacity: { value: 0.45 },
         envMap: { value: null },
         u_envMapLoaded: { value: 0.0 }
       }
@@ -460,7 +460,7 @@ const Reaction = React.forwardRef((_, ref) => {
     // --- FIX REFERENCE ERROR HERE ---
     const sodiumSize = 0.2;
     const sodiumGeometry = new THREE.IcosahedronGeometry(sodiumSize, 1);
-    
+
     // Assign to variable explicitly
     const sodiumMaterial = new THREE.ShaderMaterial({
       vertexShader: sodiumVertexShader,
@@ -481,7 +481,7 @@ const Reaction = React.forwardRef((_, ref) => {
     fireLight.shadow.mapSize.width = 1024;
     fireLight.shadow.mapSize.height = 1024;
     sodiumSphere.add(fireLight);
-    
+
     // --- PARTICLES ---
     const actualWaterLevelInWorld = waterLevelY;
     const tubeInnerRadius = tubeRadius * 0.95;
@@ -740,7 +740,7 @@ const Reaction = React.forwardRef((_, ref) => {
       try {
         fireEffect.update(delta); steamEffect.update(delta); bubbleEffect.update(delta);
         boilingBubblesEffect.update(delta); hydrogenFlameEffect.update(delta); sparkEffect.update(delta);
-      } catch (e) {}
+      } catch (e) { }
 
       controls.update();
       composer.render(delta);
@@ -843,7 +843,7 @@ const Reaction = React.forwardRef((_, ref) => {
       scene_mol.background = new THREE.Color(0x222222);
 
       // Initial temporary size
-      const w = 800; 
+      const w = 800;
       const h = 600;
 
       camera_mol = new THREE.PerspectiveCamera(50, w / h, 0.1, 200);
@@ -882,24 +882,24 @@ const Reaction = React.forwardRef((_, ref) => {
     function startReactionAnimation() {
       if (!scene_mol) return;
       TWEEN.removeAll();
-      
+
       const toRemove: any[] = [];
       scene_mol.traverse((obj: any) => {
         if (obj.isMesh || obj.type === 'Group' || obj.isCSS2DObject) {
-           if(!obj.isLight && !obj.isCamera) toRemove.push(obj);
+          if (!obj.isLight && !obj.isCamera) toRemove.push(obj);
         }
       });
       toRemove.forEach(obj => {
-        if(obj.geometry) obj.geometry.dispose();
-        if(obj.material && obj.material.dispose) obj.material.dispose();
-        if(obj.element && obj.element.remove) obj.element.remove();
-        if(obj.parent) obj.parent.remove(obj);
+        if (obj.geometry) obj.geometry.dispose();
+        if (obj.material && obj.material.dispose) obj.material.dispose();
+        if (obj.element && obj.element.remove) obj.element.remove();
+        if (obj.parent) obj.parent.remove(obj);
       });
 
-      if(scene_mol.children.length === 0) {
-         scene_mol.add(new THREE.AmbientLight(0xffffff, 0.6));
-         const dl = new THREE.DirectionalLight(0xffffff, 0.8); dl.position.set(6, 8, 12); scene_mol.add(dl);
-         const dl2 = new THREE.DirectionalLight(0xffffff, 0.3); dl2.position.set(-6, -4, -8); scene_mol.add(dl2);
+      if (scene_mol.children.length === 0) {
+        scene_mol.add(new THREE.AmbientLight(0xffffff, 0.6));
+        const dl = new THREE.DirectionalLight(0xffffff, 0.8); dl.position.set(6, 8, 12); scene_mol.add(dl);
+        const dl2 = new THREE.DirectionalLight(0xffffff, 0.3); dl2.position.set(-6, -4, -8); scene_mol.add(dl2);
       }
 
       const atoms: any = {
@@ -912,8 +912,8 @@ const Reaction = React.forwardRef((_, ref) => {
       const ohBondLength = 1.4;
 
       atoms.o1.position.set(0, 0, 0);
-      atoms.h1a.position.set(ohBondLength * Math.sin(waterAngle/2), ohBondLength * Math.cos(waterAngle/2), 0);
-      atoms.h1b.position.set(-ohBondLength * Math.sin(waterAngle/2), ohBondLength * Math.cos(waterAngle/2), 0);
+      atoms.h1a.position.set(ohBondLength * Math.sin(waterAngle / 2), ohBondLength * Math.cos(waterAngle / 2), 0);
+      atoms.h1b.position.set(-ohBondLength * Math.sin(waterAngle / 2), ohBondLength * Math.cos(waterAngle / 2), 0);
       const bond_o1_h1a = createBond(atoms.o1, atoms.h1a);
       const bond_o1_h1b = createBond(atoms.o1, atoms.h1b);
       const water1 = new THREE.Group();
@@ -922,8 +922,8 @@ const Reaction = React.forwardRef((_, ref) => {
       if (bond_o1_h1b) water1.add(bond_o1_h1b);
 
       atoms.o2.position.set(0, 0, 0);
-      atoms.h2a.position.set(ohBondLength * Math.sin(waterAngle/2), ohBondLength * Math.cos(waterAngle/2), 0);
-      atoms.h2b.position.set(-ohBondLength * Math.sin(waterAngle/2), ohBondLength * Math.cos(waterAngle/2), 0);
+      atoms.h2a.position.set(ohBondLength * Math.sin(waterAngle / 2), ohBondLength * Math.cos(waterAngle / 2), 0);
+      atoms.h2b.position.set(-ohBondLength * Math.sin(waterAngle / 2), ohBondLength * Math.cos(waterAngle / 2), 0);
       const bond_o2_h2a = createBond(atoms.o2, atoms.h2a);
       const bond_o2_h2b = createBond(atoms.o2, atoms.h2b);
       const water2 = new THREE.Group();
@@ -945,12 +945,12 @@ const Reaction = React.forwardRef((_, ref) => {
       new TWEEN.Tween(water2.rotation).to({ y: -Math.PI * 2 }, 9000).repeat(Infinity).start();
       new TWEEN.Tween(groupK.rotation).to({ z: Math.PI * 2 }, 10000).repeat(Infinity).start();
 
-      const bondDist_KOH = 2.4; const bondDist_OH_KOH = 1.4; const H_H_Dist = 1.2;      
-      const h2_base_y = 3.0; const koh1_base_y = 0.5; const koh2_base_y = -2.5; 
+      const bondDist_KOH = 2.4; const bondDist_OH_KOH = 1.4; const H_H_Dist = 1.2;
+      const h2_base_y = 3.0; const koh1_base_y = 0.5; const koh2_base_y = -2.5;
 
       const h2_pos = { h1a: { x: -2.0, y: h2_base_y, z: 0 }, h2a: { x: -2.0 + H_H_Dist, y: h2_base_y, z: 0 }, };
-      const koh1_pos = { k1: { x: 1.0,  y: koh1_base_y, z: 0 }, o1:  { x: 1.0 + bondDist_KOH,  y: koh1_base_y, z: 0 }, h1b: { x: 1.0 + bondDist_KOH + bondDist_OH_KOH,  y: koh1_base_y, z: 0 }, };
-      const koh2_pos = { k2: { x: 1.0,  y: koh2_base_y, z: 0 }, o2:  { x: 1.0 + bondDist_KOH,  y: koh2_base_y, z: 0 }, h2b: { x: 1.0 + bondDist_KOH + bondDist_OH_KOH,  y: koh2_base_y, z: 0 }, };
+      const koh1_pos = { k1: { x: 1.0, y: koh1_base_y, z: 0 }, o1: { x: 1.0 + bondDist_KOH, y: koh1_base_y, z: 0 }, h1b: { x: 1.0 + bondDist_KOH + bondDist_OH_KOH, y: koh1_base_y, z: 0 }, };
+      const koh2_pos = { k2: { x: 1.0, y: koh2_base_y, z: 0 }, o2: { x: 1.0 + bondDist_KOH, y: koh2_base_y, z: 0 }, h2b: { x: 1.0 + bondDist_KOH + bondDist_OH_KOH, y: koh2_base_y, z: 0 }, };
 
       const duration = 2800; const delay = 840;
 
@@ -990,9 +990,9 @@ const Reaction = React.forwardRef((_, ref) => {
 
       tFormH2.onStart(() => {
         const bondH2 = createBond(atoms.h1a, atoms.h2a, { radius: 0.13 });
-        if(bondH2) {
-            scene_mol!.add(bondH2); bondH2.scale.y = 0.01;
-            new TWEEN.Tween(bondH2.scale).to({ y: bondH2.scale.y * 100 }, 400).easing(TWEEN.Easing.Elastic.Out).start();
+        if (bondH2) {
+          scene_mol!.add(bondH2); bondH2.scale.y = 0.01;
+          new TWEEN.Tween(bondH2.scale).to({ y: bondH2.scale.y * 100 }, 400).easing(TWEEN.Easing.Elastic.Out).start();
         }
         [atoms.h1a, atoms.h2a].forEach((atom: any, i: number) => {
           const originalScale = atom.scale.x;
@@ -1027,7 +1027,7 @@ const Reaction = React.forwardRef((_, ref) => {
     openMolecularRef.current = () => {
       const modal = document.getElementById('molecular-modal-overlay');
       if (modal) modal.style.display = 'flex';
-      
+
       // Force resize after display:flex applies
       requestAnimationFrame(() => {
         if (!renderer_mol) initMolecularScene();
@@ -1045,7 +1045,7 @@ const Reaction = React.forwardRef((_, ref) => {
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('click', onTestTubeClick);
       window.removeEventListener('resize', onMolecularResize);
-      try { composer.dispose(); renderer.dispose(); } catch (e) {}
+      try { composer.dispose(); renderer.dispose(); } catch (e) { }
       if (renderer.domElement && renderer.domElement.parentElement) renderer.domElement.parentElement.removeChild(renderer.domElement);
     };
   }, []);
