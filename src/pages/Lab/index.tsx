@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
@@ -222,6 +223,7 @@ const ATOM_DATA: Record<string, any> = {
 };
 
 const Lab = () => {
+  const navigate = useNavigate();
   const reactionRef = useRef<any>(null);
   const [activeAtom, setActiveAtom] = useState<string>('potassium');
   const [isRotating, setIsRotating] = useState<boolean>(true);
@@ -256,7 +258,7 @@ const Lab = () => {
       </div>
 
       {/* UI Overlay */}
-      <a href="../home/home.html" id="back-to-home">← Về Trang Chủ</a>
+      <button id="back-to-home" onClick={() => navigate(-1)}>← Quay lại</button>
 
       <div id="info-panel" className="visible">
         <h3>Phản ứng: Kali (K) + Nước (H₂O)</h3>

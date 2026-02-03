@@ -82,7 +82,7 @@ export const ExperimentPopup = () => {
 
     const equipmentId = e.dataTransfer.getData('equipmentId');
     console.log('Drop event fired. Equipment ID:', equipmentId);
-    
+
     if (!equipmentId) {
       console.warn('Drop failed: no equipment ID in dataTransfer');
       return;
@@ -103,7 +103,7 @@ export const ExperimentPopup = () => {
     }
 
     const rect = canvas.getBoundingClientRect();
-    
+
     // Get position relative to canvas
     const canvasX = (e.clientX - rect.left) / rect.width;
     const canvasY = (e.clientY - rect.top) / rect.height;
@@ -179,7 +179,7 @@ export const ExperimentPopup = () => {
 
         {/* Status bar */}
         <div className="px-4 py-2 bg-gray-900 border-t border-gray-700 text-xs text-gray-500">
-          <span>Items: {droppedItems.size} </span>
+          <span>Dụng cụ: {droppedItems.size} </span>
         </div>
       </div>
     </>

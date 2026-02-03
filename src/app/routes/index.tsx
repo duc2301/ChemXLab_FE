@@ -11,6 +11,8 @@ import LabTest from "../../pages/Lab/Temp";
 import PeriodicTablePage from "../../pages/PeriodicTable";
 import LoginPage from "../../pages/Auth/Login";
 import RegisterPage from "../../pages/Auth/Register";
+import LibraryPage from "../../pages/Library";
+import GradeDetail from "../../pages/Library/GradeDetail";
 
 export const AppRoutes = () => {
   return (
@@ -22,6 +24,8 @@ export const AppRoutes = () => {
         <Route path="blog" element={<BlogPage />} />
         <Route path="support" element={<SupportPage />} />
         <Route path="experience" element={<ExperiencePage />} />
+        <Route path="library" element={<LibraryPage />} />
+        <Route path="library/:gradeId" element={<GradeDetail />} />
       </Route>
       <Route path="lab" element={<LabPage />} />
       <Route path="labtest" element={<LabTest />} />

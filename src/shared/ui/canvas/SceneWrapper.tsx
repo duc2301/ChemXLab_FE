@@ -1,5 +1,6 @@
 import { Canvas } from '@react-three/fiber';
 import { Suspense, useEffect, useState, type ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
 import * as THREE from 'three';
 
 interface SceneWrapperProps {
@@ -8,6 +9,7 @@ interface SceneWrapperProps {
 }
 
 export const SceneWrapper = ({ children, className }: SceneWrapperProps) => {
+  const navigate = useNavigate();
   const [pointerLocked, setPointerLocked] = useState(false);
 
   useEffect(() => {
@@ -60,18 +62,18 @@ export const SceneWrapper = ({ children, className }: SceneWrapperProps) => {
         <div>
           <div >
             <button
-              onClick={() => window.location.href = '/'}
-              className="absolute top-4 left-4 px-3 py-2 bg-red-600 text-white rounded shadow pointer-events-auto z-30 hover:bg-red-700"
+              onClick={() => navigate(-1)}
+              className="absolute top-4 left-4 px-3 py-2 bg-blue-600 text-white rounded shadow pointer-events-auto z-30 hover:bg-blue-700 flex items-center gap-2"
             >
-              Exit
+              ← Quay lại
             </button>
           </div>
           <div className="absolute inset-0 flex items-center justify-center z-20">
             <button
               onClick={requestLock}
-              className="px-4 py-2 bg-white text-black rounded shadow pointer-events-auto"
+              className="px-4 py-2 bg-white text-black rounded shadow pointer-events-auto font-medium hover:bg-gray-50 transition-colors"
             >
-              Click to enable free-look
+              Nhấn để bật chế độ nhìn tự do
             </button>
           </div>
         </div>
