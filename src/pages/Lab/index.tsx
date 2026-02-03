@@ -1,11 +1,11 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
-import { LabStyle } from './style';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import Reaction from './reaction';
+import { LabStyle } from './style';
 
 
 const Atom3DViewer = ({ src, isRotating, id, style }: { src: string, isRotating: boolean, id: string, style?: React.CSSProperties }) => {

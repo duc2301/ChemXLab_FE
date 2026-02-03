@@ -9,24 +9,24 @@ type GenericModelProps = ThreeElements['group'] & {
   receiveShadow?: boolean;
 };
 
-export const GenericModel = ({ 
-  path, 
-  castShadow = true, 
-  receiveShadow = true, 
-  ...props 
+export const GenericModel = ({
+  path,
+  castShadow = true,
+  receiveShadow = true,
+  ...props
 }: GenericModelProps) => {
   const { scene } = useGLTF(path);
 
   const clonedScene = useMemo(() => {
     const clone = scene.clone();
-    
+
     clone.traverse((child) => {
       if ((child as Mesh).isMesh) {
         child.castShadow = castShadow;
         child.receiveShadow = receiveShadow;
       }
     });
-    
+
     return clone;
   }, [scene, castShadow, receiveShadow]);
 

@@ -1,11 +1,11 @@
-import { useEffect, useRef } from 'react';
-import { useExperimentStore } from '../services/experimentStore';
-import { EquipmentPanel } from '../components/EquipmentPanel';
-import { ExperimentEnvironment } from './ExperimentEnvironment';
 import { X } from 'lucide-react';
-import type { DroppedItem } from '../types/equipment';
-import { generateUUID } from '../services/idGenerator';
+import { useEffect, useRef } from 'react';
+import { EquipmentPanel } from '../components/EquipmentPanel';
 import { getEquipmentById } from '../services/equipmentRegistry';
+import { useExperimentStore } from '../services/experimentStore';
+import { generateUUID } from '../services/idGenerator';
+import type { DroppedItem } from '../types/equipment';
+import { ExperimentEnvironment } from './ExperimentEnvironment';
 
 /**
  * Experiment Popup Modal

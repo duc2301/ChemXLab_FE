@@ -1,11 +1,11 @@
-import { useState, useMemo } from 'react';
+import { ArrowLeft, Search } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
+import logo from "../../shared/assets/Logo/logo.png";
 import ElementCard from './components/ElementCard';
 import ElementDetail from './components/ElementDetail';
 import periodicData from './elements.json';
 import { vietnameseElements } from './vietnamese_data';
-import { ArrowLeft, Search } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import logo from "../../shared/assets/Logo/logo.png";
 
 const PeriodicTablePage = () => {
     const [selectedElement, setSelectedElement] = useState<any>(null);
@@ -56,7 +56,7 @@ const PeriodicTablePage = () => {
             name = nameMap[name];
         }
 
-        return `/models/elements/element_${num}_${name}.glb?v=${Date.now()}`;
+        return `/models/elements/element_${num}_${name}.glb`;
     };
 
     return (

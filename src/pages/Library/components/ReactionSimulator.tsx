@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from "react";
-import { Play, Pause, RotateCcw, Zap, Info, ChevronRight } from "lucide-react";
+import { ChevronRight, Info, Pause, Play, RotateCcw, Zap } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 interface ReactionStep {
     time: number;

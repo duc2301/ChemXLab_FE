@@ -1,8 +1,8 @@
 // shared/ui/3d/VisualModel.tsx
 import { useGLTF } from '@react-three/drei';
 import type { ThreeElements } from '@react-three/fiber';
-import { useMemo, forwardRef } from 'react';
-import { Mesh, Material, Group, Object3D } from 'three';
+import { forwardRef, useMemo } from 'react';
+import { Group, Material, Mesh, Object3D } from 'three';
 
 export type VisualModelProps = Omit<ThreeElements['group'], 'ref'> & {
   path: string;

@@ -41,7 +41,7 @@ function getLayer({
 }) {
   const layerGroup = new THREE.Group();
   for (let i = 0; i < numSprites; i += 1) {
-    let angle = (i / numSprites) * Math.PI * 2;
+    const angle = (i / numSprites) * Math.PI * 2;
     const pos = new THREE.Vector3(
       Math.cos(angle) * Math.random() * radius,
       Math.sin(angle) * Math.random() * radius,
@@ -49,7 +49,7 @@ function getLayer({
     );
     // const length = new THREE.Vector3(pos.x, pos.y, 0).length();
 
-    let color = new THREE.Color().setHSL(hue, 1, sat);
+    const color = new THREE.Color().setHSL(hue, 1, sat);
     const sprite = getSprite({ hasFog, color, opacity, path, pos, size });
     layerGroup.add(sprite);
   }

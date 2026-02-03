@@ -15,14 +15,14 @@ export const getAvailableModels = async (): Promise<string[]> => {
     '/models/lab_equipment.glb',
     '/models/shelf.glb'
   ];
-  
+
   const availableModels: string[] = [];
-  
+
   for (const path of modelPaths) {
     if (await checkModelExists(path)) {
       availableModels.push(path);
     }
   }
-  
+
   return availableModels;
 };

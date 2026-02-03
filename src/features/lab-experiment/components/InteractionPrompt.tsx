@@ -9,7 +9,8 @@ export const InteractionPrompt = ({ isVisible }: InteractionPromptProps) => {
 
   useEffect(() => {
     if (isVisible) {
-      setShow(true);
+      const timer = setTimeout(() => setShow(true), 0);
+      return () => clearTimeout(timer);
     } else {
       const timer = setTimeout(() => setShow(false), 300);
       return () => clearTimeout(timer);
@@ -20,9 +21,8 @@ export const InteractionPrompt = ({ isVisible }: InteractionPromptProps) => {
 
   return (
     <div
-      className={`fixed bottom-20 left-1/2 -translate-x-1/2 transition-all duration-300 ${
-        isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
-      }`}
+      className={`fixed bottom-20 left-1/2 -translate-x-1/2 transition-all duration-300 ${isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
+        }`}
     >
       <div className="bg-black bg-opacity-70 px-4 py-2 rounded-lg border border-yellow-500 flex items-center gap-2">
         <span className="text-yellow-400 text-lg font-bold">F</span>

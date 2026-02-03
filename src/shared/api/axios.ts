@@ -1,4 +1,4 @@
-import axios, { AxiosError } from "axios";
+import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
 
 const API_PREFIXED_URL = import.meta.env.VITE_API_BASE_URL + "api/";
 
@@ -18,14 +18,14 @@ const refreshAxios = axios.create({
   },
 });
 
-const requestInterceptor = (config: any) => {
+const requestInterceptor = (config: InternalAxiosRequestConfig) => {
   const token = localStorage.getItem("jwtToken");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 };
-const requestErrorInterceptor = (error: any) => {
+const requestErrorInterceptor = (error: AxiosError) => {
   return Promise.reject(
     error instanceof Error ? error : new Error(String(error))
   );
@@ -35,8 +35,8 @@ api.interceptors.request.use(requestInterceptor, requestErrorInterceptor);
 
 let isRefreshing = false;
 let failedQueue: Array<{
-  resolve: (value?: any) => void;
-  reject: (reason?: any) => void;
+  resolve: (value?: unknown) => void;
+  reject: (reason?: unknown) => void;
 }> = [];
 
 const processQueue = (error: any, token: string | null = null) => {
@@ -52,9 +52,9 @@ const processQueue = (error: any, token: string | null = null) => {
 
 
 const handleTokenRefresh = async (
-  originalRequest: any,
-  _error: AxiosError<unknown, any>,
-  axiosInstance: typeof api 
+  originalRequest: InternalAxiosRequestConfig & { _retry?: boolean },
+  _error: AxiosError,
+  axiosInstance: typeof api
 ) => {
   if (isRefreshing) {
     return new Promise(function (resolve, reject) {
@@ -95,7 +95,7 @@ const handleTokenRefresh = async (
     processQueue(null, newAccessToken);
 
     return axiosInstance(originalRequest);
-  } catch (refreshError: any) {
+  } catch (refreshError) {
     processQueue(refreshError, null);
 
     return Promise.reject(
@@ -109,7 +109,7 @@ const handleTokenRefresh = async (
 };
 
 const createResponseInterceptor = (
-  axiosInstance: typeof api 
+  axiosInstance: typeof api
 ) => {
   return async (error: AxiosError) => {
     const originalRequest = error.config as typeof error.config & {

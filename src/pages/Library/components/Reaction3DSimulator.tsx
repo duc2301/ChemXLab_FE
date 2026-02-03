@@ -1,8 +1,8 @@
-import { Canvas } from "@react-three/fiber";
 import { OrbitControls, Text } from "@react-three/drei";
-import { useRef, useState, useMemo, useEffect } from "react";
+import { Canvas } from "@react-three/fiber";
+import { Pause, Play, RotateCcw, SkipForward } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
-import { Play, Pause, RotateCcw, SkipForward } from "lucide-react";
 
 // ============= CPK COLORS =============
 const ATOM_COLORS: Record<string, string> = {
@@ -387,3 +387,4 @@ export default function Reaction3DSimulator({ reactionType = "water" }: Props) {
 }
 
 export { REACTIONS };
+

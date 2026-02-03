@@ -1,6 +1,6 @@
-import { useRef, Suspense } from 'react';
+import { OrbitControls, Stage, useGLTF } from '@react-three/drei';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { useGLTF, Stage, OrbitControls } from '@react-three/drei';
+import { Suspense, useRef } from 'react';
 
 interface ModelProps {
     path: string;

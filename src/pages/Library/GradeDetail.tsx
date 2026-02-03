@@ -1,18 +1,18 @@
-import { useParams, Link } from "react-router-dom";
-import { useState, Suspense, lazy } from "react";
 import {
-    ChevronLeft,
-    ChevronDown,
-    ChevronRight,
-    BookOpen,
-    GraduationCap,
     Atom,
-    Sparkles,
+    BookOpen,
     Box,
+    ChevronDown,
+    ChevronLeft,
+    ChevronRight,
+    GraduationCap,
+    Sparkles,
 } from "lucide-react";
-import { getGradeData } from "./data";
-import type { Topic, Lesson } from "./data";
+import { Suspense, lazy, useState } from "react";
+import { Link, useParams } from "react-router-dom";
 import EnhancedContentRenderer from "./components/EnhancedContentRenderer";
+import type { Lesson, Topic } from "./data";
+import { getGradeData } from "./data";
 
 // Lazy load 3D component
 const ElementViewer3D = lazy(() => import("./components/ElementViewer3D"));

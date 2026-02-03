@@ -1,6 +1,6 @@
+import { ContactShadows, Environment, OrbitControls, useGLTF } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls, useGLTF, Environment, ContactShadows } from "@react-three/drei";
-import { Suspense, useState, useEffect, useRef } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 
 // Complete mapping for all 118 elements
@@ -86,7 +86,7 @@ export default function ElementViewer3D({ elementNumber, elementName, elementSym
 
     useEffect(() => {
         if (!modelPath) {
-            setHasError(true);
+            setTimeout(() => setHasError(true), 0);
             return;
         }
 

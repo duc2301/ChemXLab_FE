@@ -1,6 +1,6 @@
-import { Environment, ContactShadows, OrbitControls, Lightformer } from '@react-three/drei';
-import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing';
-import { useControls, folder } from 'leva';
+import { ContactShadows, Environment, Lightformer, OrbitControls } from '@react-three/drei';
+import { Bloom, EffectComposer, Vignette } from '@react-three/postprocessing';
+import { folder, useControls } from 'leva';
 
 interface LabEnvironmentProps {
   enableControls?: boolean;

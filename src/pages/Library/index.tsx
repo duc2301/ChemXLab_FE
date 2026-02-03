@@ -1,4 +1,4 @@
-import { ArrowRight, BookOpen, FlaskConical, Atom, Layers } from "lucide-react";
+import { ArrowRight, Atom, BookOpen, FlaskConical, Layers } from "lucide-react";
 import { Link } from "react-router-dom";
 
 interface GradeInfo {

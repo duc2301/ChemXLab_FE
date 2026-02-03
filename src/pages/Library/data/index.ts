@@ -1,14 +1,14 @@
 // Central curriculum data export
-import { grade6Topics } from "./grade6";
-import type { Topic, Lesson } from "./grade6";
-import { grade7Topics } from "./grade7";
-import { grade8Topics } from "./grade8";
-import { grade9Topics } from "./grade9";
 import { grade10Topics } from "./grade10";
 import { grade11Topics } from "./grade11";
 import { grade12Topics } from "./grade12";
+import type { Lesson, Topic } from "./grade6";
+import { grade6Topics } from "./grade6";
+import { grade7Topics } from "./grade7";
+import { grade8Topics } from "./grade8";
+import { grade9Topics } from "./grade9";
 
-export type { Topic, Lesson };
+export type { Lesson, Topic };
 
 export interface GradeData {
     id: string;

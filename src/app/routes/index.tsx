@@ -1,18 +1,18 @@
 import { Route, Routes } from "react-router-dom";
 import Layout from "../../Widget/components/Layout";
 import AboutPage from "../../pages/About";
+import LoginPage from "../../pages/Auth/Login";
+import RegisterPage from "../../pages/Auth/Register";
 import BlogPage from "../../pages/Blog";
 import ExperiencePage from "../../pages/Experience";
 import HomePage from "../../pages/Home";
-import ProductsPage from "../../pages/Products";
-import SupportPage from "../../pages/Support";
 import LabPage from "../../pages/Lab";
 import LabTest from "../../pages/Lab/Temp";
-import PeriodicTablePage from "../../pages/PeriodicTable";
-import LoginPage from "../../pages/Auth/Login";
-import RegisterPage from "../../pages/Auth/Register";
 import LibraryPage from "../../pages/Library";
 import GradeDetail from "../../pages/Library/GradeDetail";
+import PeriodicTablePage from "../../pages/PeriodicTable";
+import ProductsPage from "../../pages/Products";
+import SupportPage from "../../pages/Support";
 
 export const AppRoutes = () => {
   return (

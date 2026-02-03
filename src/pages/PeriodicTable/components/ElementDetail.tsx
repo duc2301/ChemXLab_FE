@@ -1,8 +1,8 @@
-import { Component } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Box, ExternalLink } from "lucide-react";
 import type { ErrorInfo, ReactNode } from "react";
-import { ExternalLink, Box } from "lucide-react";
+import { Component } from "react";
 import MoleculeViewer from "../../../components/ThreeD/MoleculeViewer";
-import { motion, AnimatePresence } from "framer-motion";
 
 class ModelErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
     constructor(props: { children: ReactNode }) {

@@ -1,16 +1,16 @@
-import React from "react";
 import {
-    Lightbulb,
-    Beaker,
     AlertTriangle,
-    CheckCircle,
     ArrowRight,
     Atom,
-    Zap,
+    Beaker,
     BookOpen,
+    CheckCircle,
     FlaskConical,
-    Sparkles
+    Lightbulb,
+    Sparkles,
+    Zap
 } from "lucide-react";
+import React from "react";
 
 interface EnhancedContentProps {
     content: string;

@@ -1,6 +1,6 @@
 import { forwardRef } from "react";
-import { VisualModel, type VisualModelProps } from "./VisualModel";
 import { Group } from "three";
+import { VisualModel, type VisualModelProps } from "./VisualModel";
 
 
 
@@ -8,10 +8,10 @@ export const StaticModel = forwardRef<Group, VisualModelProps>((props, ref) => {
   return (
     <VisualModel
       ref={ref}
-      {...props} 
+      {...props}
       onProcessMesh={(mesh) => {
         mesh.matrixAutoUpdate = false;
-        mesh.updateMatrix(); 
+        mesh.updateMatrix();
       }}
     />
   );

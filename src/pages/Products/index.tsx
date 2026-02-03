@@ -1,6 +1,6 @@
-import ProductHero from "./components/ProductHero";
-import PeriodicTableSection from "./components/PeriodicTableSection";
 import FeatureSection from "./components/FeatureSection";
+import PeriodicTableSection from "./components/PeriodicTableSection";
+import ProductHero from "./components/ProductHero";
 
 const ProductsPage = () => {
   return (

@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
-import type { NewsArticle, NewsResponse, NewsCategory } from "../types/newsTypes";
-import { NEWS_CATEGORIES } from "../types/newsTypes";
+import { useCallback, useEffect, useState } from "react";
 import { fetchChemistryNews, fetchNewsByCategory, getFeaturedArticle } from "../api/blogNewsService";
+import type { NewsArticle, NewsCategory, NewsResponse } from "../types/newsTypes";
+import { NEWS_CATEGORIES } from "../types/newsTypes";
 
 interface UseChemistryNewsResult {
     articles: NewsArticle[];

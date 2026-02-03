@@ -1,11 +1,11 @@
 // Lab Experiment Feature - Tính năng thí nghiệm trong phòng lab
 
 // Components
-export { ExperimentPopup } from './ui/ExperimentPopup';
-export { EquipmentPanel } from './components/EquipmentPanel';
 export { EquipmentModel } from './components/EquipmentModel';
+export { EquipmentPanel } from './components/EquipmentPanel';
 export { InteractionPrompt } from './components/InteractionPrompt';
 export { ProximityDetector } from './components/ProximityDetector';
+export { ExperimentPopup } from './ui/ExperimentPopup';
 
 // UI
 export { ExperimentEnvironment } from './ui/ExperimentEnvironment';
@@ -14,20 +14,14 @@ export { ExperimentEnvironment } from './ui/ExperimentEnvironment';
 export { useProximityDetection } from './hooks/useProximityDetection';
 
 // Services
-export { useExperimentStore } from './services/experimentStore';
 export {
-  EQUIPMENT_REGISTRY,
-  getEquipmentByCategory,
-  getEquipmentById,
-  getAllCategories,
+  EQUIPMENT_REGISTRY, getAllCategories, getEquipmentByCategory,
+  getEquipmentById
 } from './services/equipmentRegistry';
+export { useExperimentStore } from './services/experimentStore';
 
 // Types
 export type {
-  EquipmentCategory,
-  EquipmentItem,
-  DroppedItem,
-  ExperimentState,
-  ExperimentEnvironmentProps,
-  ProximityDetectorProps,
+  DroppedItem, EquipmentCategory,
+  EquipmentItem, ExperimentEnvironmentProps, ExperimentState, ProximityDetectorProps
 } from './types/equipment';

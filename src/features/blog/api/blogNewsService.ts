@@ -1,4 +1,4 @@
-import type { NewsResponse, NewsArticle } from "../types/newsTypes";
+import type { NewsArticle, NewsResponse } from "../types/newsTypes";
 import { DEFAULT_SEARCH_QUERY } from "../types/newsTypes";
 
 // Removed caching logic as we are relying on VnExpress RSS directly for now
@@ -27,6 +27,7 @@ export const fetchChemistryNews = async (
         // return getMockNewsData(); 
     }
     // For now, return VnExpress news directly as it's the priority source
+    console.debug("Query/Page ignored:", _query, _page);
     return fetchVnExpressNews();
 };
 

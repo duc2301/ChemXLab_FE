@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { MeshPhysicalMaterial, DoubleSide } from 'three';
+import { DoubleSide, MeshPhysicalMaterial } from 'three';
 import { VisualModel, type VisualModelProps } from './VisualModel';
 
 export type LiquidModelProps = VisualModelProps & {
@@ -8,11 +8,11 @@ export type LiquidModelProps = VisualModelProps & {
   opacity?: number;
 };
 
-export const LiquidModel = ({ 
-  color = '#a5d8ff', 
-  ior = 1.33, 
+export const LiquidModel = ({
+  color = '#a5d8ff',
+  ior = 1.33,
   opacity = 1,
-  ...props 
+  ...props
 }: LiquidModelProps) => {
 
   const liquidMaterial = useMemo(() => {
@@ -31,8 +31,8 @@ export const LiquidModel = ({
 
   return (
     <VisualModel
-      {...props} 
-      customMaterial={liquidMaterial} 
+      {...props}
+      customMaterial={liquidMaterial}
     />
   );
 };

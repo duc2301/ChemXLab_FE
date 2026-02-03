@@ -1,8 +1,8 @@
-import { RigidBody, type RigidBodyProps, MeshCollider } from '@react-three/rapier';
 import { useGLTF } from '@react-three/drei';
-import { useMemo } from 'react';
-import { Mesh, Object3D, BufferGeometry } from 'three';
 import type { ThreeElements } from '@react-three/fiber';
+import { MeshCollider, RigidBody, type RigidBodyProps } from '@react-three/rapier';
+import { useMemo } from 'react';
+import { BufferGeometry, Mesh, Object3D } from 'three';
 
 export type PhysicsModelProps = Omit<ThreeElements['group'], 'ref'> & {
   path: string;
@@ -25,7 +25,7 @@ export const PhysicsModel = ({
 
   const { visualScene, colliderGeometries } = useMemo(() => {
     const clone = scene.clone();
-    
+
     clone.position.set(0, 0, 0);
     clone.rotation.set(0, 0, 0);
     clone.scale.set(1, 1, 1);
@@ -49,7 +49,7 @@ export const PhysicsModel = ({
             if (!geo.index) {
               const posCount = geo.attributes.position.count;
               const indices = new Array(posCount);
-              for(let i = 0; i < posCount; i++) indices[i] = i;
+              for (let i = 0; i < posCount; i++) indices[i] = i;
               geo.setIndex(indices);
             }
 
@@ -80,9 +80,9 @@ export const PhysicsModel = ({
       {...physicsProps}
     >
       <primitive object={visualScene} />
-      
+
       {/* Chỉ tạo collider nếu có geometry và collider type hợp lệ */}
-      {(colliders === 'trimesh' || colliders === 'hull') && 
+      {(colliders === 'trimesh' || colliders === 'hull') &&
         colliderGeometries.length > 0 &&
         colliderGeometries.map((geo, index) => (
           <MeshCollider key={index} type={colliders}>
