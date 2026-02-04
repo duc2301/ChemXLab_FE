@@ -87,7 +87,7 @@ export const getAllUsers = async (): Promise<UserAdmin[]> => {
 };
 
 // Update user - API chưa có, placeholder
-export const updateUser = async (id: string, data: { fullName: string; role: string }): Promise<boolean> => {
+export const updateUser = async (_id: string, _data: { fullName: string; role: string }): Promise<boolean> => {
     try {
         // TODO: Replace with real API when available
         // const response = await api.put<ResponseDTO<UserAdmin>>(`User/${id}`, data);
@@ -101,7 +101,7 @@ export const updateUser = async (id: string, data: { fullName: string; role: str
 };
 
 // Delete user - API chưa có, placeholder
-export const deleteUser = async (userId: string): Promise<boolean> => {
+export const deleteUser = async (_userId: string): Promise<boolean> => {
     try {
         // TODO: Replace with real API when available
         // const response = await api.delete<ResponseDTO<null>>(`User/${userId}`);

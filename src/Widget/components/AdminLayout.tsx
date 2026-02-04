@@ -6,7 +6,7 @@ import AdminSidebar from "./AdminSidebar";
 
 const AdminLayout = () => {
     const navigate = useNavigate();
-    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+    const [sidebarCollapsed] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
