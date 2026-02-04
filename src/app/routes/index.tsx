@@ -1,6 +1,10 @@
 import { Route, Routes } from "react-router-dom";
+import AdminLayout from "../../Widget/components/AdminLayout";
 import Layout from "../../Widget/components/Layout";
 import AboutPage from "../../pages/About";
+import AdminDashboard from "../../pages/Admin/Dashboard";
+import AdminPackages from "../../pages/Admin/Packages";
+import AdminUsers from "../../pages/Admin/Users";
 import LoginPage from "../../pages/Auth/Login";
 import RegisterPage from "../../pages/Auth/Register";
 import BlogPage from "../../pages/Blog";
@@ -31,7 +35,14 @@ export const AppRoutes = () => {
       <Route path="labtest" element={<LabTest />} />
       <Route path="periodic-table" element={<PeriodicTablePage />} />
       <Route path="login" element={<LoginPage />} />
-      <Route path="register" element={< RegisterPage />} />
+      <Route path="register" element={<RegisterPage />} />
+
+      {/* Admin Routes */}
+      <Route path="/admin" element={<AdminLayout />}>
+        <Route index element={<AdminDashboard />} />
+        <Route path="users" element={<AdminUsers />} />
+        <Route path="packages" element={<AdminPackages />} />
+      </Route>
     </Routes>
   );
 };
