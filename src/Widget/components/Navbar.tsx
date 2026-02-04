@@ -152,7 +152,9 @@ const Navbar = () => {
                   </div>
                   <div className="py-2">
                     <Link to="/profile" className="block px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-blue-600">Hồ sơ cá nhân</Link>
-                    <Link to="/settings" className="block px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-blue-600">Cài đặt</Link>
+                    {localStorage.getItem("Role") === "ADMIN" && (
+                      <Link to="/admin" className="block px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-indigo-600">Trang Admin</Link>
+                    )}
                     <div className="border-t border-gray-100 my-1"></div>
                     <button onClick={Logout} className="block w-full text-left px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50">Đăng xuất</button>
                   </div>

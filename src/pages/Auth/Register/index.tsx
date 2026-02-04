@@ -1,11 +1,11 @@
 import { message } from "antd";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import type { RegisterForm } from "../../../entities/Auth";
 import { register } from "../../../features/Auth";
 
 // Import icons
-import { Eye, EyeOff, LogIn, UserPlus } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, LogIn, UserPlus } from "lucide-react";
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -153,7 +153,18 @@ const RegisterPage = () => {
 
         {/* Footer */}
         <div className="mt-8 text-center text-sm text-gray-600">
-          You had an account ? <a href="#" className="font-semibold text-gray-900 hover:underline decoration-1 underline-offset-2">Login</a>
+          You had an account ? <Link to="/login" className="font-semibold text-gray-900 hover:underline decoration-1 underline-offset-2">Login</Link>
+        </div>
+
+        {/* Back to Home */}
+        <div className="mt-6 text-center">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors"
+          >
+            <ArrowLeft size={16} />
+            Về trang chủ
+          </Link>
         </div>
 
       </div>

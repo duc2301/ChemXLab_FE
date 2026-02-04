@@ -1,11 +1,11 @@
 import { message } from "antd";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import type { LoginForm } from "../../../entities/Auth";
 import { Login } from "../../../features/Auth";
 
 // Import icons
-import { Eye, EyeOff, LogIn, UserPlus } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, LogIn, UserPlus } from "lucide-react";
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -30,7 +30,13 @@ const LoginPage = () => {
 
     const result: boolean | null = await Login(loginData);
     if (result) {
-      navigate('/');
+      // Check if user is ADMIN and redirect accordingly
+      const role = localStorage.getItem("Role");
+      if (role === "ADMIN") {
+        navigate('/admin');
+      } else {
+        navigate('/');
+      }
     }
     else {
       message.error("Login failed");
@@ -135,23 +141,22 @@ const LoginPage = () => {
             <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-5 h-5" alt="Google" />
             Continue with Google
           </button>
-          {/* <button className="w-full border border-gray-200 rounded-lg py-3 flex items-center justify-center gap-3 hover:bg-gray-50 transition-colors font-medium text-gray-700 text-sm">
-            <img src="https://www.svgrepo.com/show/508762/apple.svg" className="w-5 h-5" alt="Apple" />
-            Continue with Apple
-          </button>
-           <button className="w-full border border-gray-200 rounded-lg py-3 flex items-center justify-center gap-3 hover:bg-gray-50 transition-colors font-medium text-gray-700 text-sm">
-            <img src="https://www.svgrepo.com/show/331309/binance.svg" className="w-5 h-5" alt="Binance" />
-            Continue with Binance
-          </button>
-           <button className="w-full border border-gray-200 rounded-lg py-3 flex items-center justify-center gap-3 hover:bg-gray-50 transition-colors font-medium text-gray-700 text-sm">
-            <div className="w-5 h-5 bg-black rounded-full flex items-center justify-center text-white text-[10px]">W</div>
-            Continue with Wallet
-          </button> */}
         </div>
 
         {/* Footer */}
         <div className="mt-8 text-center text-sm text-gray-600">
-          Don't have an account yet? <a href="#" className="font-semibold text-gray-900 hover:underline decoration-1 underline-offset-2">Sign up</a>
+          Don't have an account yet? <Link to="/register" className="font-semibold text-gray-900 hover:underline decoration-1 underline-offset-2">Sign up</Link>
+        </div>
+
+        {/* Back to Home */}
+        <div className="mt-6 text-center">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors"
+          >
+            <ArrowLeft size={16} />
+            Về trang chủ
+          </Link>
         </div>
 
       </div>
