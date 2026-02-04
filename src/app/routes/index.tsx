@@ -17,6 +17,7 @@ import GradeDetail from "../../pages/Library/GradeDetail";
 import PeriodicTablePage from "../../pages/PeriodicTable";
 import ProductsPage from "../../pages/Products";
 import SupportPage from "../../pages/Support";
+import PaymentPage from "../../pages/Payment";
 
 export const AppRoutes = () => {
   return (
@@ -36,6 +37,7 @@ export const AppRoutes = () => {
       <Route path="periodic-table" element={<PeriodicTablePage />} />
       <Route path="login" element={<LoginPage />} />
       <Route path="register" element={<RegisterPage />} />
+      <Route path="payment" element={<PaymentPage />} />
 
       {/* Admin Routes */}
       <Route path="/admin" element={<AdminLayout />}>

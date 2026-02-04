@@ -3,11 +3,21 @@ import { ArrowRight, Check, Crown, Sparkles, Star, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { Package } from "../../entities/Package";
 import { getAllPackages } from "../../features/Package";
+import { useNavigate } from "react-router-dom";
+import { createPayment } from "../../features/Payment";
+import type { Payment } from "../../entities/Payment";
 
 const ExperiencePage = () => {
   const [packages, setPackages] = useState<Package[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedPackage, setSelectedPackage] = useState<Package | null>(null);
+
+  const navigate = useNavigate();
+
+  const handleBuyPackage = async (packageId: number) => {
+    if (packageId === 1) return;
+    const createPaymentResponse: Payment = await createPayment(packageId.toString());
+    navigate("/payment", { state: { paymentData: createPaymentResponse } });
+  }
 
   useEffect(() => {
     fetchPackages();
@@ -155,13 +165,15 @@ const ExperiencePage = () => {
 
                     {/* CTA Button */}
                     <button
-                      onClick={() => setSelectedPackage(plan)}
-                      className={`w-full py-3.5 rounded-xl font-semibold transition-all ${recommended
-                        ? "bg-white text-blue-600 hover:bg-cyan-50 shadow-lg"
-                        : "bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:from-cyan-400 hover:to-blue-400 shadow-lg shadow-cyan-500/20"
+                      onClick={() => handleBuyPackage(plan.id)}
+                      className={`w-full py-3.5 rounded-xl font-semibold transition-all ${plan.name === "FREE"
+                          ? "bg-transparent border cursor-disabled border-cyan-500 text-cyan-400 hover:bg-cyan-500/10 cursor-not-allowed"
+                          : recommended
+                            ? "bg-white text-blue-600 hover:bg-cyan-50 shadow-lg"
+                            : "bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:from-cyan-400 hover:to-blue-400 shadow-lg shadow-cyan-500/20"
                         }`}
                     >
-                      {plan.price === 0 ? "Bắt đầu miễn phí" : "Chọn gói này"}
+                      {plan.price === 0 ? "Trải nghiệm miễn phí" : "Chọn gói này"}
                     </button>
                   </div>
                 );
@@ -187,7 +199,7 @@ const ExperiencePage = () => {
                   </p>
                 </div>
                 <button
-                  onClick={() => setSelectedPackage(enterprisePackage)}
+                  onClick={() => navigate("/contact")}
                   className="bg-gradient-to-r from-amber-400 to-orange-400 text-slate-900 px-8 py-4 rounded-xl font-bold hover:from-amber-300 hover:to-orange-300 transition-all flex items-center gap-2 whitespace-nowrap shadow-lg shadow-amber-500/20"
                 >
                   Liên hệ tư vấn
@@ -307,47 +319,6 @@ const ExperiencePage = () => {
           </button>
         </div>
       </section>
-
-      {/* Detail Modal */}
-      <Modal
-        title={<div className="text-xl font-bold text-slate-900">{selectedPackage?.name}</div>}
-        open={!!selectedPackage}
-        onCancel={() => setSelectedPackage(null)}
-        footer={[
-          <Button key="close" onClick={() => setSelectedPackage(null)}>
-            Đóng
-          </Button>,
-          <Button key="buy" type="primary" className="bg-blue-600 hover:bg-blue-500">
-            {selectedPackage?.name === "DIAMOND" ? "Liên hệ tư vấn" : "Chọn gói này"}
-          </Button>
-        ]}
-        centered
-      >
-        <div className="py-4">
-          <div className="flex justify-between items-center mb-6 pb-4 border-b border-slate-200">
-            <span className="text-3xl font-bold text-blue-600">
-              {selectedPackage ? formatPrice(selectedPackage.price) : ""}
-            </span>
-            <span className="text-slate-500 font-medium bg-slate-100 px-3 py-1 rounded-full text-sm">
-              {selectedPackage?.durationDays && selectedPackage.durationDays > 0
-                ? `${selectedPackage.durationDays} ngày`
-                : "Liên hệ"}
-            </span>
-          </div>
-
-          <h4 className="font-semibold mb-4 text-slate-800">Tất cả tính năng:</h4>
-          <ul className="space-y-3">
-            {selectedPackage?.features.map((feature, idx) => (
-              <li key={idx} className="flex items-start gap-3 text-slate-700">
-                <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <Check className="w-3 h-3 text-green-600" />
-                </div>
-                <span>{feature}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </Modal>
     </div>
   );
 };
