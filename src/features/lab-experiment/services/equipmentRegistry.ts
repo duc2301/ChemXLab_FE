@@ -16,6 +16,7 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     isDraggable: true,
     dimensions: { width: 0.06, height: 0.08, depth: 0.06 },
     description: 'Cốc đo thể tích 150ml',
+    scale: 4,
   },
   {
     id: 'beaker-250ml',
@@ -26,6 +27,7 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     isDraggable: true,
     dimensions: { width: 0.07, height: 0.1, depth: 0.07 },
     description: 'Cốc đo thể tích 250ml',
+    scale: 4,
   },
   {
     id: 'beaker-500ml',
@@ -36,6 +38,7 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     isDraggable: true,
     dimensions: { width: 0.08, height: 0.12, depth: 0.08 },
     description: 'Bình tam giác 500ml',
+    scale: 3,
   },
   {
     id: 'flask-round',
@@ -46,6 +49,7 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     isDraggable: true,
     dimensions: { width: 0.08, height: 0.12, depth: 0.08 },
     description: 'Bình tròn đáy phẳng',
+    scale: 3,
   },
   {
     id: 'test-tube',
@@ -56,6 +60,7 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     isDraggable: true,
     dimensions: { width: 0.02, height: 0.15, depth: 0.02 },
     description: 'Ống nghiệm tiêu chuẩn',
+    scale: 3,
   },
 
   // Tools
@@ -68,6 +73,7 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     isDraggable: true,
     dimensions: { width: 0.005, height: 0.3, depth: 0.005 },
     description: 'Đo nhiệt độ',
+    scale: 3,
   },
   {
     id: 'dropper',
@@ -78,6 +84,7 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     isDraggable: true,
     dimensions: { width: 0.01, height: 0.12, depth: 0.01 },
     description: 'Nhỏ giọt chất lỏng',
+    scale: 4,
   },
   {
     id: 'funnel',
@@ -88,6 +95,7 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     isDraggable: true,
     dimensions: { width: 0.08, height: 0.1, depth: 0.08 },
     description: 'Phễu đổ chất lỏng',
+    scale: 4,
   },
   {
     id: 'alcohol-lamp',
@@ -98,6 +106,7 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     isDraggable: true,
     dimensions: { width: 0.06, height: 0.1, depth: 0.06 },
     description: 'Đèn đốt bằng cồn',
+    scale: 3,
   },
   {
     id: 'iron-ring',
@@ -108,6 +117,7 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     isDraggable: true,
     dimensions: { width: 0.15, height: 0.15, depth: 0.15 },
     description: 'Vòng kẹp để đỡ thiết bị',
+    scale: 3,
   },
   {
     id: 'cap-connector',
@@ -118,6 +128,7 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     isDraggable: true,
     dimensions: { width: 0.03, height: 0.03, depth: 0.03 },
     description: 'Nắp hoặc kết nối ống',
+    scale: 4,
   },
   {
     id: 'filter-paper',
@@ -128,6 +139,7 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     isDraggable: true,
     dimensions: { width: 0.1, height: 0.001, depth: 0.1 },
     description: 'Giấy lọc dùng trong phòng thí nghiệm',
+    scale: 4,
   },
 ];
 
