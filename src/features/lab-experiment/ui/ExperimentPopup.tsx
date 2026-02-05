@@ -108,15 +108,15 @@ export const ExperimentPopup = () => {
     const canvasX = (e.clientX - rect.left) / rect.width;
     const canvasY = (e.clientY - rect.top) / rect.height;
 
-    // Map to 3D space (table is at center, adjust based on camera view)
+    // Map to 3D space (table surface at Y=0.85, size 6x3)
     // Canvas center is (0.5, 0.5)
-    const tableX = (canvasX - 0.5) * 3; // Range: -1.5 to 1.5
-    const tableZ = (canvasY - 0.5) * 3; // Range: -1.5 to 1.5
+    const tableX = (canvasX - 0.5) * 5; // Range: -2.5 to 2.5 (within table bounds)
+    const tableZ = (canvasY - 0.5) * 2.5; // Range: -1.25 to 1.25 (within table bounds)
 
     const droppedItem: DroppedItem = {
       id: generateUUID(),
       equipmentId: equipment.id,
-      position: [tableX, 1.2, tableZ], // Y = table height + offset for physics
+      position: [tableX, 1.5, tableZ], // Y = above table for physics drop
       rotation: [0, Math.random() * Math.PI * 2, 0], // Random rotation
       timestamp: Date.now(),
     };
@@ -159,7 +159,7 @@ export const ExperimentPopup = () => {
           <div className="flex-1 flex flex-col">
             {/* Info bar */}
             <div className="px-4 py-2 bg-gray-800 border-b border-gray-700 text-sm text-gray-400">
-              <p>Kéo dụng cụ từ bên trái xuống bàn. Nhấn ESC để thoát.</p>
+              <p>Kéo dụng cụ từ bên trái xuống bàn. Click giữ để di chuyển. Nhấn ESC để thoát.</p>
             </div>
 
             {/* Canvas */}
