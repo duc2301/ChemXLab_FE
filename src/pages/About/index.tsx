@@ -1,104 +1,290 @@
-import { ArrowRight, Award, Globe, Target, Users } from "lucide-react";
+import {
+  ArrowRight,
+  Beaker,
+  BookOpen,
+  CheckCircle2,
+  FlaskConical,
+  Globe,
+  GraduationCap,
+  Heart,
+  Lightbulb,
+  Rocket,
+  Sparkles,
+  Star,
+  Target,
+  Users,
+  Zap,
+} from "lucide-react";
+import { Link } from "react-router-dom";
 
 const AboutPage = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-blue-50 pt-16">
-      <div className="container mx-auto px-6 py-12">
-        {/* Hero Section */}
-        <div className="text-center max-w-4xl mx-auto mb-16">
-          <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6">
-            Về <span className="text-blue-600">ChemXLab</span>
-          </h1>
-          <p className="text-lg text-slate-600 leading-relaxed">
-            ChemXLab là nền tảng tiên phong trong việc ứng dụng công nghệ thực
-            tế ảo và mô phỏng 3D vào giáo dục và nghiên cứu hóa học. Chúng tôi
-            tin rằng việc trực quan hóa các khái niệm trừu tượng sẽ mở ra cánh
-            cửa mới cho sự hiểu biết và sáng tạo.
-          </p>
+    <div className="min-h-screen bg-white font-sans text-slate-900">
+      {/* Hero Section - Light with blue accent */}
+      <section className="relative pt-24 pb-16 overflow-hidden bg-white">
+        {/* Decorative Background */}
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
+          <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] bg-blue-100/50 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] bg-cyan-100/40 rounded-full blur-3xl"></div>
         </div>
 
-        {/* Mission, Vision, Values */}
-        <div className="grid md:grid-cols-3 gap-6 mb-16">
-          {[
-            {
-              icon: <Target className="w-10 h-10 text-white" />,
-              title: "Sứ mệnh",
-              desc: "Phổ cập kiến thức hóa học thông qua công nghệ tiên tiến, giúp mọi người tiếp cận khoa học dễ dàng hơn.",
-              color: "from-red-500 to-red-700",
-            },
-            {
-              icon: <Globe className="w-10 h-10 text-white" />,
-              title: "Tầm nhìn",
-              desc: "Trở thành nền tảng giáo dục STEM hàng đầu khu vực, kết nối cộng đồng yêu khoa học toàn cầu.",
-              color: "from-green-500 to-green-700",
-            },
-            {
-              icon: <Award className="w-10 h-10 text-white" />,
-              title: "Giá trị",
-              desc: "Sáng tạo, Chính xác, và Đam mê là những giá trị cốt lõi thúc đẩy mọi hoạt động của chúng tôi.",
-              color: "from-yellow-500 to-yellow-700",
-            },
-          ].map((item, i) => (
-            <div
-              key={i}
-              className={`bg-gradient-to-br ${item.color} rounded-2xl p-8 text-white shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300`}
-            >
-              <div className="mb-6 bg-white/20 backdrop-blur w-16 h-16 rounded-xl flex items-center justify-center border-2 border-white/30 shadow-lg">
-                {item.icon}
-              </div>
-              <h3 className="text-xl font-bold mb-3">{item.title}</h3>
-              <p className="text-white/90 leading-relaxed text-sm">{item.desc}</p>
+        <div className="container mx-auto px-6 relative z-10">
+          <div className="max-w-4xl mx-auto text-center">
+            <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full text-sm font-semibold mb-6">
+              <Sparkles className="w-4 h-4" />
+              Nền tảng giáo dục Hóa học hàng đầu Việt Nam
             </div>
-          ))}
-        </div>
 
-        {/* Team Section */}
-        <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-3xl p-8 md:p-12 shadow-2xl mb-16">
-          <div className="grid md:grid-cols-2 items-center gap-12">
-            <div className="text-white">
-              <h2 className="text-3xl md:text-4xl font-bold mb-6">Đội ngũ chuyên gia</h2>
-              <p className="text-blue-100 text-lg mb-8 leading-relaxed">
-                Đội ngũ của chúng tôi bao gồm các giáo sư, tiến sĩ hóa học và
-                các kỹ sư phần mềm tài năng, cùng nhau xây dựng nên những sản
-                phẩm chất lượng nhất.
-              </p>
-              <button className="bg-white text-blue-900 px-8 py-3 rounded-full font-bold hover:bg-blue-50 transition-all shadow-xl hover:shadow-2xl hover:scale-105 inline-flex items-center gap-3">
-                Gặp gỡ đội ngũ <ArrowRight className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="grid grid-cols-2 gap-6">
-              {[1, 2, 3, 4].map((i) => (
-                <div
-                  key={i}
-                  className="aspect-square bg-white/10 backdrop-blur rounded-2xl flex items-center justify-center border-2 border-white/20 hover:bg-white/20 transition-all shadow-xl"
-                >
-                  <Users className="w-12 h-12 text-white/60" />
-                </div>
-              ))}
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-slate-900 mb-6 leading-tight">
+              Chào mừng đến với{" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">
+                ChemXLab
+              </span>
+            </h1>
+
+            <p className="text-lg md:text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed mb-8">
+              ChemXLab là nền tảng tiên phong ứng dụng công nghệ thực tế ảo và mô phỏng 3D vào giáo dục Hóa học.
+              Chúng tôi tin rằng việc trực quan hóa kiến thức sẽ mở ra cánh cửa mới cho thế hệ nhà khoa học tương lai.
+            </p>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link
+                to="/labtest"
+                className="w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-blue-600/30 hover:shadow-xl flex items-center justify-center gap-2"
+              >
+                <FlaskConical className="w-5 h-5" />
+                Trải nghiệm ngay
+              </Link>
+              <Link
+                to="/library"
+                className="w-full sm:w-auto px-8 py-4 bg-white hover:bg-slate-50 text-slate-700 border-2 border-slate-200 font-bold rounded-xl transition-all flex items-center justify-center gap-2"
+              >
+                Khám phá thư viện
+                <ArrowRight className="w-5 h-5" />
+              </Link>
             </div>
           </div>
         </div>
+      </section>
 
-        {/* Stats Section */}
-        <div className="grid md:grid-cols-4 gap-6 mb-16">
-          {[
-            { number: "10,000+", label: "Người dùng" },
-            { number: "500+", label: "Thí nghiệm" },
-            { number: "50+", label: "Chuyên gia" },
-            { number: "99%", label: "Hài lòng" },
-          ].map((stat, i) => (
-            <div
-              key={i}
-              className="text-center bg-white rounded-2xl p-6 shadow-lg border border-slate-100 hover:border-blue-400 hover:shadow-xl transition-all"
-            >
-              <div className="text-4xl font-bold text-blue-600 mb-2">
-                {stat.number}
+      {/* Stats Section */}
+      <section className="py-12 border-y border-slate-100 bg-white">
+        <div className="container mx-auto px-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            {[
+              { number: "10,000+", label: "Học sinh sử dụng", icon: <Users className="w-5 h-5" /> },
+              { number: "500+", label: "Thí nghiệm mô phỏng", icon: <Beaker className="w-5 h-5" /> },
+              { number: "50+", label: "Trường học tin dùng", icon: <GraduationCap className="w-5 h-5" /> },
+              { number: "4.9/5", label: "Đánh giá trung bình", icon: <Star className="w-5 h-5" /> },
+            ].map((stat, i) => (
+              <div key={i} className="group">
+                <div className="flex items-center justify-center gap-2 text-blue-600 mb-2">
+                  {stat.icon}
+                </div>
+                <div className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-1 group-hover:text-blue-600 transition-colors">
+                  {stat.number}
+                </div>
+                <div className="text-sm font-medium text-slate-500">{stat.label}</div>
               </div>
-              <div className="text-slate-500 font-semibold">{stat.label}</div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      </section>
+
+      {/* Mission, Vision, Values */}
+      <section className="py-20 bg-slate-50">
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-14">
+            <h2 className="text-blue-600 font-bold tracking-widest uppercase text-sm mb-3">
+              Giá trị cốt lõi
+            </h2>
+            <h3 className="text-3xl md:text-4xl font-extrabold text-slate-900">
+              Sứ mệnh & Tầm nhìn
+            </h3>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {[
+              {
+                icon: <Target className="w-7 h-7" />,
+                title: "Sứ mệnh",
+                desc: "Phổ cập kiến thức Hóa học thông qua công nghệ tiên tiến, giúp mọi học sinh tiếp cận khoa học một cách trực quan và thú vị nhất.",
+                color: "bg-blue-100 text-blue-600",
+                borderColor: "hover:border-blue-300",
+              },
+              {
+                icon: <Globe className="w-7 h-7" />,
+                title: "Tầm nhìn",
+                desc: "Trở thành nền tảng giáo dục STEM hàng đầu Đông Nam Á, xây dựng thế hệ nhà khoa học yêu thích khám phá và sáng tạo.",
+                color: "bg-cyan-100 text-cyan-600",
+                borderColor: "hover:border-cyan-300",
+              },
+              {
+                icon: <Heart className="w-7 h-7" />,
+                title: "Giá trị",
+                desc: "Sáng tạo không ngừng, Chính xác trong từng chi tiết, và Đam mê truyền cảm hứng học tập cho mọi người.",
+                color: "bg-emerald-100 text-emerald-600",
+                borderColor: "hover:border-emerald-300",
+              },
+            ].map((item, i) => (
+              <div
+                key={i}
+                className={`bg-white rounded-2xl p-8 border-2 border-slate-100 ${item.borderColor} shadow-sm hover:shadow-xl transition-all duration-300 group`}
+              >
+                <div className={`w-14 h-14 rounded-xl ${item.color} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
+                  {item.icon}
+                </div>
+                <h4 className="text-xl font-bold text-slate-900 mb-3">{item.title}</h4>
+                <p className="text-slate-600 leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Why Choose Us - Bento Grid */}
+      <section className="py-20 bg-white">
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-14">
+            <h2 className="text-blue-600 font-bold tracking-widest uppercase text-sm mb-3">
+              Tại sao chọn ChemXLab?
+            </h2>
+            <h3 className="text-3xl md:text-4xl font-extrabold text-slate-900">
+              Trải nghiệm học tập khác biệt
+            </h3>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+            {/* Large Card - Dark accent */}
+            <div className="md:col-span-2 bg-[#0F172A] rounded-3xl p-8 text-white relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl"></div>
+              <div className="relative z-10">
+                <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center mb-6 backdrop-blur border border-blue-400/30">
+                  <Rocket className="w-6 h-6 text-blue-300" />
+                </div>
+                <h4 className="text-2xl font-bold mb-3">Học qua trải nghiệm thực tế</h4>
+                <p className="text-slate-300 leading-relaxed max-w-lg">
+                  Không còn học thuộc lòng khô khan! ChemXLab cho phép học sinh tự tay thực hiện thí nghiệm,
+                  quan sát phản ứng và hiểu sâu bản chất hóa học thông qua mô phỏng 3D sinh động.
+                </p>
+              </div>
+              <Beaker className="absolute -bottom-10 -right-10 w-48 h-48 text-blue-500/10 group-hover:text-blue-500/20 transition-colors" />
+            </div>
+
+            {/* Small Cards - White */}
+            <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm hover:shadow-xl transition-all group">
+              <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600 mb-6">
+                <CheckCircle2 className="w-6 h-6" />
+              </div>
+              <h4 className="text-xl font-bold text-slate-900 mb-2">An toàn 100%</h4>
+              <p className="text-slate-600">Không lo hóa chất độc hại hay tai nạn phòng thí nghiệm</p>
+            </div>
+
+            <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm hover:shadow-xl transition-all group">
+              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 mb-6">
+                <Lightbulb className="w-6 h-6" />
+              </div>
+              <h4 className="text-xl font-bold text-slate-900 mb-2">AI Thông minh</h4>
+              <p className="text-slate-600">Trợ lý AI hỗ trợ giải đáp thắc mắc 24/7</p>
+            </div>
+
+            <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm hover:shadow-xl transition-all group">
+              <div className="w-12 h-12 bg-cyan-100 rounded-xl flex items-center justify-center text-cyan-600 mb-6">
+                <BookOpen className="w-6 h-6" />
+              </div>
+              <h4 className="text-xl font-bold text-slate-900 mb-2">Theo chương trình</h4>
+              <p className="text-slate-600">Nội dung phù hợp chương trình THCS & THPT Việt Nam</p>
+            </div>
+
+            <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm hover:shadow-xl transition-all group">
+              <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center text-amber-600 mb-6">
+                <Zap className="w-6 h-6" />
+              </div>
+              <h4 className="text-xl font-bold text-slate-900 mb-2">Phản hồi tức thì</h4>
+              <p className="text-slate-600">Kết quả thí nghiệm hiển thị realtime</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Team Section */}
+      <section className="py-20 bg-slate-50">
+        <div className="container mx-auto px-6">
+          <div className="max-w-5xl mx-auto">
+            <div className="bg-white rounded-3xl p-8 md:p-12 shadow-lg border border-slate-100">
+              <div className="grid md:grid-cols-2 gap-12 items-center">
+                <div>
+                  <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-semibold mb-4">
+                    <Users className="w-4 h-4" />
+                    Đội ngũ của chúng tôi
+                  </div>
+                  <h3 className="text-3xl font-extrabold text-slate-900 mb-6">
+                    Những con người đam mê giáo dục
+                  </h3>
+                  <p className="text-slate-600 text-lg mb-8 leading-relaxed">
+                    Đội ngũ ChemXLab bao gồm các chuyên gia hóa học, giáo viên giàu kinh nghiệm và
+                    kỹ sư công nghệ tài năng. Chúng tôi chia sẻ chung một đam mê:
+                    <strong> biến việc học Hóa học thành hành trình khám phá thú vị.</strong>
+                  </p>
+                  <Link
+                    to="/support"
+                    className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-all shadow-lg shadow-blue-600/30"
+                  >
+                    Liên hệ với chúng tôi
+                    <ArrowRight className="w-5 h-5" />
+                  </Link>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  {[
+                    { role: "Chuyên gia Hóa học", color: "bg-blue-50 border-blue-200" },
+                    { role: "Giáo viên THPT", color: "bg-cyan-50 border-cyan-200" },
+                    { role: "Kỹ sư 3D", color: "bg-emerald-50 border-emerald-200" },
+                    { role: "AI Engineer", color: "bg-amber-50 border-amber-200" },
+                  ].map((member, i) => (
+                    <div
+                      key={i}
+                      className={`aspect-square ${member.color} rounded-2xl flex flex-col items-center justify-center border-2 hover:scale-105 transition-all p-4`}
+                    >
+                      <Users className="w-10 h-10 text-slate-400 mb-3" />
+                      <span className="text-sm font-semibold text-slate-700 text-center">{member.role}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section - Dark accent */}
+      <section className="py-20 bg-[#0F172A] relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/20 rounded-full blur-[120px]"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-cyan-500/10 rounded-full blur-[100px]"></div>
+
+        <div className="container mx-auto px-6 relative z-10 text-center">
+          <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-6">
+            Sẵn sàng bắt đầu hành trình?
+          </h2>
+          <p className="text-slate-300 text-lg max-w-2xl mx-auto mb-10">
+            Tham gia cùng hàng nghìn học sinh đang khám phá thế giới Hóa học một cách trực quan và thú vị mỗi ngày.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link
+              to="/register"
+              className="w-full sm:w-auto px-10 py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition-all shadow-[0_0_20px_rgba(37,99,235,0.4)] hover:shadow-[0_0_30px_rgba(37,99,235,0.6)]"
+            >
+              Đăng ký miễn phí
+            </Link>
+            <Link
+              to="/experience"
+              className="w-full sm:w-auto px-10 py-4 border border-slate-600 text-white font-bold rounded-xl hover:bg-slate-800 transition-all"
+            >
+              Xem các gói dịch vụ
+            </Link>
+          </div>
+        </div>
+      </section>
     </div>
   );
 };
