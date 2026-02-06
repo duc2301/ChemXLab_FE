@@ -95,7 +95,7 @@ const LoginPage = () => {
           <div className="space-y-1.5">
             <div className="flex justify-between items-center">
               <label className="text-sm font-medium text-gray-700">Password</label>
-              <a href="#" className="text-xs font-semibold text-gray-900 hover:underline">Forgot password?</a>
+              <Link to="/forgot-password" className="text-xs font-semibold text-gray-900 hover:underline">Forgot password?</Link>
             </div>
             <div className="relative">
               <input
