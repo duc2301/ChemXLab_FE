@@ -20,3 +20,32 @@ export interface JwtDecode {
     AvatarUrl: string;
     "http://schemas.microsoft.com/ws/2008/06/identity/claims/role": string;
 }
+export interface ForgotPasswordRequestDTO {
+  email: string;
+}
+
+export interface VerifyOtpDTO {
+  email: string;
+  otpCode: string;
+}
+
+export interface ResetPasswordDTO {
+  email: string;
+  otpCode: string;
+  newPassword: string;
+  confirmPassword?: string; 
+}
+
+export interface ChangePasswordDTO {
+  oldPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+export interface UserProfileDTO {
+  id: string;
+  fullName: string;
+  email: string;
+  role: string;
+  avatarUrl: string;
+}
