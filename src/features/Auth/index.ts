@@ -59,3 +59,51 @@ export const DecodeJwt = async (token: string): Promise<JwtDecode | null> => {
     return null;
   }
 }
+
+export const SendOtp = async (email: string): Promise<boolean> => {
+  try {
+    const response = await api.post("Auth/forgot-password", { email });
+    const data: ResponseDTO<null> = response.data;
+    
+    if (data.isSuccess) {
+      message.success("Mã OTP đã được gửi đến email của bạn. Vui lòng kiểm tra!");
+      return true;
+    } else {
+      message.error(data.message || "Không thể gửi OTP. Vui lòng thử lại.");
+      return false;
+    }
+  } catch (error: any) {
+    const errorMsg = error.response?.data?.message || "Lỗi kết nối đến server";
+    message.error(errorMsg);
+    return false;
+  }
+};
+
+export const verifyOtp = async (email: string, otpCode: string): Promise<boolean> => {
+  try {
+    const response = await api.post("Auth/verify-otp", { email, otpCode });
+    const data: ResponseDTO<boolean> = response.data;
+    return data.isSuccess;
+  } catch (error) {
+    return false;
+  }
+};
+
+export const ResetPassword = async (payload: any): Promise<boolean> => {
+  try {
+    const response = await api.post("Auth/reset-password", payload);
+    const data: ResponseDTO<null> = response.data;
+
+    if (data.isSuccess) {
+      message.success("Đổi mật khẩu thành công! Vui lòng đăng nhập lại.");
+      return true;
+    } else {
+      message.error(data.message || "Đổi mật khẩu thất bại.");
+      return false;
+    }
+  } catch (error: any) {
+    const errorMsg = error.response?.data?.message || "Mã OTP không đúng hoặc đã hết hạn.";
+    message.error(errorMsg);
+    return false;
+  }
+};
