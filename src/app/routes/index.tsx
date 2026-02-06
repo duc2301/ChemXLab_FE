@@ -8,16 +8,17 @@ import AdminUsers from "../../pages/Admin/Users";
 import LoginPage from "../../pages/Auth/Login";
 import RegisterPage from "../../pages/Auth/Register";
 import BlogPage from "../../pages/Blog";
+import ChatbotPage from "../../pages/Chatbot";
 import ExperiencePage from "../../pages/Experience";
 import HomePage from "../../pages/Home";
 import LabPage from "../../pages/Lab";
 import LabTest from "../../pages/Lab/Temp";
 import LibraryPage from "../../pages/Library";
 import GradeDetail from "../../pages/Library/GradeDetail";
+import PaymentPage from "../../pages/Payment";
 import PeriodicTablePage from "../../pages/PeriodicTable";
 import ProductsPage from "../../pages/Products";
 import SupportPage from "../../pages/Support";
-import PaymentPage from "../../pages/Payment";
 
 export const AppRoutes = () => {
   return (
@@ -38,6 +39,7 @@ export const AppRoutes = () => {
       <Route path="login" element={<LoginPage />} />
       <Route path="register" element={<RegisterPage />} />
       <Route path="payment" element={<PaymentPage />} />
+      <Route path="chatbot" element={<ChatbotPage />} />
 
       {/* Admin Routes */}
       <Route path="/admin" element={<AdminLayout />}>
