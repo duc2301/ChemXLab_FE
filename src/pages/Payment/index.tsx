@@ -1,11 +1,27 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import type { Payment } from '../../entities/Payment';
+import { initPaymentSignal } from '../../shared/SignalR';
 
 
 const PaymentPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
+
+useEffect(() => {
+  const setup = async () => {
+    await initPaymentSignal(() => {
+      console.log("Payment success received!");
+      navigate("/paymentSuccess");
+    });
+  };
+
+  setup();
+
+  return () => {
+  };
+}, []);
+
   
   // Lấy dữ liệu payment từ state đã truyền sang
   const paymentData = location.state?.paymentData as Payment;
