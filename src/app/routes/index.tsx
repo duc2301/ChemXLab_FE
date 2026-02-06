@@ -19,6 +19,7 @@ import PaymentPage from "../../pages/Payment";
 import PeriodicTablePage from "../../pages/PeriodicTable";
 import ProductsPage from "../../pages/Products";
 import SupportPage from "../../pages/Support";
+import ForgotPasswordPage from "../../pages/Auth/ForgotPassword";
 
 export const AppRoutes = () => {
   return (
@@ -37,6 +38,7 @@ export const AppRoutes = () => {
       <Route path="labtest" element={<LabTest />} />
       <Route path="periodic-table" element={<PeriodicTablePage />} />
       <Route path="login" element={<LoginPage />} />
+      <Route path="forgot-password" element={<ForgotPasswordPage />} />
       <Route path="register" element={<RegisterPage />} />
       <Route path="payment" element={<PaymentPage />} />
       <Route path="chatbot" element={<ChatbotPage />} />
