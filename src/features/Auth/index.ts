@@ -12,9 +12,10 @@ export const Login = async (LoginData: LoginForm): Promise<boolean | null> => {
     localStorage.setItem("jwtToken", data.result);
     const decodedToken = await DecodeJwt(data.result);
     if (decodedToken) {
-      localStorage.setItem("AvatarUrl", decodedToken.AvatarUrl);
-      localStorage.setItem("Role", decodedToken.Role);
+      localStorage.setItem("AvatarUrl", decodedToken.AvatarUrl || "");
+      localStorage.setItem("Role", decodedToken["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] || "");
       localStorage.setItem("Email", decodedToken.email);
+      localStorage.setItem("UserId", decodedToken.UserId || "");
     }
     message.success("Login successful");
     return data.isSuccess;

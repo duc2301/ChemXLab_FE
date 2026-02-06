@@ -30,9 +30,9 @@ const LoginPage = () => {
 
     const result: boolean | null = await Login(loginData);
     if (result) {
-      // Check if user is ADMIN and redirect accordingly
+      // Check if user is ADMIN and redirect accordingly (case-insensitive)
       const role = localStorage.getItem("Role");
-      if (role === "ADMIN") {
+      if (role?.toUpperCase() === "ADMIN") {
         navigate('/admin');
       } else {
         navigate('/');
