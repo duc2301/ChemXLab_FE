@@ -74,3 +74,12 @@ export interface Transaction {
     status: 'pending' | 'completed' | 'failed' | 'refunded';
     createdAt: string;
 }
+
+export interface CreateUserForm {
+    fullName: string;
+    email: string;
+    password: string;
+    confirmPassword: string; 
+    role: string;
+    avatarUrl?: string;
+}
