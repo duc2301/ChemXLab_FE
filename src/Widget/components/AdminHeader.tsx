@@ -1,15 +1,10 @@
 import { Search, User } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { getAdminEmail } from "../../features/Admin";
-import { Logout } from "../../features/Auth";
 
 const AdminHeader = () => {
-    const navigate = useNavigate();
     const [showDropdown, setShowDropdown] = useState(false);
-    const [showNotifications, setShowNotifications] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
-    const notificationRef = useRef<HTMLDivElement>(null);
 
     const adminEmail = getAdminEmail() || "admin@chemxlab.com";
     const avatarUrl = localStorage.getItem("AvatarUrl");
@@ -19,25 +14,11 @@ const AdminHeader = () => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
                 setShowDropdown(false);
             }
-            if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
-                setShowNotifications(false);
-            }
         };
 
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
-
-    const handleLogout = () => {
-        Logout();
-        navigate("/login");
-    };
-
-    const notifications = [
-        { id: 1, text: "Người dùng mới đã đăng ký", time: "5 phút trước" },
-        { id: 2, text: "Thanh toán mới đã hoàn thành", time: "15 phút trước" },
-        { id: 3, text: "Có báo cáo lỗi mới", time: "1 giờ trước" },
-    ];
 
     return (
         <header className="h-16 bg-white shadow-sm border-b border-gray-200 flex items-center justify-between px-6 sticky top-0 z-40">
