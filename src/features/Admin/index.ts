@@ -4,6 +4,7 @@
 import { message } from "antd";
 import type {
     CreatePackageForm,
+    CreateUserForm,
     DashboardStats,
     MonthlyRevenue,
     PackageAdmin,
@@ -70,46 +71,63 @@ export const getDashboardStats = async (
 };
 
 // ============== USER MANAGEMENT API ==============
-// GET /api/User/GetAllUsers
+
+// 1. Lấy danh sách (GET /api/User/GetAllUsers)
 export const getAllUsers = async (): Promise<UserAdmin[]> => {
     try {
         const response = await api.get<ResponseDTO<UserAdmin[]>>("User/GetAllUsers");
         if (response.data.isSuccess) {
             return response.data.result;
         }
-        message.error(response.data.message || "Không thể tải danh sách người dùng");
         return [];
     } catch (error) {
         console.error("Failed to fetch users:", error);
-        message.error("Không thể tải danh sách người dùng");
         return [];
     }
 };
 
-// Update user - API chưa có, placeholder
-export const updateUser = async (_id: string, _data: { fullName: string; role: string }): Promise<boolean> => {
+// 2. Tạo User mới (POST /api/User)
+export const createUser = async (data: CreateUserForm): Promise<boolean> => {
     try {
-        // TODO: Replace with real API when available
-        // const response = await api.put<ResponseDTO<UserAdmin>>(`User/${id}`, data);
-        message.info("API cập nhật user chưa sẵn sàng");
+        // Chuẩn bị dữ liệu gửi lên (Payload)
+        const payload = {
+            email: data.email,
+            password: data.password,
+            fullName: data.fullName,
+            avatarUrl: data.avatarUrl || null,
+            role: data.role
+        };
+
+        const response = await api.post<ResponseDTO<UserAdmin>>("User", payload);
+        
+        if (response.data.isSuccess) {
+            message.success("Tạo người dùng thành công");
+            return true;
+        }
+        message.error(response.data.message || "Tạo thất bại");
         return false;
-    } catch (error) {
-        console.error("Failed to update user:", error);
-        message.error("Cập nhật người dùng thất bại");
+    } catch (error: any) {
+        console.error("Create User Error:", error);
+        
+        const serverError = error.response?.data?.errors?.[0]?.message || error.response?.data?.message;
+        message.error(serverError || "Lỗi khi tạo người dùng");
         return false;
     }
 };
 
-// Delete user - API chưa có, placeholder
-export const deleteUser = async (_userId: string): Promise<boolean> => {
+// 3. Xóa User (DELETE /api/User/{id})
+export const deleteUser = async (userId: string): Promise<boolean> => {
     try {
-        // TODO: Replace with real API when available
-        // const response = await api.delete<ResponseDTO<null>>(`User/${userId}`);
-        message.info("API xóa user chưa sẵn sàng");
+        const response = await api.delete<ResponseDTO<null>>(`User/${userId}`);
+        if (response.data.isSuccess) {
+            message.success("Đã xóa người dùng");
+            return true;
+        }
+        message.error(response.data.message || "Xóa thất bại");
         return false;
     } catch (error) {
         console.error("Failed to delete user:", error);
-        message.error("Xóa người dùng thất bại");
+        message.error("Lỗi khi xóa người dùng");
         return false;
     }
 };
