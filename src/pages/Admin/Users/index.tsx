@@ -1,299 +1,318 @@
 import {
     Eye,
     Filter,
+    Plus,
     Search,
+    Trash2,
     Users as UsersIcon,
     X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import type { UserAdmin } from "../../../entities/Admin";
-import { getAllUsers } from "../../../features/Admin";
+import type { CreateUserForm, UserAdmin } from "../../../entities/Admin";
+import { createUser, deleteUser, getAllUsers } from "../../../features/Admin";
 
-// Role Badge
+// --- Sub-components ---
+
 const RoleBadge = ({ role }: { role: string }) => {
+    const normalizedRole = role ? role.charAt(0).toUpperCase() + role.slice(1).toLowerCase() : "Unknown";
     const styles: Record<string, string> = {
-        ADMIN: "bg-purple-100 text-purple-700",
-        TEACHER: "bg-blue-100 text-blue-700",
-        STUDENT: "bg-green-100 text-green-700",
+        Admin: "bg-purple-100 text-purple-700 border-purple-200",
+        Teacher: "bg-blue-100 text-blue-700 border-blue-200",
+        Student: "bg-green-100 text-green-700 border-green-200",
     };
 
     return (
-        <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${styles[role] || "bg-gray-100 text-gray-700"}`}>
-            {role}
+        <span className={`px-3 py-1 rounded-full text-xs font-medium border ${styles[normalizedRole] || "bg-gray-100 text-gray-700"}`}>
+            {normalizedRole}
         </span>
     );
 };
 
-// Format date
 const formatDate = (dateStr: string | null) => {
     if (!dateStr) return "N/A";
     return new Date(dateStr).toLocaleDateString("vi-VN", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
+        day: "2-digit", month: "2-digit", year: "numeric"
     });
 };
 
-// View User Modal
-interface ViewModalProps {
-    user: UserAdmin;
-    onClose: () => void;
-}
+// --- Modal Tạo Mới User ---
+const CreateUserModal = ({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) => {
+    const [formData, setFormData] = useState<CreateUserForm>({
+        fullName: "", email: "", password: "", confirmPassword: "", role: "STUDENT"
+    });
+    const [loading, setLoading] = useState(false);
 
-const ViewUserModal = ({ user, onClose }: ViewModalProps) => {
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (formData.password !== formData.confirmPassword) {
+            alert("Mật khẩu xác nhận không khớp!");
+            return;
+        }
+        setLoading(true);
+        const success = await createUser(formData);
+        setLoading(false);
+        if (success) onSuccess();
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fadeIn">
+            <div className="bg-white rounded-xl w-full max-w-lg p-6 shadow-2xl relative">
+                <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+                    <X size={24} />
+                </button>
+                <h2 className="text-xl font-bold text-gray-800 mb-6">Thêm người dùng mới</h2>
+                
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Họ và tên</label>
+                        <input required type="text" className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                            placeholder="Nguyễn Văn A"
+                            value={formData.fullName} onChange={e => setFormData({ ...formData, fullName: e.target.value })} />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <input required type="email" className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                            placeholder="example@email.com"
+                            value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Mật khẩu</label>
+                            <input required type="password" className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Xác nhận MK</label>
+                            <input required type="password" className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                value={formData.confirmPassword} onChange={e => setFormData({ ...formData, confirmPassword: e.target.value })} />
+                        </div>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Vai trò</label>
+                        <select className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                            value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })}>
+                            <option value="Student">Học sinh (STUDENT)</option>
+                            <option value="Teacher">Giáo viên (TEACHER)</option>
+                            <option value="Admin">Quản trị viên (ADMIN )</option>
+                        </select>
+                    </div>
+                    <div className="pt-4">
+                        <button type="submit" disabled={loading}
+                            className="w-full py-2.5 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-all disabled:bg-gray-400">
+                            {loading ? "Đang xử lý..." : "Tạo tài khoản"}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+};
+
+// --- Modal Xem Chi Tiết ---
+const ViewUserModal = ({ user, onClose }: { user: UserAdmin; onClose: () => void }) => {
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl">
-                <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xl font-semibold text-gray-900">Chi tiết người dùng</h2>
-                    <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                        <X size={20} className="text-gray-500" />
-                    </button>
-                </div>
-
-                <div className="space-y-4">
-                    {/* Avatar */}
-                    <div className="flex justify-center">
+            <div className="bg-white rounded-xl w-full max-w-sm p-6 shadow-xl relative">
+                <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><X size={20} /></button>
+                <div className="flex flex-col items-center pt-4">
+                    <div className="w-24 h-24 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 text-3xl font-bold mb-4 overflow-hidden border-4 border-white shadow-lg">
                         {user.avatarUrl ? (
-                            <img
-                                src={user.avatarUrl}
-                                alt={user.fullName}
-                                className="w-20 h-20 rounded-full object-cover"
-                            />
+                            <img src={user.avatarUrl} alt={user.fullName} className="w-full h-full object-cover" />
                         ) : (
-                            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-2xl font-semibold">
-                                {user.fullName.charAt(0)}
-                            </div>
+                            user.fullName.charAt(0).toUpperCase()
                         )}
                     </div>
-
-                    {/* Info */}
-                    <div className="space-y-3">
-                        <div className="flex justify-between py-2 border-b border-gray-100">
-                            <span className="text-gray-500">ID</span>
-                            <span className="text-gray-900 font-mono text-sm">{user.id.slice(0, 8)}...</span>
-                        </div>
-                        <div className="flex justify-between py-2 border-b border-gray-100">
-                            <span className="text-gray-500">Họ và tên</span>
-                            <span className="text-gray-900 font-medium">{user.fullName}</span>
-                        </div>
-                        <div className="flex justify-between py-2 border-b border-gray-100">
-                            <span className="text-gray-500">Email</span>
-                            <span className="text-gray-900">{user.email}</span>
-                        </div>
-                        <div className="flex justify-between py-2 border-b border-gray-100">
-                            <span className="text-gray-500">Vai trò</span>
-                            <RoleBadge role={user.role} />
-                        </div>
-                        <div className="flex justify-between py-2">
-                            <span className="text-gray-500">Ngày tạo</span>
-                            <span className="text-gray-900">{formatDate(user.createdAt)}</span>
-                        </div>
-                    </div>
+                    <h3 className="text-xl font-bold text-gray-900">{user.fullName}</h3>
+                    <p className="text-gray-500 text-sm mb-3">{user.email}</p>
+                    <RoleBadge role={user.role} />
                 </div>
-
-                <div className="mt-6">
-                    <button
-                        onClick={onClose}
-                        className="w-full px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
-                    >
-                        Đóng
-                    </button>
+                <div className="mt-6 pt-6 border-t border-gray-100 space-y-3">
+                    <div className="flex justify-between text-sm">
+                        <span className="text-gray-500">User ID</span>
+                        <span className="text-gray-900 font-mono text-xs truncate max-w-[150px]" title={user.id}>{user.id}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                        <span className="text-gray-500">Ngày tham gia</span>
+                        <span className="text-gray-900 font-medium">{formatDate(user.createdAt)}</span>
+                    </div>
                 </div>
             </div>
         </div>
     );
 };
 
+// --- Main Page Component ---
 const AdminUsers = () => {
     const [users, setUsers] = useState<UserAdmin[]>([]);
     const [filteredUsers, setFilteredUsers] = useState<UserAdmin[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const [roleFilter, setRoleFilter] = useState<string>("all");
+    
+    // States cho Modal
+    const [showCreateModal, setShowCreateModal] = useState(false);
     const [viewingUser, setViewingUser] = useState<UserAdmin | null>(null);
 
-    // Fetch users
-    useEffect(() => {
-        const fetchUsers = async () => {
-            const data = await getAllUsers();
-            setUsers(data);
-            setFilteredUsers(data);
-            setIsLoading(false);
-        };
+    // Fetch dữ liệu
+    const fetchUsers = async () => {
+        setIsLoading(true);
+        const data = await getAllUsers();
+        setUsers(data);
+        setFilteredUsers(data);
+        setIsLoading(false);
+    };
 
+    useEffect(() => {
         fetchUsers();
     }, []);
 
-    // Filter users
+    // Xử lý Filter & Search
     useEffect(() => {
         let result = users;
-
-        // Search filter
         if (searchQuery) {
-            result = result.filter(
-                (user) =>
-                    user.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    user.email.toLowerCase().includes(searchQuery.toLowerCase())
-            );
+            const query = searchQuery.toLowerCase();
+            result = result.filter(u => u.fullName?.toLowerCase().includes(query) || u.email?.toLowerCase().includes(query));
         }
-
-        // Role filter
         if (roleFilter !== "all") {
-            result = result.filter((user) => user.role === roleFilter);
+            result = result.filter(u => u.role?.toLowerCase() === roleFilter.toLowerCase());
         }
-
         setFilteredUsers(result);
     }, [users, searchQuery, roleFilter]);
 
-    // Get unique roles
-    const roles = Array.from(new Set(users.map((u) => u.role)));
+    // Xử lý Xóa
+    const handleDelete = async (id: string) => {
+        if (window.confirm("Bạn có chắc chắn muốn xóa người dùng này không? Hành động này không thể hoàn tác.")) {
+            const success = await deleteUser(id);
+            if (success) {
+                // Cập nhật UI ngay lập tức
+                setUsers(prev => prev.filter(u => u.id !== id));
+            }
+        }
+    };
 
-    if (isLoading) {
-        return (
-            <div className="flex items-center justify-center h-[calc(100vh-120px)]">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-                    <p className="text-gray-500">Đang tải dữ liệu...</p>
-                </div>
-            </div>
-        );
-    }
+    if (isLoading) return (
+        <div className="flex justify-center items-center h-[60vh] gap-3">
+            <div className="w-6 h-6 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+            <span className="text-gray-500 font-medium">Đang tải dữ liệu...</span>
+        </div>
+    );
 
     return (
-        <div className="space-y-6">
-            {/* Page Header */}
-            <div className="flex items-center justify-between">
+        <div className="space-y-6 p-6">
+            {/* Header Section */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">Quản lý người dùng</h1>
-                    <p className="text-gray-500 mt-1">Xem danh sách tất cả người dùng trong hệ thống</p>
+                    <p className="text-gray-500 text-sm mt-1">
+                        Tổng số: <span className="font-semibold text-indigo-600">{users.length}</span> tài khoản
+                    </p>
                 </div>
-                <div className="flex items-center gap-2 px-4 py-2 bg-indigo-50 rounded-lg">
-                    <UsersIcon size={20} className="text-indigo-600" />
-                    <span className="text-indigo-600 font-semibold">{users.length} người dùng</span>
-                </div>
+                <button 
+                    onClick={() => setShowCreateModal(true)}
+                    className="flex items-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-xl hover:bg-indigo-700 transition shadow-sm font-medium"
+                >
+                    <Plus size={20} /> Thêm người dùng
+                </button>
             </div>
 
-            {/* Filters */}
-            <div className="bg-white rounded-2xl p-4 shadow-sm">
-                <div className="flex flex-col md:flex-row gap-4">
-                    {/* Search */}
-                    <div className="flex-1 relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                        <input
-                            type="text"
-                            placeholder="Tìm kiếm theo tên hoặc email..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                        />
-                    </div>
-
-                    {/* Role Filter */}
-                    <div className="flex items-center gap-2">
-                        <Filter size={18} className="text-gray-400" />
+            {/* Filter Bar */}
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 flex flex-col md:flex-row gap-4">
+                <div className="flex-1 relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                    <input
+                        type="text"
+                        placeholder="Tìm kiếm theo tên, email..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
+                    />
+                </div>
+                <div className="flex items-center gap-2 min-w-[200px]">
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-2.5 flex items-center">
+                        <Filter size={18} className="text-gray-400 mr-2" />
                         <select
                             value={roleFilter}
                             onChange={(e) => setRoleFilter(e.target.value)}
-                            className="px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                            className="bg-transparent outline-none text-gray-700 text-sm font-medium cursor-pointer w-full"
                         >
                             <option value="all">Tất cả vai trò</option>
-                            {roles.map((role) => (
-                                <option key={role} value={role}>{role}</option>
-                            ))}
+                            <option value="Admin">Admin</option>
+                            <option value="Teacher">Teacher</option>
+                            <option value="Student">Student</option>
                         </select>
                     </div>
                 </div>
             </div>
 
-            {/* Users Table */}
-            <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+            {/* Table */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full">
-                        <thead className="bg-gray-50">
+                        <thead className="bg-gray-50/80 border-b border-gray-200">
                             <tr>
-                                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                    Người dùng
-                                </th>
-                                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                    Vai trò
-                                </th>
-                                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                    Ngày tạo
-                                </th>
-                                <th className="text-right py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                    Hành động
-                                </th>
+                                <th className="text-left py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Người dùng</th>
+                                <th className="text-left py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Vai trò</th>
+                                <th className="text-left py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Ngày tạo</th>
+                                <th className="text-right py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Thao tác</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            {filteredUsers.map((user) => (
-                                <tr key={user.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                                    <td className="py-4 px-6">
-                                        <div className="flex items-center gap-3">
-                                            {user.avatarUrl ? (
-                                                <img
-                                                    src={user.avatarUrl}
-                                                    alt={user.fullName}
-                                                    className="w-10 h-10 rounded-full object-cover"
-                                                />
-                                            ) : (
-                                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-semibold">
-                                                    {user.fullName.charAt(0)}
+                        <tbody className="divide-y divide-gray-100">
+                            {filteredUsers.length > 0 ? (
+                                filteredUsers.map((user) => (
+                                    <tr key={user.id} className="hover:bg-indigo-50/30 transition-colors group">
+                                        <td className="py-4 px-6">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                                                    {user.avatarUrl ? (
+                                                        <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <span className="text-gray-500 font-bold">{user.fullName?.charAt(0)}</span>
+                                                    )}
                                                 </div>
-                                            )}
-                                            <div>
-                                                <p className="font-medium text-gray-900">{user.fullName}</p>
-                                                <p className="text-sm text-gray-500">{user.email}</p>
+                                                <div>
+                                                    <p className="font-medium text-gray-900 group-hover:text-indigo-600 transition-colors">{user.fullName}</p>
+                                                    <p className="text-xs text-gray-500">{user.email}</p>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </td>
-                                    <td className="py-4 px-6">
-                                        <RoleBadge role={user.role} />
-                                    </td>
-                                    <td className="py-4 px-6">
-                                        <span className="text-sm text-gray-600">{formatDate(user.createdAt)}</span>
-                                    </td>
-                                    <td className="py-4 px-6">
-                                        <div className="flex items-center justify-end gap-2">
-                                            <button
-                                                onClick={() => setViewingUser(user)}
-                                                className="p-2 hover:bg-indigo-50 rounded-lg transition-colors"
-                                                title="Xem chi tiết"
-                                            >
-                                                <Eye size={16} className="text-indigo-600" />
-                                            </button>
-                                        </div>
+                                        </td>
+                                        <td className="py-4 px-6"><RoleBadge role={user.role} /></td>
+                                        <td className="py-4 px-6 text-sm text-gray-600">{formatDate(user.createdAt)}</td>
+                                        <td className="py-4 px-6 text-right">
+                                            <div className="flex items-center justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
+                                                <button onClick={() => setViewingUser(user)} className="p-2 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-all" title="Xem chi tiết">
+                                                    <Eye size={18} />
+                                                </button>
+                                                <button onClick={() => handleDelete(user.id)} className="p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-all" title="Xóa người dùng">
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan={4} className="py-12 text-center text-gray-500">
+                                        <UsersIcon size={48} className="mx-auto mb-3 text-gray-300" />
+                                        <p>Không tìm thấy người dùng phù hợp</p>
                                     </td>
                                 </tr>
-                            ))}
+                            )}
                         </tbody>
                     </table>
                 </div>
-
-                {/* Empty State */}
-                {filteredUsers.length === 0 && (
-                    <div className="text-center py-12">
-                        <UsersIcon size={48} className="text-gray-300 mx-auto mb-4" />
-                        <p className="text-gray-500">Không tìm thấy người dùng nào</p>
-                    </div>
-                )}
-
-                {/* Pagination Info */}
-                <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
-                    <p className="text-sm text-gray-500">
-                        Hiển thị {filteredUsers.length} trên {users.length} người dùng
-                    </p>
-                </div>
             </div>
 
-            {/* View Modal */}
+            {/* Render Modals */}
+            {showCreateModal && (
+                <CreateUserModal 
+                    onClose={() => setShowCreateModal(false)} 
+                    onSuccess={() => { setShowCreateModal(false); fetchUsers(); }} 
+                />
+            )}
             {viewingUser && (
-                <ViewUserModal
-                    user={viewingUser}
-                    onClose={() => setViewingUser(null)}
+                <ViewUserModal 
+                    user={viewingUser} 
+                    onClose={() => setViewingUser(null)} 
                 />
             )}
         </div>
