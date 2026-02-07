@@ -16,17 +16,21 @@ const RegisterPage = () => {
 
   const handleRegister = async () => {
     if (!registerData?.email || !registerData?.passwordHash || !registerData?.fullName || !registerData?.confirmPassword) {
-      message.warning("Please enter all fields");
+      message.warning("Vui lòng điền đầy đủ thông tin");
       return;
     }
 
     if (registerData.passwordHash !== registerData.confirmPassword) {
-      message.warning("Passwords do not match");
+      message.warning("Mật khẩu xác nhận không khớp");
       return;
     }
 
     setIsLoading(true);
-    await register(registerData);
+    try {
+      await register(registerData);
+    } finally {
+      setIsLoading(false);
+    }
   }
 
 
@@ -51,7 +55,7 @@ const RegisterPage = () => {
             className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all text-gray-500 hover:bg-gray-50`}
           >
             <LogIn size={18} />
-            Login
+            Đăng nhập
           </button>
           <button
             onClick={() => navigate('/register')}
@@ -59,16 +63,16 @@ const RegisterPage = () => {
             className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all bg-gray-100 font-semibold text-gray-900`}
           >
             <UserPlus size={18} />
-            Sign Up
+            Đăng ký
           </button>
         </div>
 
         <div className="space-y-5" onKeyDown={handleKeyDown}>
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-gray-700">Email address</label>
+            <label className="text-sm font-medium text-gray-700">Địa chỉ email</label>
             <input
               type="email"
-              placeholder="Enter your email address"
+              placeholder="Nhập địa chỉ email của bạn"
               required
               value={registerData?.email}
               onChange={e => setRegisterData({ ...registerData, email: e.target.value } as RegisterForm)}
@@ -77,10 +81,10 @@ const RegisterPage = () => {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-gray-700">Full Name</label>
+            <label className="text-sm font-medium text-gray-700">Họ và tên</label>
             <input
               type="text"
-              placeholder="Enter your full name"
+              placeholder="Nhập họ và tên của bạn"
               required
               value={registerData?.fullName}
               onChange={e => setRegisterData({ ...registerData, fullName: e.target.value } as RegisterForm)}
@@ -90,13 +94,13 @@ const RegisterPage = () => {
 
           <div className="space-y-1.5">
             <div className="flex justify-between items-center">
-              <label className="text-sm font-medium text-gray-700">Password</label>
-              <a href="#" className="text-xs font-semibold text-gray-900 hover:underline">Forgot password?</a>
+              <label className="text-sm font-medium text-gray-700">Mật khẩu</label>
+              <a href="#" className="text-xs font-semibold text-gray-900 hover:underline">Quên mật khẩu?</a>
             </div>
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
-                placeholder="Enter your password"
+                placeholder="Nhập mật khẩu của bạn"
                 required
                 value={registerData?.passwordHash}
                 onChange={e => setRegisterData({ ...registerData, passwordHash: e.target.value } as RegisterForm)}
@@ -113,10 +117,10 @@ const RegisterPage = () => {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-gray-700">Confirm password</label>
+            <label className="text-sm font-medium text-gray-700">Xác nhận mật khẩu</label>
             <input
               type="password"
-              placeholder="Confirm your password"
+              placeholder="Nhập lại mật khẩu của bạn"
               required
               value={registerData?.confirmPassword}
               onChange={e => setRegisterData({ ...registerData, confirmPassword: e.target.value } as RegisterForm)}
@@ -129,7 +133,7 @@ const RegisterPage = () => {
             disabled={isLoading}
             className={`w-full bg-[#1a1b2e] text-white font-medium py-3.5 rounded-lg hover:bg-[#2e3048] transition-colors mt-2 flex justify-center items-center ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
           >
-            {isLoading ? "Registering..." : "Register"}
+            {isLoading ? "Đang đăng ký..." : "Đăng ký"}
           </button>
         </div>
 
@@ -139,7 +143,7 @@ const RegisterPage = () => {
             <div className="w-full border-t border-gray-200"></div>
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-white px-3 text-gray-400">OR</span>
+            <span className="bg-white px-3 text-gray-400">HOẶC</span>
           </div>
         </div>
 
@@ -147,13 +151,13 @@ const RegisterPage = () => {
         <div className="space-y-3">
           <button className="w-full border border-gray-200 rounded-lg py-3 flex items-center justify-center gap-3 hover:bg-gray-50 transition-colors font-medium text-gray-700 text-sm">
             <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-5 h-5" alt="Google" />
-            Continue with Google
+            Tiếp tục với Google
           </button>
         </div>
 
         {/* Footer */}
         <div className="mt-8 text-center text-sm text-gray-600">
-          You had an account ? <Link to="/login" className="font-semibold text-gray-900 hover:underline decoration-1 underline-offset-2">Login</Link>
+          Đã có tài khoản? <Link to="/login" className="font-semibold text-gray-900 hover:underline decoration-1 underline-offset-2">Đăng nhập</Link>
         </div>
 
         {/* Back to Home */}
