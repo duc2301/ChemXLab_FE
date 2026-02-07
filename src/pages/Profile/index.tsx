@@ -1,7 +1,7 @@
 import { message } from 'antd';
 import { Camera, Loader2, Lock, Mail, Save, ShieldCheck, User, ChevronRight, BadgeCheck } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
-import type { ChangePasswordForm, UpdateProfileForm } from '../../entities/Profile';
+import type { ChangePasswordForm } from '../../entities/Profile';
 import { ChangePassword, GetUserProfile, UpdateProfile, uploadAvatarToFirebase } from '../../features/Profile';
 
 const ProfilePage = () => {
