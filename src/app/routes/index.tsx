@@ -5,6 +5,7 @@ import AboutPage from "../../pages/About";
 import AdminDashboard from "../../pages/Admin/Dashboard";
 import AdminPackages from "../../pages/Admin/Packages";
 import AdminUsers from "../../pages/Admin/Users";
+import ForgotPasswordPage from "../../pages/Auth/ForgotPassword";
 import LoginPage from "../../pages/Auth/Login";
 import RegisterPage from "../../pages/Auth/Register";
 import BlogPage from "../../pages/Blog";
@@ -18,8 +19,8 @@ import GradeDetail from "../../pages/Library/GradeDetail";
 import PaymentPage from "../../pages/Payment";
 import PeriodicTablePage from "../../pages/PeriodicTable";
 import ProductsPage from "../../pages/Products";
+import ProfilePage from "../../pages/Profile";
 import SupportPage from "../../pages/Support";
-import ForgotPasswordPage from "../../pages/Auth/ForgotPassword";
 
 export const AppRoutes = () => {
   return (
@@ -33,6 +34,7 @@ export const AppRoutes = () => {
         <Route path="experience" element={<ExperiencePage />} />
         <Route path="library" element={<LibraryPage />} />
         <Route path="library/:gradeId" element={<GradeDetail />} />
+        <Route path="profile" element={<ProfilePage />} />
       </Route>
       <Route path="lab" element={<LabPage />} />
       <Route path="labtest" element={<LabTest />} />
