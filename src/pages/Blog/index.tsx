@@ -64,7 +64,7 @@ const BlogPage = () => {
                 <span>ChemXLab Blog</span>
               </div>
               <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 mb-4 tracking-tight">
-                News & Insights
+                Tin tức & Góc nhìn
               </h1>
               <p className="text-lg text-slate-500 max-w-lg">
                 Cập nhật tin tức hóa học, công nghệ mới và các nghiên cứu khoa học từ khắp nơi trên thế giới.

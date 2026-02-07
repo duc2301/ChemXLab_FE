@@ -1,5 +1,5 @@
 import { message } from 'antd';
-import { Camera, Loader2, Lock, Mail, Save, ShieldCheck, User, ChevronRight, BadgeCheck } from 'lucide-react';
+import { BadgeCheck, Camera, ChevronRight, Loader2, Lock, Mail, Save, ShieldCheck, User } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import type { ChangePasswordForm } from '../../entities/Profile';
 import { ChangePassword, GetUserProfile, UpdateProfile, uploadAvatarToFirebase } from '../../features/Profile';
@@ -84,12 +84,12 @@ const ProfilePage = () => {
   return (
     <div className="min-h-screen bg-[#f1f5f9] pt-20 pb-12 px-4 sm:px-6 lg:px-8 font-sans">
       <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-700">
-        
+
         {/* Profile Header Card */}
         <div className="relative overflow-hidden bg-white rounded-3xl shadow-xl shadow-indigo-100/50 border border-white p-8">
           {/* Decorative background element */}
           <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 bg-indigo-50 rounded-full blur-3xl opacity-50 pointer-events-none" />
-          
+
           <div className="relative flex flex-col md:flex-row items-center gap-8">
             <div className="relative group">
               <div className="w-32 h-32 rounded-3xl overflow-hidden ring-4 ring-indigo-50 shadow-2xl transition-transform duration-300 group-hover:scale-105">
@@ -98,13 +98,13 @@ const ProfilePage = () => {
                     <Loader2 className="animate-spin text-white" size={32} />
                   </div>
                 )}
-                <img 
-                  src={avatarUrl || `https://ui-avatars.com/api/?name=${fullName || 'User'}&background=6366f1&color=fff`} 
-                  alt="Profile" 
+                <img
+                  src={avatarUrl || `https://ui-avatars.com/api/?name=${fullName || 'User'}&background=6366f1&color=fff`}
+                  alt="Profile"
                   className="w-full h-full object-cover"
                 />
               </div>
-              <button 
+              <button
                 onClick={handleAvatarClick}
                 disabled={uploading}
                 className="absolute -bottom-2 -right-2 p-3 bg-indigo-600 text-white rounded-2xl shadow-xl hover:bg-indigo-700 hover:rotate-12 transition-all active:scale-95"
@@ -120,7 +120,7 @@ const ProfilePage = () => {
                   {user?.fullName || 'Người dùng'}
                 </h1>
                 <span className="flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold uppercase tracking-wider">
-                  <BadgeCheck size={14} /> Verified
+                  <BadgeCheck size={14} /> Đã xác thực
                 </span>
               </div>
               <p className="text-gray-500 flex items-center justify-center md:justify-start gap-2 text-lg">
@@ -146,11 +146,10 @@ const ProfilePage = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`w-full flex items-center justify-between px-5 py-4 rounded-2xl transition-all duration-200 group ${
-                  activeTab === tab.id 
-                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 translate-x-2' 
+                className={`w-full flex items-center justify-between px-5 py-4 rounded-2xl transition-all duration-200 group ${activeTab === tab.id
+                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 translate-x-2'
                   : 'bg-transparent text-gray-600 hover:bg-gray-50'
-                }`}
+                  }`}
               >
                 <div className="flex items-center gap-4">
                   <tab.icon size={20} className={activeTab === tab.id ? 'text-white' : 'text-indigo-500'} />
@@ -170,7 +169,7 @@ const ProfilePage = () => {
                     <h3 className="text-xl font-bold text-gray-900">Cập nhật hồ sơ</h3>
                     <p className="text-gray-500 text-sm mt-1">Thông tin này sẽ được hiển thị công khai trên hệ thống.</p>
                   </div>
-                  
+
                   <form onSubmit={handleUpdateInfo} className="space-y-6">
                     <div className="group space-y-2">
                       <label className="text-sm font-bold text-gray-700 ml-1">Họ và tên</label>
@@ -204,7 +203,7 @@ const ProfilePage = () => {
                     <h3 className="text-xl font-bold text-gray-900">Thay đổi mật khẩu</h3>
                     <p className="text-gray-500 text-sm mt-1">Đảm bảo mật khẩu của bạn có ít nhất 6 ký tự để bảo mật.</p>
                   </div>
-                  
+
                   <form onSubmit={handleChangePassword} className="space-y-5 max-w-md">
                     {[
                       { key: 'currentPassword', label: 'Mật khẩu hiện tại' },
@@ -219,13 +218,13 @@ const ProfilePage = () => {
                             type="password"
                             required
                             value={(passData as any)[f.key]}
-                            onChange={(e) => setPassData({...passData, [f.key]: e.target.value})}
+                            onChange={(e) => setPassData({ ...passData, [f.key]: e.target.value })}
                             className="w-full bg-gray-50 border-none rounded-2xl pl-12 pr-4 py-4 focus:ring-2 focus:ring-green-500 transition-all outline-none"
                           />
                         </div>
                       </div>
                     ))}
-                    
+
                     <div className="pt-4">
                       <button
                         type="submit"

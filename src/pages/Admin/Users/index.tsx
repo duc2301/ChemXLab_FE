@@ -61,7 +61,7 @@ const CreateUserModal = ({ onClose, onSuccess }: { onClose: () => void; onSucces
                     <X size={24} />
                 </button>
                 <h2 className="text-xl font-bold text-gray-800 mb-6">Thêm người dùng mới</h2>
-                
+
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Họ và tên</label>
@@ -128,7 +128,7 @@ const ViewUserModal = ({ user, onClose }: { user: UserAdmin; onClose: () => void
                 </div>
                 <div className="mt-6 pt-6 border-t border-gray-100 space-y-3">
                     <div className="flex justify-between text-sm">
-                        <span className="text-gray-500">User ID</span>
+                        <span className="text-gray-500">Mã người dùng</span>
                         <span className="text-gray-900 font-mono text-xs truncate max-w-[150px]" title={user.id}>{user.id}</span>
                     </div>
                     <div className="flex justify-between text-sm">
@@ -148,7 +148,7 @@ const AdminUsers = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const [roleFilter, setRoleFilter] = useState<string>("all");
-    
+
     // States cho Modal
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [viewingUser, setViewingUser] = useState<UserAdmin | null>(null);
@@ -207,7 +207,7 @@ const AdminUsers = () => {
                         Tổng số: <span className="font-semibold text-indigo-600">{users.length}</span> tài khoản
                     </p>
                 </div>
-                <button 
+                <button
                     onClick={() => setShowCreateModal(true)}
                     className="flex items-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-xl hover:bg-indigo-700 transition shadow-sm font-medium"
                 >
@@ -236,9 +236,9 @@ const AdminUsers = () => {
                             className="bg-transparent outline-none text-gray-700 text-sm font-medium cursor-pointer w-full"
                         >
                             <option value="all">Tất cả vai trò</option>
-                            <option value="Admin">Admin</option>
-                            <option value="Teacher">Teacher</option>
-                            <option value="Student">Student</option>
+                            <option value="Admin">Quản trị viên</option>
+                            <option value="Teacher">Giáo viên</option>
+                            <option value="Student">Học sinh</option>
                         </select>
                     </div>
                 </div>
@@ -304,15 +304,15 @@ const AdminUsers = () => {
 
             {/* Render Modals */}
             {showCreateModal && (
-                <CreateUserModal 
-                    onClose={() => setShowCreateModal(false)} 
-                    onSuccess={() => { setShowCreateModal(false); fetchUsers(); }} 
+                <CreateUserModal
+                    onClose={() => setShowCreateModal(false)}
+                    onSuccess={() => { setShowCreateModal(false); fetchUsers(); }}
                 />
             )}
             {viewingUser && (
-                <ViewUserModal 
-                    user={viewingUser} 
-                    onClose={() => setViewingUser(null)} 
+                <ViewUserModal
+                    user={viewingUser}
+                    onClose={() => setViewingUser(null)}
                 />
             )}
         </div>

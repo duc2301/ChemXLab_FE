@@ -6,22 +6,28 @@ import type { ResponseDTO } from "../../entities/Response";
 import api from "../../shared/api/axios";
 
 export const Login = async (LoginData: LoginForm): Promise<boolean | null> => {
-  const response = await api.post("Auth/Login", LoginData);
-  const data: ResponseDTO<string> = response.data;
-  if (data.isSuccess) {
-    localStorage.setItem("jwtToken", data.result);
-    const decodedToken = await DecodeJwt(data.result);
-    if (decodedToken) {
-      localStorage.setItem("AvatarUrl", decodedToken.AvatarUrl || "");
-      localStorage.setItem("Role", decodedToken["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] || "");
-      localStorage.setItem("Email", decodedToken.email);
-      localStorage.setItem("UserId", decodedToken.UserId || "");
+  try {
+    const response = await api.post("Auth/Login", LoginData);
+    const data: ResponseDTO<string> = response.data;
+    if (data.isSuccess) {
+      localStorage.setItem("jwtToken", data.result);
+      const decodedToken = await DecodeJwt(data.result);
+      if (decodedToken) {
+        localStorage.setItem("AvatarUrl", decodedToken.AvatarUrl || "");
+        localStorage.setItem("Role", decodedToken["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] || "");
+        localStorage.setItem("Email", decodedToken.email);
+        localStorage.setItem("UserId", decodedToken.UserId || "");
+      }
+      message.success("Đăng nhập thành công");
+      return true;
     }
-    message.success("Login successful");
-    return data.isSuccess;
-  }
-  else {
-    message.error(data.message || "Login failed");
+    else {
+      message.error(data.message || "Đăng nhập thất bại. Vui lòng kiểm tra lại email và mật khẩu.");
+      return false;
+    }
+  } catch (error: any) {
+    const errorMsg = error.response?.data?.message || "Lỗi kết nối đến server. Vui lòng thử lại sau.";
+    message.error(errorMsg);
     return false;
   }
 }
@@ -32,21 +38,27 @@ export const Logout = (): void => {
 }
 
 export const register = async (RegisterData: RegisterForm): Promise<string | null> => {
-  const response = await api.post("Auth/Register", RegisterData);
-  const data: ResponseDTO<UserAccount> = response.data;
-  if (data.isSuccess) {
-    message.success("Registration successful");
-    window.location.href = "/login";
-    return "success";
-  }
-  else if (data.errors && data.errors.length > 0) {
-    data.errors.forEach((error) => {
-      message.error(error.message);
-    });
-    return null;
-  }
-  else {
-    message.error(data.message || "Registration failed");
+  try {
+    const response = await api.post("Auth/Register", RegisterData);
+    const data: ResponseDTO<UserAccount> = response.data;
+    if (data.isSuccess) {
+      message.success("Đăng ký thành công! Vui lòng đăng nhập.");
+      window.location.href = "/login";
+      return "success";
+    }
+    else if (data.errors && data.errors.length > 0) {
+      data.errors.forEach((error) => {
+        message.error(error.message);
+      });
+      return null;
+    }
+    else {
+      message.error(data.message || "Đăng ký thất bại. Vui lòng thử lại.");
+      return null;
+    }
+  } catch (error: any) {
+    const errorMsg = error.response?.data?.message || "Lỗi kết nối đến server. Vui lòng thử lại sau.";
+    message.error(errorMsg);
     return null;
   }
 }
@@ -64,7 +76,7 @@ export const SendOtp = async (email: string): Promise<boolean> => {
   try {
     const response = await api.post("Auth/forgot-password", { email });
     const data: ResponseDTO<null> = response.data;
-    
+
     if (data.isSuccess) {
       message.success("Mã OTP đã được gửi đến email của bạn. Vui lòng kiểm tra!");
       return true;
