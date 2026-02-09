@@ -136,7 +136,7 @@ const AdminDashboard = () => {
         <div className="space-y-6">
             {/* Page Header */}
             <div>
-                <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+                <h1 className="text-2xl font-bold text-gray-900">Bảng điều khiển</h1>
                 <p className="text-gray-500 mt-1">Tổng quan về hoạt động hệ thống</p>
             </div>
 
@@ -204,7 +204,7 @@ const AdminDashboard = () => {
                                 </div>
                                 <div>
                                     <p className="text-sm font-medium text-gray-900">Giáo viên</p>
-                                    <p className="text-xs text-gray-500">Teacher</p>
+                                    <p className="text-xs text-gray-500">Người giảng dạy</p>
                                 </div>
                             </div>
                             <span className="text-xl font-bold text-gray-900">{countByRole("TEACHER")}</span>
@@ -216,7 +216,7 @@ const AdminDashboard = () => {
                                 </div>
                                 <div>
                                     <p className="text-sm font-medium text-gray-900">Học sinh</p>
-                                    <p className="text-xs text-gray-500">Student</p>
+                                    <p className="text-xs text-gray-500">Người học</p>
                                 </div>
                             </div>
                             <span className="text-xl font-bold text-gray-900">{countByRole("STUDENT")}</span>

@@ -148,7 +148,7 @@ const Navbar = () => {
                   <div className="px-4 py-3 border-b border-gray-100 bg-blue-50/30">
                     <p className="text-sm font-bold text-gray-900 truncate">{userEmail || "User"}</p>
                     <p className="text-xs text-green-600 font-medium flex items-center gap-1">
-                      <span className="w-2 h-2 bg-green-500 rounded-full"></span> Online
+                      <span className="w-2 h-2 bg-green-500 rounded-full"></span> Trực tuyến
                     </p>
                   </div>
                   <div className="py-2">

@@ -18,31 +18,30 @@ const LoginPage = () => {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      message.warning("Please enter both email and password");
+      message.warning("Vui lòng nhập email và mật khẩu");
       return;
     }
 
     setIsLoading(true);
-    const loginData: LoginForm = {
-      email,
-      password
-    };
+    try {
+      const loginData: LoginForm = {
+        email,
+        password
+      };
 
-    const result: boolean | null = await Login(loginData);
-    if (result) {
-      // Check if user is ADMIN and redirect accordingly (case-insensitive)
-      const role = localStorage.getItem("Role");
-      if (role?.toUpperCase() === "ADMIN") {
-        navigate('/admin');
-      } else {
-        navigate('/');
+      const result: boolean | null = await Login(loginData);
+      if (result) {
+        // Check if user is ADMIN and redirect accordingly (case-insensitive)
+        const role = localStorage.getItem("Role");
+        if (role?.toUpperCase() === "ADMIN") {
+          navigate('/admin');
+        } else {
+          navigate('/');
+        }
       }
+    } finally {
+      setIsLoading(false);
     }
-    else {
-      message.error("Login failed");
-    }
-    setIsLoading(false);
-
   }
 
   // 2. Hàm xử lý phím Enter
@@ -67,7 +66,7 @@ const LoginPage = () => {
             className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all bg-gray-100 font-semibold text-gray-900 `}
           >
             <LogIn size={18} />
-            Login
+            Đăng nhập
           </button>
           <button
             onClick={() => navigate('/register')}
@@ -75,16 +74,16 @@ const LoginPage = () => {
             className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all text-gray-500 hover:bg-gray-50`}
           >
             <UserPlus size={18} />
-            Sign Up
+            Đăng ký
           </button>
         </div>
 
         <div className="space-y-5" onKeyDown={handleKeyDown}>
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-gray-700">Email address</label>
+            <label className="text-sm font-medium text-gray-700">Địa chỉ email</label>
             <input
               type="email"
-              placeholder="Enter your email address"
+              placeholder="Nhập địa chỉ email của bạn"
               required
               value={email}
               onChange={e => setEmail(e.target.value)}
@@ -94,13 +93,13 @@ const LoginPage = () => {
 
           <div className="space-y-1.5">
             <div className="flex justify-between items-center">
-              <label className="text-sm font-medium text-gray-700">Password</label>
-              <Link to="/forgot-password" className="text-xs font-semibold text-gray-900 hover:underline">Forgot password?</Link>
+              <label className="text-sm font-medium text-gray-700">Mật khẩu</label>
+              <Link to="/forgot-password" className="text-xs font-semibold text-gray-900 hover:underline">Quên mật khẩu?</Link>
             </div>
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
-                placeholder="Enter your password"
+                placeholder="Nhập mật khẩu của bạn"
                 required
                 value={password}
                 onChange={e => setPassword(e.target.value)}
@@ -121,7 +120,7 @@ const LoginPage = () => {
             disabled={isLoading}
             className={`w-full bg-[#1a1b2e] text-white font-medium py-3.5 rounded-lg hover:bg-[#2e3048] transition-colors mt-2 flex justify-center items-center ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
           >
-            {isLoading ? "Logging in..." : "Log In"}
+            {isLoading ? "Đang đăng nhập..." : "Đăng nhập"}
           </button>
         </div>
 
@@ -131,7 +130,7 @@ const LoginPage = () => {
             <div className="w-full border-t border-gray-200"></div>
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-white px-3 text-gray-400">OR</span>
+            <span className="bg-white px-3 text-gray-400">HOẶC</span>
           </div>
         </div>
 
@@ -139,13 +138,13 @@ const LoginPage = () => {
         <div className="space-y-3">
           <button className="w-full border border-gray-200 rounded-lg py-3 flex items-center justify-center gap-3 hover:bg-gray-50 transition-colors font-medium text-gray-700 text-sm">
             <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-5 h-5" alt="Google" />
-            Continue with Google
+            Tiếp tục với Google
           </button>
         </div>
 
         {/* Footer */}
         <div className="mt-8 text-center text-sm text-gray-600">
-          Don't have an account yet? <Link to="/register" className="font-semibold text-gray-900 hover:underline decoration-1 underline-offset-2">Sign up</Link>
+          Chưa có tài khoản? <Link to="/register" className="font-semibold text-gray-900 hover:underline decoration-1 underline-offset-2">Đăng ký ngay</Link>
         </div>
 
         {/* Back to Home */}

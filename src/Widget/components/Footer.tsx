@@ -63,7 +63,7 @@ const Footer = () => {
               <div className="flex gap-6">
                 <SocialIcon icon={<Facebook size={22} />} href="https://www.facebook.com/ChemxLab201" />
                 <SocialIcon icon={<Mail size={22} />} href="mailto:chemxlab567@gmail.com" />
-                <SocialIcon icon={<TikTok size={22} />} href="https://tiktok.com" />
+                <SocialIcon icon={<TikTok size={22} />} href="https://www.tiktok.com/@chemxlab_231" />
               </div>
             </div>
 

@@ -24,7 +24,7 @@ const HomePage = () => {
             <div className="w-full lg:w-1/2 space-y-8 text-center lg:text-left">
               <h1 className="text-5xl lg:text-7xl font-extrabold text-white leading-tight tracking-tight uppercase">
                 KHÁM PHÁ <br />
-                <span className="text-blue-400">CÙNG</span> <br />
+                {/* <span className="text-blue-400">CÙNG</span> <br /> */}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">
                   CHEMXLAB
                 </span>

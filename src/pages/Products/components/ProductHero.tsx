@@ -61,7 +61,7 @@ const ProductHero = () => {
                 <div className="text-sm text-slate-400">Nguyên tố 3D</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-white">Free</div>
+                <div className="text-2xl font-bold text-white">Miễn phí</div>
                 <div className="text-sm text-slate-400">Sử dụng</div>
               </div>
             </div>
