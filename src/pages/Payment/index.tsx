@@ -25,6 +25,7 @@ useEffect(() => {
   
   // Lấy dữ liệu payment từ state đã truyền sang
   const paymentData = location.state?.paymentData as Payment;
+  sessionStorage.setItem('TransactionCode', paymentData?.transactionCode || '');  
 
   // Nếu không có dữ liệu (truy cập trực tiếp), quay lại trang chủ
   if (!paymentData) {

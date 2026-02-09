@@ -21,6 +21,7 @@ import PeriodicTablePage from "../../pages/PeriodicTable";
 import ProductsPage from "../../pages/Products";
 import ProfilePage from "../../pages/Profile";
 import SupportPage from "../../pages/Support";
+import PaymentSuccessPage from "../../pages/Payment/Success";
 
 export const AppRoutes = () => {
   return (
@@ -44,6 +45,7 @@ export const AppRoutes = () => {
       <Route path="register" element={<RegisterPage />} />
       <Route path="payment" element={<PaymentPage />} />
       <Route path="chatbot" element={<ChatbotPage />} />
+      <Route path="paymentSuccess" element={<PaymentSuccessPage />} />
 
       {/* Admin Routes */}
       <Route path="/admin" element={<AdminLayout />}>
