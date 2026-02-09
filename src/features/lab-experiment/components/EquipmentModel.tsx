@@ -200,13 +200,6 @@ const Model = ({
       if (child instanceof THREE.Mesh) {
         child.castShadow = true;
         child.receiveShadow = true;
-        child.position.x = scene.position.x;
-        child.position.y = scene.position.y - 0.08;
-        child.position.z = scene.position.z;
-
-        child.rotateX(scene.rotation.x);
-        child.rotateY(scene.rotation.y);
-        child.rotateZ(scene.rotation.z);
       }
     });
     return clone;
@@ -229,15 +222,20 @@ const Model = ({
           material.emissive = new THREE.Color("#000000");
           material.emissiveIntensity = 0;
         }
-
-        child.position.x = clonedScene.position.x;
-        child.position.y = clonedScene.position.y + 0.04;
-        child.position.z = clonedScene.position.z;
-
-        child.rotateX(clonedScene.rotation.x);
-        child.rotateY(clonedScene.rotation.y);
-        child.rotateZ(clonedScene.rotation.z);
       }
+    });
+
+    // Adjust position of children to align with parent
+    clonedScene.children.forEach((child) => {
+      child.position.x = clonedScene.position.x;
+      child.position.y = clonedScene.position.y + 0.04;
+      child.position.z = clonedScene.position.z;
+
+      child.rotateX(clonedScene.rotation.x);
+      child.rotateY(clonedScene.rotation.y);
+      child.rotateZ(clonedScene.rotation.z);
+
+      child.updateMatrixWorld();
     });
   }, [clonedScene, isHovered, isDragging]);
 
