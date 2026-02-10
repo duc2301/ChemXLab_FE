@@ -13,8 +13,8 @@ const ExperiencePage = () => {
 
   const navigate = useNavigate();
 
-  const handleBuyPackage = async (packageId: number) => {
-    if (packageId === 1) return;
+  const handleBuyPackage = async (packageId: string) => {
+    // if (packageId === 1) return;
     const createPaymentResponse: Payment = await createPayment(packageId.toString());
     navigate("/payment", { state: { paymentData: createPaymentResponse } });
   }
