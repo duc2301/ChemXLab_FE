@@ -13,10 +13,10 @@ const ExperiencePage = () => {
 
   const navigate = useNavigate();
 
-  const handleBuyPackage = async (packageId: string) => {
-    // if (packageId === 1) return;
+  const handleBuyPackage = async (packageId: string) => {    
     const createPaymentResponse: Payment = await createPayment(packageId.toString());
-    navigate("/payment", { state: { paymentData: createPaymentResponse } });
+    const selectedPackage = packages.find(p => p.id === packageId);
+    navigate("/payment", { state: { paymentId: createPaymentResponse.id, packageName: selectedPackage?.name || "Unknown Package" } }); 
   }
 
   useEffect(() => {
