@@ -1,12 +1,22 @@
-import { message } from 'antd';
-import { BadgeCheck, Camera, ChevronRight, Loader2, Lock, Mail, Save, ShieldCheck, User } from 'lucide-react';
+import { message, Table, Progress, Button } from 'antd';
+import { 
+  BadgeCheck, Camera, CreditCard, Loader2, Lock, Mail, 
+  Save, ShieldCheck, User, Clock, CalendarDays, Zap, Crown, AlertCircle, CheckCircle2 
+} from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
-import type { ChangePasswordForm } from '../../entities/Profile';
-import { ChangePassword, GetUserProfile, UpdateProfile, uploadAvatarToFirebase } from '../../features/Profile';
+import { useNavigate } from 'react-router-dom';
+import type { ChangePasswordForm, ISubscription, IPaymentTransaction } from '../../entities/Profile';
+import { 
+  ChangePassword, GetUserProfile, UpdateProfile, uploadAvatarToFirebase, 
+  GetMySubscription, GetMyTransactions 
+} from '../../features/Profile';
+import api from '../../shared/api/axios';
+import type { ColumnsType } from 'antd/es/table';
 
 const ProfilePage = () => {
+  const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [activeTab, setActiveTab] = useState<'info' | 'password'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'password' | 'billing'>('info');
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [user, setUser] = useState<any>(null);
@@ -19,11 +29,29 @@ const ProfilePage = () => {
     confirmPassword: ''
   });
 
+  const [subscription, setSubscription] = useState<ISubscription | null>(null);
+  const [packageName, setPackageName] = useState<string>('');
+  const [transactions, setTransactions] = useState<IPaymentTransaction[]>([]);
+  const [billingLoading, setBillingLoading] = useState(false);
+
   const userId = localStorage.getItem('UserId');
+
+  const isInfoValid = fullName.trim().length > 0;
+
+  const isPasswordValid = 
+    passData.currentPassword.trim().length > 0 && 
+    passData.newPassword.trim().length > 0 && 
+    passData.confirmPassword.trim().length > 0;
 
   useEffect(() => {
     fetchUserData();
   }, []);
+
+  useEffect(() => {
+    if (activeTab === 'billing') {
+      fetchBillingData();
+    }
+  }, [activeTab]);
 
   const fetchUserData = async () => {
     if (!userId) return;
@@ -32,6 +60,39 @@ const ProfilePage = () => {
       setUser(userData);
       setFullName(userData.fullName || '');
       setAvatarUrl(userData.avatarUrl || '');
+    }
+  };
+
+  const fetchBillingData = async () => {
+    setBillingLoading(true);
+    try {
+      const [subData, transData] = await Promise.all([
+        GetMySubscription(),
+        GetMyTransactions()
+      ]);
+
+      if (subData) {
+        setSubscription(subData);
+        if (subData.packageId) {
+          fetchPackageName(subData.packageId);
+        }
+      }
+      if (transData) setTransactions(transData);
+    } catch (error) {
+      console.error("Error fetching billing data", error);
+    } finally {
+      setBillingLoading(false);
+    }
+  };
+
+  const fetchPackageName = async (packageId: string) => {
+    try {
+      const response = await api.get(`packages/${packageId}`); 
+      if (response.data && response.data.result) {
+        setPackageName(response.data.result.packageName || response.data.result.name || 'Gói cao cấp');
+      }
+    } catch (error) {
+      setPackageName('Gói dịch vụ');
     }
   };
 
@@ -56,6 +117,8 @@ const ProfilePage = () => {
   const handleUpdateInfo = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!userId) return;
+    if (!isInfoValid) return; // Chặn nếu chưa nhập tên
+
     setLoading(true);
     const success = await UpdateProfile(userId, { fullName, avatarUrl });
     if (success) {
@@ -68,6 +131,8 @@ const ProfilePage = () => {
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isPasswordValid) return; // Chặn nếu chưa nhập đủ
+
     if (passData.newPassword !== passData.confirmPassword) {
       message.error("Mật khẩu xác nhận không khớp!");
       return;
@@ -81,56 +146,116 @@ const ProfilePage = () => {
     setLoading(false);
   };
 
+  const calculateDaysLeft = () => {
+    if (!subscription?.endDate) return 0;
+    const end = new Date(subscription.endDate).getTime();
+    const now = new Date().getTime();
+    const diff = end - now;
+    return Math.ceil(diff / (1000 * 3600 * 24));
+  };
+
+  const calculateProgress = () => {
+    if (!subscription?.startDate || !subscription?.endDate) return 0;
+    const start = new Date(subscription.startDate).getTime();
+    const end = new Date(subscription.endDate).getTime();
+    const now = new Date().getTime();
+    const total = end - start;
+    const elapsed = now - start;
+    
+    if (total <= 0) return 0;
+    return Math.min(100, Math.max(0, (elapsed / total) * 100));
+  };
+
+  const transactionColumns: ColumnsType<IPaymentTransaction> = [
+    {
+      title: 'Mã GD',
+      dataIndex: 'transactionCode',
+      key: 'transactionCode',
+      render: (text) => <span className="font-mono text-xs text-gray-500">{text || 'N/A'}</span>
+    },
+    {
+      title: 'Số tiền',
+      dataIndex: 'amount',
+      key: 'amount',
+      render: (val) => <span className="font-bold text-gray-900">{val?.toLocaleString('vi-VN')} đ</span>,
+    },
+    {
+      title: 'Trạng thái',
+      dataIndex: 'status',
+      key: 'status',
+      render: (status) => {
+        const isSuccess = ['PAID', 'Completed', 'Success'].includes(status);
+        return (
+          <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+            isSuccess ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+          }`}>
+            {isSuccess ? <CheckCircle2 size={12} className="mr-1" /> : <AlertCircle size={12} className="mr-1" />}
+            {status?.toUpperCase()}
+          </div>
+        );
+      }
+    },
+    {
+      title: 'Ngày tạo',
+      dataIndex: 'paymentMethod',
+      key: 'date',
+      responsive: ['md'],
+      render: (_, record) => <span className="text-gray-500 text-sm">Vừa xong</span>
+    }
+  ];
+
   return (
-    <div className="min-h-screen bg-[#f1f5f9] pt-20 pb-12 px-4 sm:px-6 lg:px-8 font-sans">
-      <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-700">
+    <div className="min-h-screen bg-[#f8fafc] pt-24 pb-12 px-4 sm:px-6 lg:px-8 font-sans">
+      <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-700">
 
         {/* Profile Header Card */}
-        <div className="relative overflow-hidden bg-white rounded-3xl shadow-xl shadow-indigo-100/50 border border-white p-8">
-          {/* Decorative background element */}
-          <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 bg-indigo-50 rounded-full blur-3xl opacity-50 pointer-events-none" />
-
-          <div className="relative flex flex-col md:flex-row items-center gap-8">
-            <div className="relative group">
-              <div className="w-32 h-32 rounded-3xl overflow-hidden ring-4 ring-indigo-50 shadow-2xl transition-transform duration-300 group-hover:scale-105">
-                {uploading && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-indigo-900/40 backdrop-blur-sm z-20">
-                    <Loader2 className="animate-spin text-white" size={32} />
-                  </div>
-                )}
-                <img
-                  src={avatarUrl || `https://ui-avatars.com/api/?name=${fullName || 'User'}&background=6366f1&color=fff`}
-                  alt="Profile"
-                  className="w-full h-full object-cover"
-                />
+        <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden relative">
+          <div className="h-32 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-90"></div>
+          <div className="px-8 pb-8">
+            <div className="relative flex flex-col md:flex-row items-end -mt-12 gap-6">
+              <div className="relative group">
+                <div className="w-36 h-36 rounded-3xl overflow-hidden ring-4 ring-white shadow-xl bg-white">
+                  {uploading && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-20">
+                      <Loader2 className="animate-spin text-white" size={32} />
+                    </div>
+                  )}
+                  <img
+                    src={avatarUrl || `https://ui-avatars.com/api/?name=${fullName || 'User'}&background=6366f1&color=fff&size=256`}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <button
+                  onClick={handleAvatarClick}
+                  disabled={uploading}
+                  className="absolute bottom-2 right-2 p-2.5 bg-gray-900 text-white rounded-xl shadow-lg hover:bg-black hover:scale-105 transition-all"
+                >
+                  <Camera size={18} />
+                </button>
+                <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
               </div>
-              <button
-                onClick={handleAvatarClick}
-                disabled={uploading}
-                className="absolute -bottom-2 -right-2 p-3 bg-indigo-600 text-white rounded-2xl shadow-xl hover:bg-indigo-700 hover:rotate-12 transition-all active:scale-95"
-              >
-                <Camera size={20} />
-              </button>
-              <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
-            </div>
 
-            <div className="text-center md:text-left space-y-2">
-              <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
-                <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
-                  {user?.fullName || 'Người dùng'}
-                </h1>
-                <span className="flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold uppercase tracking-wider">
-                  <BadgeCheck size={14} /> Đã xác thực
-                </span>
+              <div className="flex-1 text-center md:text-left mb-2">
+                <div className="flex flex-col md:flex-row md:items-center gap-3 mb-1">
+                  <h1 className="text-3xl font-bold text-gray-900">
+                    {user?.fullName || 'Người dùng'}
+                  </h1>
+                  <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-bold border border-blue-100 mx-auto md:mx-0 w-fit">
+                    <BadgeCheck size={14} /> VERIFIED
+                  </span>
+                </div>
+                <p className="text-gray-500 flex items-center justify-center md:justify-start gap-2">
+                  <Mail size={16} />
+                  {user?.email || localStorage.getItem('Email')}
+                </p>
               </div>
-              <p className="text-gray-500 flex items-center justify-center md:justify-start gap-2 text-lg">
-                <Mail size={18} className="text-indigo-400" />
-                {user?.email || localStorage.getItem('Email')}
-              </p>
-              <div className="flex gap-2 pt-2 justify-center md:justify-start">
-                <span className="px-4 py-1.5 bg-indigo-50 text-indigo-600 rounded-xl text-sm font-semibold border border-indigo-100 shadow-sm">
-                  {localStorage.getItem('Role') || 'THÀNH VIÊN'}
-                </span>
+
+              <div className="flex gap-3 mb-4 md:mb-2 w-full md:w-auto">
+                <div className="flex-1 md:flex-none px-6 py-3 bg-gray-50 rounded-2xl border border-gray-100 text-center">
+                  <span className="block text-xs text-gray-500 font-semibold uppercase tracking-wider">Vai trò</span>
+                  <span className="font-bold text-indigo-600">{localStorage.getItem('Role') || 'MEMBER'}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -138,88 +263,103 @@ const ProfilePage = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Sidebar Navigation */}
-          <div className="lg:col-span-4 space-y-3 bg-white p-4 rounded-3xl shadow-sm border border-gray-100">
-            {[
-              { id: 'info', label: 'Thông tin cá nhân', icon: User },
-              { id: 'password', label: 'Bảo mật & Mật khẩu', icon: ShieldCheck },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
-                className={`w-full flex items-center justify-between px-5 py-4 rounded-2xl transition-all duration-200 group ${activeTab === tab.id
-                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 translate-x-2'
-                  : 'bg-transparent text-gray-600 hover:bg-gray-50'
-                  }`}
-              >
-                <div className="flex items-center gap-4">
-                  <tab.icon size={20} className={activeTab === tab.id ? 'text-white' : 'text-indigo-500'} />
-                  <span className="font-semibold">{tab.label}</span>
-                </div>
-                <ChevronRight size={18} className={`transition-transform ${activeTab === tab.id ? 'opacity-100 translate-x-1' : 'opacity-0'}`} />
-              </button>
-            ))}
+          <div className="lg:col-span-3 space-y-2">
+             <div className="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 sticky top-24">
+              {[
+                { id: 'info', label: 'Hồ sơ', icon: User, desc: 'Thông tin cá nhân' },
+                { id: 'password', label: 'Bảo mật', icon: ShieldCheck, desc: 'Đổi mật khẩu' },
+                { id: 'billing', label: 'Gói dịch vụ', icon: CreditCard, desc: 'Lịch sử & Gói' },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as any)}
+                  className={`w-full flex items-center gap-4 p-4 rounded-xl transition-all duration-200 text-left mb-1 ${activeTab === tab.id
+                    ? 'bg-indigo-50 text-indigo-700 shadow-sm ring-1 ring-indigo-200'
+                    : 'text-gray-600 hover:bg-gray-50'
+                    }`}
+                >
+                  <div className={`p-2 rounded-lg ${activeTab === tab.id ? 'bg-white shadow-sm text-indigo-600' : 'bg-gray-100 text-gray-500'}`}>
+                    <tab.icon size={20} />
+                  </div>
+                  <div>
+                    <span className="block font-semibold text-sm">{tab.label}</span>
+                    <span className="block text-xs opacity-70 font-normal">{tab.desc}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* Form Content */}
-          <div className="lg:col-span-8">
-            <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 min-h-[400px]">
-              {activeTab === 'info' ? (
-                <div className="animate-in slide-in-from-right-4 duration-500">
-                  <div className="mb-8">
-                    <h3 className="text-xl font-bold text-gray-900">Cập nhật hồ sơ</h3>
-                    <p className="text-gray-500 text-sm mt-1">Thông tin này sẽ được hiển thị công khai trên hệ thống.</p>
+          {/* Content Area */}
+          <div className="lg:col-span-9">
+            <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8 min-h-[500px]">
+              
+              {/* TAB 1: INFO */}
+              {activeTab === 'info' && (
+                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-2xl">
+                  <div className="mb-8 border-b border-gray-100 pb-4">
+                    <h3 className="text-2xl font-bold text-gray-900">Thông tin cá nhân</h3>
+                    <p className="text-gray-500 mt-1">Quản lý tên hiển thị và ảnh đại diện của bạn.</p>
                   </div>
 
                   <form onSubmit={handleUpdateInfo} className="space-y-6">
-                    <div className="group space-y-2">
-                      <label className="text-sm font-bold text-gray-700 ml-1">Họ và tên</label>
-                      <div className="relative">
-                        <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-indigo-500 transition-colors" size={18} />
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-gray-700">Họ và tên hiển thị</label>
+                      <div className="relative group">
+                        <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-indigo-500 transition-colors" size={20} />
                         <input
                           type="text"
                           value={fullName}
                           onChange={(e) => setFullName(e.target.value)}
-                          className="w-full bg-gray-50 border-none rounded-2xl pl-12 pr-4 py-4 focus:ring-2 focus:ring-indigo-500 transition-all outline-none text-gray-700 font-medium"
-                          placeholder="Ví dụ: Nguyễn Văn A"
+                          className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-12 pr-4 py-3.5 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all outline-none font-medium text-gray-900"
+                          placeholder="Nhập họ tên của bạn"
                         />
                       </div>
                     </div>
 
-                    <div className="pt-6">
+                    <div className="pt-4">
                       <button
                         type="submit"
-                        disabled={loading || uploading}
-                        className="w-full sm:w-auto flex items-center justify-center gap-2 bg-indigo-600 text-white px-8 py-4 rounded-2xl hover:bg-indigo-700 hover:shadow-xl hover:shadow-indigo-200 transition-all disabled:opacity-50 font-bold"
+                        disabled={loading || uploading || !isInfoValid} // Disable nếu không hợp lệ
+                        className={`inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl transition-all font-semibold
+                          ${isInfoValid 
+                            ? 'bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-200 hover:shadow-green-300 transform hover:-translate-y-0.5' 
+                            : 'bg-gray-900 text-gray-400 cursor-not-allowed opacity-80' // Nút đen khi chưa đủ
+                          }`}
                       >
                         {loading ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
-                        Lưu thông tin mới
+                        Lưu thay đổi
                       </button>
                     </div>
                   </form>
                 </div>
-              ) : (
-                <div className="animate-in slide-in-from-right-4 duration-500">
-                  <div className="mb-8">
-                    <h3 className="text-xl font-bold text-gray-900">Thay đổi mật khẩu</h3>
-                    <p className="text-gray-500 text-sm mt-1">Đảm bảo mật khẩu của bạn có ít nhất 6 ký tự để bảo mật.</p>
+              )}
+
+              {/* TAB 2: PASSWORD */}
+              {activeTab === 'password' && (
+                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-xl">
+                  <div className="mb-8 border-b border-gray-100 pb-4">
+                    <h3 className="text-2xl font-bold text-gray-900">Đổi mật khẩu</h3>
+                    <p className="text-gray-500 mt-1">Cập nhật mật khẩu thường xuyên để bảo vệ tài khoản.</p>
                   </div>
 
-                  <form onSubmit={handleChangePassword} className="space-y-5 max-w-md">
+                  <form onSubmit={handleChangePassword} className="space-y-5">
                     {[
                       { key: 'currentPassword', label: 'Mật khẩu hiện tại' },
                       { key: 'newPassword', label: 'Mật khẩu mới' },
-                      { key: 'confirmPassword', label: 'Xác nhận mật khẩu' },
+                      { key: 'confirmPassword', label: 'Xác nhận mật khẩu mới' },
                     ].map((f) => (
                       <div key={f.key} className="space-y-2">
-                        <label className="text-sm font-bold text-gray-700 ml-1">{f.label}</label>
-                        <div className="relative">
-                          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                        <label className="text-sm font-semibold text-gray-700">{f.label}</label>
+                        <div className="relative group">
+                          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-indigo-500 transition-colors" size={20} />
                           <input
                             type="password"
                             required
                             value={(passData as any)[f.key]}
                             onChange={(e) => setPassData({ ...passData, [f.key]: e.target.value })}
-                            className="w-full bg-gray-50 border-none rounded-2xl pl-12 pr-4 py-4 focus:ring-2 focus:ring-green-500 transition-all outline-none"
+                            className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-12 pr-4 py-3.5 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all outline-none"
+                            placeholder="••••••••"
                           />
                         </div>
                       </div>
@@ -228,14 +368,148 @@ const ProfilePage = () => {
                     <div className="pt-4">
                       <button
                         type="submit"
-                        disabled={loading}
-                        className="w-full flex items-center justify-center gap-2 bg-green-600 text-white px-8 py-4 rounded-2xl hover:bg-green-700 hover:shadow-xl hover:shadow-green-200 transition-all disabled:opacity-50 font-bold"
+                        disabled={loading || !isPasswordValid} // Disable nếu không hợp lệ
+                        className={`inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl transition-all font-semibold
+                          ${isPasswordValid 
+                            ? 'bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-200 hover:shadow-green-300 transform hover:-translate-y-0.5' 
+                            : 'bg-gray-900 text-gray-400 cursor-not-allowed opacity-80' // Nút đen khi chưa đủ
+                          }`}
                       >
                         {loading ? <Loader2 className="animate-spin" size={20} /> : <ShieldCheck size={20} />}
                         Cập nhật mật khẩu
                       </button>
                     </div>
                   </form>
+                </div>
+              )}
+
+              {/* TAB 3: BILLING */}
+              {activeTab === 'billing' && (
+                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                  {billingLoading ? (
+                    <div className="flex flex-col items-center justify-center py-20 gap-4">
+                      <Loader2 className="animate-spin text-indigo-600" size={40} />
+                      <p className="text-gray-500 font-medium">Đang tải thông tin gói...</p>
+                    </div>
+                  ) : (
+                    <div className="grid gap-8">
+                      {/* Subscription Section */}
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-900 mb-5 flex items-center gap-2">
+                          <Crown className="text-yellow-500 fill-yellow-500" size={24}/> 
+                          Gói đăng ký của bạn
+                        </h3>
+                        
+                        {subscription && subscription.isActive ? (
+                          /* Active Subscription Card */
+                          <div className="relative overflow-hidden rounded-3xl bg-gray-900 text-white shadow-2xl p-8 transition-all hover:scale-[1.01]">
+                            <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full blur-3xl opacity-50 pointer-events-none" />
+                            <div className="absolute bottom-0 left-0 -ml-16 -mb-16 w-64 h-64 bg-gradient-to-tr from-blue-500 to-cyan-500 rounded-full blur-3xl opacity-30 pointer-events-none" />
+
+                            <div className="relative z-10 grid md:grid-cols-2 gap-8 items-center">
+                              <div>
+                                <div className="flex items-center gap-3 mb-2">
+                                  <div className="p-2 bg-white/10 backdrop-blur-md rounded-lg">
+                                    <Zap size={20} className="text-yellow-400" />
+                                  </div>
+                                  <span className="text-indigo-200 font-medium tracking-wide uppercase text-sm">Gói hiện tại</span>
+                                </div>
+                                <h2 className="text-4xl font-extrabold tracking-tight mb-4">
+                                  {packageName || 'Premium Plan'}
+                                </h2>
+                                <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-green-500/20 text-green-300 border border-green-500/30 rounded-full text-sm font-bold">
+                                  <span className="relative flex h-2 w-2">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                                  </span>
+                                  ĐANG HOẠT ĐỘNG
+                                </div>
+                              </div>
+
+                              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/10">
+                                <div className="flex justify-between text-sm mb-2 text-gray-300">
+                                  <span>Thời hạn sử dụng</span>
+                                  <span className="text-white font-bold">{calculateDaysLeft()} ngày còn lại</span>
+                                </div>
+                                <Progress 
+                                  percent={calculateProgress()} 
+                                  showInfo={false} 
+                                  strokeColor={{ '0%': '#6366f1', '100%': '#a855f7' }} 
+                                  trailColor="rgba(255,255,255,0.1)"
+                                  className="mb-4"
+                                />
+                                <div className="grid grid-cols-2 gap-4 pt-2">
+                                  <div>
+                                    <p className="text-xs text-gray-400 mb-1">Ngày bắt đầu</p>
+                                    <p className="font-semibold flex items-center gap-1.5">
+                                      <CalendarDays size={14} className="text-indigo-400" />
+                                      {subscription.startDate ? new Date(subscription.startDate).toLocaleDateString('vi-VN') : 'N/A'}
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <p className="text-xs text-gray-400 mb-1">Ngày hết hạn</p>
+                                    <p className="font-semibold flex items-center gap-1.5">
+                                      <CalendarDays size={14} className="text-pink-400" />
+                                      {subscription.endDate ? new Date(subscription.endDate).toLocaleDateString('vi-VN') : 'N/A'}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          /* No Subscription / Free Tier Card */
+                          <div className="rounded-3xl border border-gray-200 p-8 bg-gray-50 flex flex-col md:flex-row items-center justify-between gap-6">
+                            <div className="flex items-center gap-6">
+                              <div className="w-16 h-16 rounded-2xl bg-gray-200 flex items-center justify-center text-gray-500">
+                                <User size={32} />
+                              </div>
+                              <div>
+                                <h4 className="text-xl font-bold text-gray-900">Gói Miễn Phí</h4>
+                                <p className="text-gray-500">Bạn đang sử dụng các tính năng cơ bản.</p>
+                              </div>
+                            </div>
+                            <Button 
+                              type="primary" 
+                              size="large"
+                              className="bg-indigo-600 hover:bg-indigo-700 h-12 px-8 rounded-xl shadow-lg shadow-indigo-200"
+                              onClick={() => navigate('/products')}
+                            >
+                              Nâng cấp ngay
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Transaction History */}
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-900 mb-5 flex items-center gap-2">
+                          <Clock size={24} className="text-gray-400" />
+                          Lịch sử giao dịch
+                        </h3>
+                        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
+                          <Table 
+                            dataSource={transactions} 
+                            columns={transactionColumns} 
+                            rowKey="id"
+                            pagination={{ 
+                              pageSize: 5,
+                              style: { paddingRight: 24 } 
+                            }}
+                            className="custom-table"
+                            locale={{ 
+                              emptyText: (
+                                <div className="py-12 flex flex-col items-center text-gray-400">
+                                  <CreditCard size={48} strokeWidth={1} className="mb-4 text-gray-300" />
+                                  <p>Chưa có giao dịch nào được ghi nhận</p>
+                                </div>
+                              ) 
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
