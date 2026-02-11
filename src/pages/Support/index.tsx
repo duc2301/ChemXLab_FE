@@ -10,7 +10,7 @@ import {
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 
-const SUPPORT_EMAIL = "lanhatnam1612@gmail.com";
+const SUPPORT_EMAIL = "chemxlab567@gmail.com";
 const SUPPORT_PHONE = "+84 123 456 789";
 
 const SupportPage = () => {

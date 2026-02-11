@@ -8,7 +8,6 @@ import {
     Package,
     Users,
 } from "lucide-react";
-import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Logout } from "../../features/Auth";
 
@@ -40,10 +39,14 @@ const sidebarItems: SidebarItem[] = [
     },
 ];
 
-const AdminSidebar = () => {
+interface AdminSidebarProps {
+    isCollapsed: boolean;
+    onToggle: () => void;
+}
+
+const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
     const location = useLocation();
     const navigate = useNavigate();
-    const [isCollapsed, setIsCollapsed] = useState(false);
 
     const isActive = (path: string) => {
         if (path === "/admin") {
@@ -125,8 +128,9 @@ const AdminSidebar = () => {
 
             {/* Collapse Toggle */}
             <button
-                onClick={() => setIsCollapsed(!isCollapsed)}
+                onClick={onToggle}
                 className="absolute -right-3 top-20 w-6 h-6 bg-indigo-600 rounded-full flex items-center justify-center shadow-lg hover:bg-indigo-700 transition-colors"
+                style={{ cursor: "pointer", zIndex: 60 }}
             >
                 {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
             </button>

@@ -6,7 +6,7 @@ import AdminSidebar from "./AdminSidebar";
 
 const AdminLayout = () => {
     const navigate = useNavigate();
-    const [sidebarCollapsed] = useState(false);
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -42,7 +42,10 @@ const AdminLayout = () => {
 
     return (
         <div className="min-h-screen bg-gray-100">
-            <AdminSidebar />
+            <AdminSidebar
+                isCollapsed={sidebarCollapsed}
+                onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+            />
             <div
                 className={`transition-all duration-300 ${sidebarCollapsed ? "ml-[72px]" : "ml-[260px]"
                     }`}
