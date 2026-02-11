@@ -45,7 +45,7 @@ export const AppRoutes = () => {
       <Route path="register" element={<RegisterPage />} />
       <Route path="payment" element={<PaymentPage />} />
       <Route path="chatbot" element={<ChatbotPage />} />
-      <Route path="paymentSuccess" element={<PaymentSuccessPage />} />
+      <Route path="payment/success" element={<PaymentSuccessPage />} />
 
       {/* Admin Routes */}
       <Route path="/admin" element={<AdminLayout />}>

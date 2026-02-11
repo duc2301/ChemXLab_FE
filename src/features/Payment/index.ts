@@ -8,3 +8,10 @@ export const createPayment = async (packageId : string) : Promise<Payment> => {
   var result : Payment = data.result;
   return result;
 }
+
+export const getPaymentById = async (paymentId : string) : Promise<Payment> => {
+  var response = await api.get(`payments/${paymentId}`);
+  var data : ResponseDTO<Payment> = await response.data;
+  var result : Payment = data.result;
+  return result;
+}
