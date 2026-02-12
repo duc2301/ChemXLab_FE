@@ -13,7 +13,7 @@ export interface ISubscription {
   id: string;
   userId: string | null;
   packageId: string | null;
-  startDate: string | null; 
+  startDate: string | null;
   endDate: string | null;
   isActive: boolean | null;
 }

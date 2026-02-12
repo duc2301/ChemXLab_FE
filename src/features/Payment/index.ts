@@ -2,16 +2,16 @@ import type { Payment } from "../../entities/Payment";
 import type { ResponseDTO } from "../../entities/Response";
 import api from "../../shared/api/axios";
 
-export const createPayment = async (packageId : string) : Promise<Payment> => { 
+export const createPayment = async (packageId: string): Promise<Payment> => {
   var response = await api.post(`/payments?packageId=${packageId}`);
-  var data : ResponseDTO<Payment> = await response.data;
-  var result : Payment = data.result;
+  var data: ResponseDTO<Payment> = await response.data;
+  var result: Payment = data.result;
   return result;
 }
 
-export const getPaymentById = async (paymentId : string) : Promise<Payment> => {
+export const getPaymentById = async (paymentId: string): Promise<Payment> => {
   var response = await api.get(`payments/${paymentId}`);
-  var data : ResponseDTO<Payment> = await response.data;
-  var result : Payment = data.result;
+  var data: ResponseDTO<Payment> = await response.data;
+  var result: Payment = data.result;
   return result;
 }

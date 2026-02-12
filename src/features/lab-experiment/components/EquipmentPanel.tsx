@@ -76,8 +76,8 @@ export const EquipmentPanel = ({ onSelectEquipment, selectedId }: EquipmentPanel
                         e.dataTransfer?.setData('equipmentId', item.id);
                       }}
                       className={`w-full px-3 py-2 text-left text-xs rounded transition-all flex items-start gap-2 ${selectedId === item.id
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-700 hover:bg-gray-600 text-gray-200'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-700 hover:bg-gray-600 text-gray-200'
                         }`}
                     >
                       <span className="text-lg">📦</span>

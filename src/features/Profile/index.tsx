@@ -1,5 +1,5 @@
 import { message } from "antd";
-import type { ChangePasswordForm, ISubscription,IPaymentTransaction, UpdateProfileForm } from "../../entities/Profile";
+import type { ChangePasswordForm, IPaymentTransaction, ISubscription, UpdateProfileForm } from "../../entities/Profile";
 import type { ResponseDTO } from "../../entities/Response";
 import api from "../../shared/api/axios";
 import { supabase } from "../../shared/config/supabase";
@@ -11,7 +11,6 @@ export const GetUserProfile = async (_userId: string): Promise<any | null> => {
     if (data.isSuccess) {
       return data.result;
     }
-    return null;
     return null;
   } catch (error) {
     return null;
@@ -38,7 +37,7 @@ export const uploadAvatarToFirebase = async (file: File, userId: string): Promis
   try {
     // Check if user is authenticated with Supabase
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    
+
     if (sessionError || !session) {
       console.warn("No Supabase auth session. Using unauthenticated upload (requires RLS disabled)");
       // Continue anyway - if RLS is disabled, upload will work
@@ -59,7 +58,7 @@ export const uploadAvatarToFirebase = async (file: File, userId: string): Promis
 
     if (error) {
       console.error("Supabase Upload Error:", error);
-      
+
       // Provide helpful error message for RLS errors
       if (error.message.includes("row-level security")) {
         message.error("RLS Policy Error: Vui lòng liên hệ admin hoặc disable RLS trong Supabase");
@@ -82,12 +81,12 @@ export const uploadAvatarToFirebase = async (file: File, userId: string): Promis
   }
 };
 
-export const ChangePassword = async (userId: string, data: ChangePasswordForm): Promise<boolean> => {
+export const ChangePassword = async (_userId: string, data: ChangePasswordForm): Promise<boolean> => {
   try {
     const response = await api.put(`User/change-password`, {
-        oldPassword: data.currentPassword,
-        newPassword: data.newPassword,
-        confirmPassword: data.confirmPassword
+      oldPassword: data.currentPassword,
+      newPassword: data.newPassword,
+      confirmPassword: data.confirmPassword
     });
 
     const resData: ResponseDTO<any> = response.data;
@@ -99,8 +98,8 @@ export const ChangePassword = async (userId: string, data: ChangePasswordForm): 
     return false;
   } catch (error: any) {
     console.error("Change Password Error:", error);
-    const errorMsg = error.response?.data?.message || 
-                     (error.response?.data?.errors ? JSON.stringify(error.response.data.errors) : "Lỗi hệ thống");
+    const errorMsg = error.response?.data?.message ||
+      (error.response?.data?.errors ? JSON.stringify(error.response.data.errors) : "Lỗi hệ thống");
     message.error(errorMsg);
     return false;
   }

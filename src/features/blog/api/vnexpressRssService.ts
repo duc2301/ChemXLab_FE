@@ -1,7 +1,5 @@
 import type { NewsArticle, NewsResponse } from "../types/newsTypes";
 
-
-
 /**
  * Create a complete NewsArticle with all required fields
  */

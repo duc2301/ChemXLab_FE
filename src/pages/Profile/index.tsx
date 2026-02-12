@@ -1,17 +1,27 @@
-import { message, Table, Progress, Button } from 'antd';
-import { 
-  BadgeCheck, Camera, CreditCard, Loader2, Lock, Mail, 
-  Save, ShieldCheck, User, Clock, CalendarDays, Zap, Crown, AlertCircle, CheckCircle2 
+import { Button, message, Progress, Table } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
+import {
+  AlertCircle,
+  BadgeCheck,
+  CalendarDays,
+  Camera,
+  CheckCircle2,
+  Clock,
+  CreditCard,
+  Crown,
+  Loader2, Lock, Mail,
+  Save, ShieldCheck, User,
+  Zap
 } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { ChangePasswordForm, ISubscription, IPaymentTransaction } from '../../entities/Profile';
-import { 
-  ChangePassword, GetUserProfile, UpdateProfile, uploadAvatarToFirebase, 
-  GetMySubscription, GetMyTransactions 
+import type { ChangePasswordForm, IPaymentTransaction, ISubscription } from '../../entities/Profile';
+import {
+  ChangePassword,
+  GetMySubscription, GetMyTransactions,
+  GetUserProfile, UpdateProfile, uploadAvatarToFirebase
 } from '../../features/Profile';
 import api from '../../shared/api/axios';
-import type { ColumnsType } from 'antd/es/table';
 
 const ProfilePage = () => {
   const navigate = useNavigate();
@@ -38,9 +48,9 @@ const ProfilePage = () => {
 
   const isInfoValid = fullName.trim().length > 0;
 
-  const isPasswordValid = 
-    passData.currentPassword.trim().length > 0 && 
-    passData.newPassword.trim().length > 0 && 
+  const isPasswordValid =
+    passData.currentPassword.trim().length > 0 &&
+    passData.newPassword.trim().length > 0 &&
     passData.confirmPassword.trim().length > 0;
 
   useEffect(() => {
@@ -87,7 +97,7 @@ const ProfilePage = () => {
 
   const fetchPackageName = async (packageId: string) => {
     try {
-      const response = await api.get(`packages/${packageId}`); 
+      const response = await api.get(`packages/${packageId}`);
       if (response.data && response.data.result) {
         setPackageName(response.data.result.packageName || response.data.result.name || 'Gói cao cấp');
       }
@@ -161,7 +171,7 @@ const ProfilePage = () => {
     const now = new Date().getTime();
     const total = end - start;
     const elapsed = now - start;
-    
+
     if (total <= 0) return 0;
     return Math.min(100, Math.max(0, (elapsed / total) * 100));
   };
@@ -186,9 +196,8 @@ const ProfilePage = () => {
       render: (status) => {
         const isSuccess = ['PAID', 'Completed', 'Success'].includes(status);
         return (
-          <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-            isSuccess ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-          }`}>
+          <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${isSuccess ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+            }`}>
             {isSuccess ? <CheckCircle2 size={12} className="mr-1" /> : <AlertCircle size={12} className="mr-1" />}
             {status?.toUpperCase()}
           </div>
@@ -200,7 +209,7 @@ const ProfilePage = () => {
       dataIndex: 'paymentMethod',
       key: 'date',
       responsive: ['md'],
-      render: (_, record) => <span className="text-gray-500 text-sm">Vừa xong</span>
+      render: () => <span className="text-gray-500 text-sm">Vừa xong</span>
     }
   ];
 
@@ -264,7 +273,7 @@ const ProfilePage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Sidebar Navigation */}
           <div className="lg:col-span-3 space-y-2">
-             <div className="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 sticky top-24">
+            <div className="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 sticky top-24">
               {[
                 { id: 'info', label: 'Hồ sơ', icon: User, desc: 'Thông tin cá nhân' },
                 { id: 'password', label: 'Bảo mật', icon: ShieldCheck, desc: 'Đổi mật khẩu' },
@@ -293,7 +302,7 @@ const ProfilePage = () => {
           {/* Content Area */}
           <div className="lg:col-span-9">
             <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8 min-h-[500px]">
-              
+
               {/* TAB 1: INFO */}
               {activeTab === 'info' && (
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-2xl">
@@ -322,8 +331,8 @@ const ProfilePage = () => {
                         type="submit"
                         disabled={loading || uploading || !isInfoValid} // Disable nếu không hợp lệ
                         className={`inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl transition-all font-semibold
-                          ${isInfoValid 
-                            ? 'bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-200 hover:shadow-green-300 transform hover:-translate-y-0.5' 
+                          ${isInfoValid
+                            ? 'bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-200 hover:shadow-green-300 transform hover:-translate-y-0.5'
                             : 'bg-gray-900 text-gray-400 cursor-not-allowed opacity-80' // Nút đen khi chưa đủ
                           }`}
                       >
@@ -370,8 +379,8 @@ const ProfilePage = () => {
                         type="submit"
                         disabled={loading || !isPasswordValid} // Disable nếu không hợp lệ
                         className={`inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl transition-all font-semibold
-                          ${isPasswordValid 
-                            ? 'bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-200 hover:shadow-green-300 transform hover:-translate-y-0.5' 
+                          ${isPasswordValid
+                            ? 'bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-200 hover:shadow-green-300 transform hover:-translate-y-0.5'
                             : 'bg-gray-900 text-gray-400 cursor-not-allowed opacity-80' // Nút đen khi chưa đủ
                           }`}
                       >
@@ -396,10 +405,10 @@ const ProfilePage = () => {
                       {/* Subscription Section */}
                       <div>
                         <h3 className="text-xl font-bold text-gray-900 mb-5 flex items-center gap-2">
-                          <Crown className="text-yellow-500 fill-yellow-500" size={24}/> 
+                          <Crown className="text-yellow-500 fill-yellow-500" size={24} />
                           Gói đăng ký của bạn
                         </h3>
-                        
+
                         {subscription && subscription.isActive ? (
                           /* Active Subscription Card */
                           <div className="relative overflow-hidden rounded-3xl bg-gray-900 text-white shadow-2xl p-8 transition-all hover:scale-[1.01]">
@@ -431,10 +440,10 @@ const ProfilePage = () => {
                                   <span>Thời hạn sử dụng</span>
                                   <span className="text-white font-bold">{calculateDaysLeft()} ngày còn lại</span>
                                 </div>
-                                <Progress 
-                                  percent={calculateProgress()} 
-                                  showInfo={false} 
-                                  strokeColor={{ '0%': '#6366f1', '100%': '#a855f7' }} 
+                                <Progress
+                                  percent={calculateProgress()}
+                                  showInfo={false}
+                                  strokeColor={{ '0%': '#6366f1', '100%': '#a855f7' }}
                                   trailColor="rgba(255,255,255,0.1)"
                                   className="mb-4"
                                 />
@@ -469,8 +478,8 @@ const ProfilePage = () => {
                                 <p className="text-gray-500">Bạn đang sử dụng các tính năng cơ bản.</p>
                               </div>
                             </div>
-                            <Button 
-                              type="primary" 
+                            <Button
+                              type="primary"
                               size="large"
                               className="bg-indigo-600 hover:bg-indigo-700 h-12 px-8 rounded-xl shadow-lg shadow-indigo-200"
                               onClick={() => navigate('/products')}
@@ -488,22 +497,22 @@ const ProfilePage = () => {
                           Lịch sử giao dịch
                         </h3>
                         <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
-                          <Table 
-                            dataSource={transactions} 
-                            columns={transactionColumns} 
+                          <Table
+                            dataSource={transactions}
+                            columns={transactionColumns}
                             rowKey="id"
-                            pagination={{ 
+                            pagination={{
                               pageSize: 5,
-                              style: { paddingRight: 24 } 
+                              style: { paddingRight: 24 }
                             }}
                             className="custom-table"
-                            locale={{ 
+                            locale={{
                               emptyText: (
                                 <div className="py-12 flex flex-col items-center text-gray-400">
                                   <CreditCard size={48} strokeWidth={1} className="mb-4 text-gray-300" />
                                   <p>Chưa có giao dịch nào được ghi nhận</p>
                                 </div>
-                              ) 
+                              )
                             }}
                           />
                         </div>
