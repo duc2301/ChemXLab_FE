@@ -9,31 +9,31 @@ export const Login = async (LoginData: LoginForm): Promise<boolean | null> => {
   try {
     const response = await api.post("Auth/Login", LoginData);
     const data: ResponseDTO<string> = response.data;
-    
+
     if (data.isSuccess) {
       localStorage.setItem("jwtToken", data.result);
-      
-      const decodedToken: any = await DecodeJwt(data.result);
-      
-      if (decodedToken) {
-        console.log("Decoded Token:", decodedToken); 
 
-        const userId = decodedToken["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] 
-                    || decodedToken.nameid 
-                    || decodedToken.sub 
-                    || decodedToken.UserId; 
+      const decodedToken: any = await DecodeJwt(data.result);
+
+      if (decodedToken) {
+        console.log("Decoded Token:", decodedToken);
+
+        const userId = decodedToken["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"]
+          || decodedToken.nameid
+          || decodedToken.sub
+          || decodedToken.UserId;
 
         if (userId) {
-            localStorage.setItem("UserId", userId);
+          localStorage.setItem("UserId", userId);
         } else {
-            console.error("Không tìm thấy UserId trong token!");
+          console.error("Không tìm thấy UserId trong token!");
         }
 
         localStorage.setItem("Email", decodedToken.email || decodedToken["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"] || "");
         localStorage.setItem("Role", decodedToken.role || decodedToken["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] || "");
         localStorage.setItem("AvatarUrl", decodedToken.AvatarUrl || "");
       }
-      
+
       message.success("Đăng nhập thành công");
       return true;
     }

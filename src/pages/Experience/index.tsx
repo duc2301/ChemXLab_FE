@@ -13,10 +13,10 @@ const ExperiencePage = () => {
 
   const navigate = useNavigate();
 
-  const handleBuyPackage = async (packageId: string) => {    
+  const handleBuyPackage = async (packageId: string) => {
     const createPaymentResponse: Payment = await createPayment(packageId.toString());
     const selectedPackage = packages.find(p => p.id === packageId);
-    navigate("/payment", { state: { paymentId: createPaymentResponse.id, packageName: selectedPackage?.name || "Unknown Package" } }); 
+    navigate("/payment", { state: { paymentId: createPaymentResponse.id, packageName: selectedPackage?.name || "Unknown Package" } });
   }
 
   useEffect(() => {
@@ -167,10 +167,10 @@ const ExperiencePage = () => {
                     <button
                       onClick={() => handleBuyPackage(plan.id)}
                       className={`w-full py-3.5 rounded-xl font-semibold transition-all ${plan.name === "FREE"
-                          ? "bg-transparent border cursor-disabled border-cyan-500 text-cyan-400 hover:bg-cyan-500/10 cursor-not-allowed"
-                          : recommended
-                            ? "bg-white text-blue-600 hover:bg-cyan-50 shadow-lg"
-                            : "bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:from-cyan-400 hover:to-blue-400 shadow-lg shadow-cyan-500/20"
+                        ? "bg-transparent border cursor-disabled border-cyan-500 text-cyan-400 hover:bg-cyan-500/10 cursor-not-allowed"
+                        : recommended
+                          ? "bg-white text-blue-600 hover:bg-cyan-50 shadow-lg"
+                          : "bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:from-cyan-400 hover:to-blue-400 shadow-lg shadow-cyan-500/20"
                         }`}
                     >
                       {plan.price === 0 ? "Trải nghiệm miễn phí" : "Chọn gói này"}

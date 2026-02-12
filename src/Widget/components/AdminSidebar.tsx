@@ -1,4 +1,5 @@
 import {
+    Atom,
     ChevronLeft,
     ChevronRight,
     FlaskConical,
@@ -10,14 +11,12 @@ import {
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Logout } from "../../features/Auth";
-
 interface SidebarItem {
     id: string;
     label: string;
     icon: React.ReactNode;
     path: string;
 }
-
 const sidebarItems: SidebarItem[] = [
     {
         id: "dashboard",
@@ -37,29 +36,30 @@ const sidebarItems: SidebarItem[] = [
         icon: <Package size={20} />,
         path: "/admin/packages",
     },
+    {
+        id: "elements",
+        label: "Quản lý Nguyên tố",
+        icon: <Atom size={20} />,
+        path: "/admin/elements",
+    },
 ];
-
 interface AdminSidebarProps {
     isCollapsed: boolean;
     onToggle: () => void;
 }
-
 const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
     const location = useLocation();
     const navigate = useNavigate();
-
     const isActive = (path: string) => {
         if (path === "/admin") {
             return location.pathname === "/admin";
         }
         return location.pathname.startsWith(path);
     };
-
     const handleLogout = () => {
         Logout();
         navigate("/login");
     };
-
     return (
         <aside
             className={`fixed left-0 top-0 h-screen bg-gradient-to-b from-[#1a1b2e] to-[#2e3048] text-white transition-all duration-300 z-50 flex flex-col ${isCollapsed ? "w-[72px]" : "w-[260px]"
@@ -77,7 +77,6 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
                     </div>
                 )}
             </div>
-
             {/* Navigation */}
             <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
                 {sidebarItems.map((item) => (
@@ -104,7 +103,6 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
                     </Link>
                 ))}
             </nav>
-
             {/* Bottom Actions */}
             <div className="px-3 py-4 border-t border-white/10 space-y-2">
                 {/* Back to Home */}
@@ -115,7 +113,6 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
                     <Home size={20} />
                     {!isCollapsed && <span className="font-medium text-sm">Về trang chủ</span>}
                 </Link>
-
                 {/* Logout Button */}
                 <button
                     onClick={handleLogout}
@@ -125,7 +122,6 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
                     {!isCollapsed && <span className="font-medium text-sm">Đăng xuất</span>}
                 </button>
             </div>
-
             {/* Collapse Toggle */}
             <button
                 onClick={onToggle}
@@ -137,5 +133,4 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
         </aside>
     );
 };
-
 export default AdminSidebar;

@@ -3,9 +3,9 @@ import * as signalR from "@microsoft/signalr";
 const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
 const connection = new signalR.HubConnectionBuilder()
-  .withUrl(`${baseUrl}PaymentHub`,{
+  .withUrl(`${baseUrl}PaymentHub`, {
     accessTokenFactory: () => {
-      return localStorage.getItem("jwtToken") || ""; 
+      return localStorage.getItem("jwtToken") || "";
     }
   })
   .withAutomaticReconnect()
