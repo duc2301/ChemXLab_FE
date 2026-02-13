@@ -42,6 +42,12 @@ const sidebarItems: SidebarItem[] = [
         icon: <Atom size={20} />,
         path: "/admin/elements",
     },
+    {
+        id: "chemicals",
+        label: "Quản lý Hóa chất",
+        icon: <FlaskConical size={20} />, 
+        path: "/admin/chemicals",         
+    },
 ];
 interface AdminSidebarProps {
     isCollapsed: boolean;
