@@ -23,6 +23,7 @@ import PeriodicTablePage from "../../pages/PeriodicTable";
 import ProductsPage from "../../pages/Products";
 import ProfilePage from "../../pages/Profile";
 import SupportPage from "../../pages/Support";
+import AdminChemicalsPage from "../../pages/Admin/Chemical";
 export const AppRoutes = () => {
   return (
     <Routes>
@@ -52,6 +53,7 @@ export const AppRoutes = () => {
         <Route path="users" element={<AdminUsers />} />
         <Route path="packages" element={<AdminPackages />} />
         <Route path="elements" element={<AdminElements />} />
+        <Route path="chemicals" element={<AdminChemicalsPage />} />
       </Route>
     </Routes>
   );
