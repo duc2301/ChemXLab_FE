@@ -122,3 +122,31 @@ export interface UpdateElementForm {
     atomicMass: number;
     properties: string;
 }
+
+// ============== CHEMICAL TYPES ==============
+// From GET /api/Chemical
+export interface ChemicalAdmin {
+    id: string;
+    formula: string;
+    commonName: string | null;
+    iupacName: string | null;
+    stateAtRoomTemp: string | null; 
+    structure3dUrl: string | null;
+    molecularData: any | null; 
+    isPublic: boolean;
+    createdBy?: string | null;
+}
+
+// POST /api/Chemical
+export interface CreateChemicalForm {
+    formula: string;
+    commonName?: string;
+    iupacName?: string;
+    stateAtRoomTemp?: string;
+    structure3dUrl?: string;
+    molecularData?: any;
+    isPublic?: boolean;
+}
+
+// PUT /api/Chemical/:id
+export interface UpdateChemicalForm extends CreateChemicalForm {}
