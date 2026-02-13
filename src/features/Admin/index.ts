@@ -386,11 +386,13 @@ export const uploadFile = async (file: File): Promise<string | null> => {
         const filePath = `${fileName}`;
 
         const { data, error } = await supabase.storage
-            .from('chemical-models') 
+            .from("chemical-models")
             .upload(filePath, file, {
-                cacheControl: '3600',
+                cacheControl: "3600",
                 upsert: false
             });
+
+            console.log("Upload result:", data);
 
         if (error) {
             throw error;
