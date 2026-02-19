@@ -2,15 +2,18 @@ import { Canvas } from '@react-three/fiber';
 import { Suspense, useEffect, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as THREE from 'three';
+import { useLabSettings } from '../../../features/lab-environment/services/labSettingsStore';
 
 interface SceneWrapperProps {
   children: ReactNode;
   className?: string;
+  hideOverlay?: boolean;
 }
 
-export const SceneWrapper = ({ children, className }: SceneWrapperProps) => {
+export const SceneWrapper = ({ children, className, hideOverlay = false }: SceneWrapperProps) => {
   const navigate = useNavigate();
   const [pointerLocked, setPointerLocked] = useState(false);
+  const fov = useLabSettings((s) => s.fov);
 
   useEffect(() => {
     const onChange = () => {
@@ -40,25 +43,23 @@ export const SceneWrapper = ({ children, className }: SceneWrapperProps) => {
   };
   return (
     <div className={`relative h-screen w-full bg-slate-900 ${className}`}>
-      {/* Canvas là cửa sổ nhìn vào thế giới 3D */}
       <Canvas id="r3f-canvas"
         shadows
-        camera={{ position: [5, 5, 5], fov: 50 }} // Góc nhìn camera mặc định
-        dpr={[1, 2]} // Tối ưu pixel ratio cho màn hình retina
+        camera={{ position: [5, 5, 5], fov: fov }}
+        dpr={[1, 2]}
         gl={{
-          toneMapping: THREE.ACESFilmicToneMapping, // Chuẩn điện ảnh
-          toneMappingExposure: 0.9, // Độ phơi sáng
-          antialias: true // Khử răng cưa
+          toneMapping: THREE.ACESFilmicToneMapping,
+          toneMappingExposure: 0.9,
+          antialias: true
         }}
       >
-        {/* Suspense để chờ load các tài nguyên 3D nặng */}
         <Suspense fallback={null}>
           {children}
         </Suspense>
       </Canvas>
 
-      {/* Click overlay to request pointer lock (only visible when not locked) */}
-      {!pointerLocked && (
+      {/* Click overlay to request pointer lock (only visible when not locked and not hidden by parent) */}
+      {!hideOverlay && !pointerLocked && (
         <div>
           <div >
             <button
