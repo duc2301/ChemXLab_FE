@@ -4,67 +4,96 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { CapsuleCollider, RapierRigidBody, RigidBody, useRapier } from '@react-three/rapier';
 import { useRef } from 'react';
 import { Vector3 } from 'three';
+import { useLabSettings } from '../../lab-environment/services/labSettingsStore';
 import type { ControlsState } from '../models/controls';
 
-const MOVEMENT_SPEED = 5;
-const JUMP_FORCE = 5;
+const VELOCITY_DEAD_ZONE = 0.001;
 
-export const UserCamera = () => {
+interface UserCameraProps {
+  frozen?: boolean;
+}
+
+export const UserCamera = ({ frozen = false }: UserCameraProps) => {
   const { camera } = useThree();
   const [, get] = useKeyboardControls<ControlsState>();
   const rigidBodyRef = useRef<RapierRigidBody>(null);
   const { world } = useRapier();
 
-  // Vectors - tạo 1 lần duy nhất để tránh garbage collection
-  const directionRef = useRef(new Vector3());
-  const frontVectorRef = useRef(new Vector3());
-  const sideVectorRef = useRef(new Vector3());
+  // Vectors — created once to avoid GC pressure
+  const moveDir = useRef(new Vector3());
+  const frontV = useRef(new Vector3());
+  const sideV = useRef(new Vector3());
 
-  useFrame((state) => {
-    if (!rigidBodyRef.current) return;
+  useFrame(() => {
+    const rb = rigidBodyRef.current;
+    if (!rb) return;
 
-    const { forward, backward, left, right, up } = get();
-    const vel = rigidBodyRef.current.linvel();
+    // Read configurable settings
+    const { movementSpeed, sprintMultiplier, jumpForce } = useLabSettings.getState();
 
-    // Tính hướng di chuyển
-    const direction = directionRef.current;
-    const frontVector = frontVectorRef.current;
-    const sideVector = sideVectorRef.current;
+    // Always keep camera synced to physics body position
+    const pos = rb.translation();
+    camera.position.set(pos.x, pos.y + 0.8, pos.z);
 
-    frontVector.set(0, 0, Number(backward) - Number(forward));
-    sideVector.set(Number(left) - Number(right), 0, 0);
+    if (frozen) {
+      // Kill horizontal velocity while paused
+      const v = rb.linvel();
+      rb.setLinvel({ x: 0, y: v.y, z: 0 }, true);
+      return;
+    }
 
-    direction
-      .subVectors(frontVector, sideVector)
-      .normalize()
-      .multiplyScalar(MOVEMENT_SPEED)
-      .applyEuler(state.camera.rotation);
+    const { forward, backward, left, right, jump, sprint } = get();
+    const vel = rb.linvel();
 
-    // Áp dụng vận tốc (giữ nguyên Y cho trọng lực)
-    rigidBodyRef.current.setLinvel(
-      { x: direction.x, y: vel.y, z: direction.z },
-      true
-    );
+    // Check if any movement key is pressed
+    const isMoving = forward || backward || left || right;
 
-    // Xử lý nhảy với ground check
-    if (up) {
-      const origin = rigidBodyRef.current.translation();
+    if (!isMoving) {
+      // No input → stop horizontal movement immediately (prevents drift)
+      rb.setLinvel({ x: 0, y: vel.y, z: 0 }, true);
+    } else {
+      // Calculate movement direction
+      const speed = sprint ? movementSpeed * sprintMultiplier : movementSpeed;
+      const front = frontV.current;
+      const side = sideV.current;
+      const dir = moveDir.current;
+
+      // Front/back: negative Z = forward in Three.js
+      front.set(0, 0, (backward ? 1 : 0) - (forward ? 1 : 0));
+      // Left/right: positive X = right
+      side.set((right ? 1 : 0) - (left ? 1 : 0), 0, 0);
+
+      dir.copy(front).add(side);
+
+      // Normalize to prevent faster diagonal movement, then apply speed
+      if (dir.lengthSq() > VELOCITY_DEAD_ZONE) {
+        dir.normalize().multiplyScalar(speed);
+        // Rotate direction by camera's Y rotation only (horizontal plane)
+        dir.applyEuler(camera.rotation);
+        // Zero out any vertical component from camera pitch
+        dir.y = 0;
+
+        rb.setLinvel({ x: dir.x, y: vel.y, z: dir.z }, true);
+      } else {
+        rb.setLinvel({ x: 0, y: vel.y, z: 0 }, true);
+      }
+    }
+
+    // Jump — only when grounded (raycast down)
+    if (jump) {
+      const origin = rb.translation();
       const ray = world.castRay(
         {
           origin: { x: origin.x, y: origin.y, z: origin.z },
-          dir: { x: 0, y: -1, z: 0 }
+          dir: { x: 0, y: -1, z: 0 },
         } as any,
         1.1,
         true
       );
-
       if (ray) {
-        rigidBodyRef.current.setLinvel({ x: vel.x, y: JUMP_FORCE, z: vel.z }, true);
+        rb.setLinvel({ x: vel.x, y: jumpForce, z: vel.z }, true);
       }
     }
-
-    const translation = rigidBodyRef.current.translation();
-    camera.position.set(translation.x, translation.y + 0.8, translation.z);
   });
 
   return (
@@ -73,10 +102,10 @@ export const UserCamera = () => {
       colliders={false}
       mass={1}
       type="dynamic"
-      position={[0, 5, 0]}
+      position={[0, 3, 0]}
       enabledRotations={[false, false, false]}
       linearDamping={0.5}
-      friction={0}
+      friction={1}
     >
       <CapsuleCollider args={[0.75, 0.35]} />
     </RigidBody>
