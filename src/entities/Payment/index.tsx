@@ -3,7 +3,7 @@ export interface Payment {
     userId: string;
     packageId: string;
     amount: number;
-    status: 'PENDING' | 'CANCEL' | 'PAID';
+    status: 'PENDING' | 'EXPIRED' | 'PAID';
     currency: string;
     createdAt?: string;
     paymentMethod: string;

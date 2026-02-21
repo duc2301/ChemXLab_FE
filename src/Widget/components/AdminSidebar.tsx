@@ -1,4 +1,5 @@
 import {
+    Atom,
     ChevronLeft,
     ChevronRight,
     FlaskConical,
@@ -8,17 +9,14 @@ import {
     Package,
     Users,
 } from "lucide-react";
-import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Logout } from "../../features/Auth";
-
 interface SidebarItem {
     id: string;
     label: string;
     icon: React.ReactNode;
     path: string;
 }
-
 const sidebarItems: SidebarItem[] = [
     {
         id: "dashboard",
@@ -38,25 +36,36 @@ const sidebarItems: SidebarItem[] = [
         icon: <Package size={20} />,
         path: "/admin/packages",
     },
+    {
+        id: "elements",
+        label: "Quản lý Nguyên tố",
+        icon: <Atom size={20} />,
+        path: "/admin/elements",
+    },
+    {
+        id: "chemicals",
+        label: "Quản lý Hóa chất",
+        icon: <FlaskConical size={20} />, 
+        path: "/admin/chemicals",         
+    },
 ];
-
-const AdminSidebar = () => {
+interface AdminSidebarProps {
+    isCollapsed: boolean;
+    onToggle: () => void;
+}
+const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
     const location = useLocation();
     const navigate = useNavigate();
-    const [isCollapsed, setIsCollapsed] = useState(false);
-
     const isActive = (path: string) => {
         if (path === "/admin") {
             return location.pathname === "/admin";
         }
         return location.pathname.startsWith(path);
     };
-
     const handleLogout = () => {
         Logout();
         navigate("/login");
     };
-
     return (
         <aside
             className={`fixed left-0 top-0 h-screen bg-gradient-to-b from-[#1a1b2e] to-[#2e3048] text-white transition-all duration-300 z-50 flex flex-col ${isCollapsed ? "w-[72px]" : "w-[260px]"
@@ -74,7 +83,6 @@ const AdminSidebar = () => {
                     </div>
                 )}
             </div>
-
             {/* Navigation */}
             <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
                 {sidebarItems.map((item) => (
@@ -101,7 +109,6 @@ const AdminSidebar = () => {
                     </Link>
                 ))}
             </nav>
-
             {/* Bottom Actions */}
             <div className="px-3 py-4 border-t border-white/10 space-y-2">
                 {/* Back to Home */}
@@ -112,7 +119,6 @@ const AdminSidebar = () => {
                     <Home size={20} />
                     {!isCollapsed && <span className="font-medium text-sm">Về trang chủ</span>}
                 </Link>
-
                 {/* Logout Button */}
                 <button
                     onClick={handleLogout}
@@ -122,16 +128,15 @@ const AdminSidebar = () => {
                     {!isCollapsed && <span className="font-medium text-sm">Đăng xuất</span>}
                 </button>
             </div>
-
             {/* Collapse Toggle */}
             <button
-                onClick={() => setIsCollapsed(!isCollapsed)}
+                onClick={onToggle}
                 className="absolute -right-3 top-20 w-6 h-6 bg-indigo-600 rounded-full flex items-center justify-center shadow-lg hover:bg-indigo-700 transition-colors"
+                style={{ cursor: "pointer", zIndex: 60 }}
             >
                 {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
             </button>
         </aside>
     );
 };
-
 export default AdminSidebar;

@@ -1,5 +1,5 @@
 export interface Package {
-    id: number;
+    id: string;
     name: string;
     price: number;
     durationDays: number;

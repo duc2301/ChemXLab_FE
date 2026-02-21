@@ -4,9 +4,10 @@ import { folder, useControls } from 'leva';
 
 interface LabEnvironmentProps {
   enableControls?: boolean;
+  levaHidden?: boolean;
 }
 
-export const LabEnvironment = ({ enableControls = true }: LabEnvironmentProps) => {
+export const LabEnvironment = ({ enableControls = true, levaHidden = false }: LabEnvironmentProps) => {
   const config = useControls({
     'Không gian Lab': folder({
       bgColor: { value: '#f0f2f5', label: 'Màu nền' },
@@ -34,7 +35,7 @@ export const LabEnvironment = ({ enableControls = true }: LabEnvironmentProps) =
       bloomIntensity: { value: 0.05, min: 0, max: 2, label: 'Cường độ Bloom' },
       bloomThreshold: { value: 1, min: 0, max: 1, label: 'Ngưỡng Bloom' },
     })
-  });
+  }, { hidden: levaHidden });
 
   return (
     <>

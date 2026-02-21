@@ -3,6 +3,7 @@ import AdminLayout from "../../Widget/components/AdminLayout";
 import Layout from "../../Widget/components/Layout";
 import AboutPage from "../../pages/About";
 import AdminDashboard from "../../pages/Admin/Dashboard";
+import AdminElements from "../../pages/Admin/Elements";
 import AdminPackages from "../../pages/Admin/Packages";
 import AdminUsers from "../../pages/Admin/Users";
 import ForgotPasswordPage from "../../pages/Auth/ForgotPassword";
@@ -17,12 +18,12 @@ import LabTest from "../../pages/Lab/Temp";
 import LibraryPage from "../../pages/Library";
 import GradeDetail from "../../pages/Library/GradeDetail";
 import PaymentPage from "../../pages/Payment";
+import PaymentSuccessPage from "../../pages/Payment/Success";
 import PeriodicTablePage from "../../pages/PeriodicTable";
 import ProductsPage from "../../pages/Products";
 import ProfilePage from "../../pages/Profile";
 import SupportPage from "../../pages/Support";
-import PaymentSuccessPage from "../../pages/Payment/Success";
-
+import AdminChemicalsPage from "../../pages/Admin/Chemical";
 export const AppRoutes = () => {
   return (
     <Routes>
@@ -45,13 +46,14 @@ export const AppRoutes = () => {
       <Route path="register" element={<RegisterPage />} />
       <Route path="payment" element={<PaymentPage />} />
       <Route path="chatbot" element={<ChatbotPage />} />
-      <Route path="paymentSuccess" element={<PaymentSuccessPage />} />
-
+      <Route path="payment/success" element={<PaymentSuccessPage />} />
       {/* Admin Routes */}
       <Route path="/admin" element={<AdminLayout />}>
         <Route index element={<AdminDashboard />} />
         <Route path="users" element={<AdminUsers />} />
         <Route path="packages" element={<AdminPackages />} />
+        <Route path="elements" element={<AdminElements />} />
+        <Route path="chemicals" element={<AdminChemicalsPage />} />
       </Route>
     </Routes>
   );

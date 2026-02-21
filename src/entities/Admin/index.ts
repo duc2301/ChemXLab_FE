@@ -1,5 +1,3 @@
-// Admin Dashboard Types - Matching Backend API Responses
-
 // ============== USER TYPES ==============
 // From GET /api/User/GetAllUsers
 export interface UserAdmin {
@@ -79,7 +77,76 @@ export interface CreateUserForm {
     fullName: string;
     email: string;
     password: string;
-    confirmPassword: string; 
+    confirmPassword: string;
     role: string;
     avatarUrl?: string;
 }
+
+// ============== ELEMENT TYPES ==============
+// Properties structure returned by the API
+export interface ElementProperties {
+    englishName?: string;
+    category?: string;
+    group?: number;
+    period?: number;
+    density?: string;
+    meltingPoint?: string;
+    boilingPoint?: string;
+    discoverer?: string;
+    yearDiscovered?: string;
+    color_hex?: string;
+    description?: string;
+    electronConfiguration?: string;
+    oxidationStates?: string[];
+}
+
+// From GET /api/elements
+export interface ElementAdmin {
+    id: number;
+    symbol: string;
+    name: string;
+    atomicMass: number;
+    properties: ElementProperties | string;
+}
+// POST /api/elements
+export interface CreateElementForm {
+    symbol: string;
+    name: string;
+    atomicMass: number;
+    properties: string;
+}
+// PUT /api/elements/:id
+export interface UpdateElementForm {
+    symbol: string;
+    name: string;
+    atomicMass: number;
+    properties: string;
+}
+
+// ============== CHEMICAL TYPES ==============
+// From GET /api/Chemical
+export interface ChemicalAdmin {
+    id: string;
+    formula: string;
+    commonName: string | null;
+    iupacName: string | null;
+    stateAtRoomTemp: string | null; 
+    structure3dUrl: string | null;
+    molecularData: any | null; 
+    isPublic: boolean;
+    createdBy?: string | null;
+}
+
+// POST /api/Chemical
+export interface CreateChemicalForm {
+    formula: string;
+    commonName?: string;
+    iupacName?: string;
+    stateAtRoomTemp?: string;
+    structure3dUrl?: string;
+    molecularData?: any;
+    isPublic?: boolean;
+}
+
+// PUT /api/Chemical/:id
+export interface UpdateChemicalForm extends CreateChemicalForm {}
