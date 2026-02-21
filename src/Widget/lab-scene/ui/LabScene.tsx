@@ -95,8 +95,7 @@ function LabSceneContent({
 
   return (
     <>
-      {/* PointerLockControls — ALWAYS mounted, toggled via lock/unlock */}
-      <PointerLockControls ref={controlsRef} />
+      <PointerLockControls ref={controlsRef} selector="#r3f-canvas" />
 
       {/* Sync FOV and mouse sensitivity at runtime */}
       <FovSync />
