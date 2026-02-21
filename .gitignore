@@ -31,3 +31,5 @@ sonar-project.properties
 # src/service/geminiAPI.ts
 .vercel
 .env*.local
+package-lock.json
+yarn.lock
