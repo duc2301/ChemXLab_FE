@@ -1,8 +1,13 @@
 import { useGLTF } from "@react-three/drei";
 import type { ThreeEvent } from "@react-three/fiber";
 import { useFrame, useThree } from "@react-three/fiber";
-import { RapierRigidBody, RigidBody } from "@react-three/rapier";
-import { Suspense, useCallback, useMemo, useRef, useState } from "react";
+import {
+  RapierRigidBody,
+  RigidBody,
+  type CollisionEnterPayload,
+  type CollisionExitPayload,
+} from "@react-three/rapier";
+import { useCallback, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { getEquipmentById } from "../services/equipmentRegistry";
 import type { DroppedItem } from "../types/equipment";
@@ -32,6 +37,7 @@ export const EquipmentModel = ({
   const rigidBodyRef = useRef<RapierRigidBody>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const ignoredCollisions = ["lab-floor", "table-surface", ""];
 
   const { camera, gl, pointer } = useThree();
   const equipment = getEquipmentById(droppedItem.equipmentId);
@@ -113,6 +119,30 @@ export const EquipmentModel = ({
     }
   }, [gl.domElement, isDragging]);
 
+  const handleCollisionEnter = useCallback((e: CollisionEnterPayload) => {
+    if (ignoredCollisions.includes(e.colliderObject?.name || "")) {
+      return; // Ignore floor collisions
+    }
+    if (e.colliderObject?.name === "iron-ring") {
+      if (rigidBodyRef.current) {
+        // const currentPos = rigidBodyRef.current.translation();
+        // rigidBodyRef.current.setTranslation(
+        //   { x: currentPos.x, y: currentPos.y + 2, z: currentPos.z },
+        //   true,
+        // );
+      }
+    }
+    console.log("hover: ", e.colliderObject?.name);
+
+    // Optional: Add collision sound or effects here
+  }, []);
+  const handleCollisionExit = useCallback((e: CollisionExitPayload) => {
+    if (ignoredCollisions.includes(e.colliderObject?.name || "")) {
+      return; // Ignore floor collisions
+    }
+    console.log("out: ", e.colliderObject?.name);
+  }, []);
+
   if (!equipment) {
     console.warn(`Equipment not found: ${droppedItem.equipmentId}`);
     return null;
@@ -123,19 +153,13 @@ export const EquipmentModel = ({
   return (
     <RigidBody
       ref={rigidBodyRef}
-      type="dynamic"
-      position={[
-        droppedItem.position[0],
-        tableHeight, // On table surface
-        droppedItem.position[2],
-      ]}
+      type="kinematicPosition"
+      position={[droppedItem.position[0], tableHeight, droppedItem.position[2]]}
       rotation={droppedItem.rotation}
-      mass={equipment.mass || 0.5}
-      colliders="cuboid"
-      restitution={0.01}
-      friction={0.99}
-      linearDamping={0.95}
-      angularDamping={0.98}
+      colliders={"hull"}
+      name={droppedItem.equipmentId}
+      onCollisionEnter={handleCollisionEnter}
+      onCollisionExit={handleCollisionExit}
     >
       <group
         scale={[modelScale, modelScale, modelScale]}
@@ -144,17 +168,11 @@ export const EquipmentModel = ({
         onPointerEnter={handlePointerEnter}
         onPointerLeave={handlePointerLeave}
       >
-        <Suspense
-          fallback={
-            <FallbackBox isHovered={isHovered} isDragging={isDragging} />
-          }
-        >
-          <Model
-            modelPath={equipment.modelPath}
-            isHovered={isHovered}
-            isDragging={isDragging}
-          />
-        </Suspense>
+        <Model
+          modelPath={equipment.modelPath}
+          isHovered={isHovered}
+          isDragging={isDragging}
+        />
       </group>
     </RigidBody>
   );

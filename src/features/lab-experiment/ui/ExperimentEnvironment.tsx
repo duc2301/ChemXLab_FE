@@ -85,7 +85,7 @@ const LabTable = () => {
 
       {/* Metal table legs */}
       {legPositions.map((pos, index) => (
-        <RigidBody key={index} type="fixed" position={pos}>
+        <RigidBody key={index} type="fixed" position={pos} name="table-surface">
           <mesh receiveShadow castShadow>
             <boxGeometry args={LEG_SIZE} />
             <meshStandardMaterial color="#4a5568" roughness={0.4} metalness={0.6} />
@@ -94,13 +94,13 @@ const LabTable = () => {
       ))}
 
       {/* Support bars connecting legs */}
-      <RigidBody type="fixed" position={[0, 0.25, -TABLE_TOP_SIZE[2] / 2 + 0.2]}>
+      <RigidBody type="fixed" position={[0, 0.25, -TABLE_TOP_SIZE[2] / 2 + 0.2]} name="table-surface">
         <mesh receiveShadow>
           <boxGeometry args={[TABLE_TOP_SIZE[0] - 0.4, 0.04, 0.04]} />
           <meshStandardMaterial color="#4a5568" roughness={0.4} metalness={0.6} />
         </mesh>
       </RigidBody>
-      <RigidBody type="fixed" position={[0, 0.25, TABLE_TOP_SIZE[2] / 2 - 0.2]}>
+      <RigidBody type="fixed" position={[0, 0.25, TABLE_TOP_SIZE[2] / 2 - 0.2]} name="table-surface">
         <mesh receiveShadow>
           <boxGeometry args={[TABLE_TOP_SIZE[0] - 0.4, 0.04, 0.04]} />
           <meshStandardMaterial color="#4a5568" roughness={0.4} metalness={0.6} />
@@ -108,13 +108,13 @@ const LabTable = () => {
       </RigidBody>
 
       {/* Side support bars */}
-      <RigidBody type="fixed" position={[-TABLE_TOP_SIZE[0] / 2 + 0.2, 0.25, 0]}>
+      <RigidBody type="fixed" position={[-TABLE_TOP_SIZE[0] / 2 + 0.2, 0.25, 0]} name="table-surface">
         <mesh receiveShadow>
           <boxGeometry args={[0.04, 0.04, TABLE_TOP_SIZE[2] - 0.4]} />
           <meshStandardMaterial color="#4a5568" roughness={0.4} metalness={0.6} />
         </mesh>
       </RigidBody>
-      <RigidBody type="fixed" position={[TABLE_TOP_SIZE[0] / 2 - 0.2, 0.25, 0]}>
+      <RigidBody type="fixed" position={[TABLE_TOP_SIZE[0] / 2 - 0.2, 0.25, 0]} name="table-surface">
         <mesh receiveShadow>
           <boxGeometry args={[0.04, 0.04, TABLE_TOP_SIZE[2] - 0.4]} />
           <meshStandardMaterial color="#4a5568" roughness={0.4} metalness={0.6} />
@@ -129,8 +129,8 @@ const LabTable = () => {
  */
 const LabFloor = () => {
   return (
-    <RigidBody type="fixed" position={[0, -0.05, 0]}>
-      <CuboidCollider args={[10, 0.05, 10]} />
+    <RigidBody type="fixed" position={[0, -0.05, 0]} name="lab-floor">
+      <CuboidCollider args={[10, 0.05, 10]} name='lab-floor'/>
       <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[20, 20]} />
         <meshStandardMaterial color="#1f2937" roughness={0.9} />
