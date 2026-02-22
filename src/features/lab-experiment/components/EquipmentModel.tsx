@@ -181,22 +181,22 @@ export const EquipmentModel = ({
 /**
  * Fallback box while model loads
  */
-const FallbackBox = ({
-  isHovered,
-  isDragging,
-}: {
-  isHovered: boolean;
-  isDragging: boolean;
-}) => (
-  <mesh>
-    <boxGeometry args={[0.1, 0.1, 0.1]} />
-    <meshStandardMaterial
-      color={isDragging ? "#ffcc00" : isHovered ? "#66aaff" : "#888888"}
-      transparent
-      opacity={0.8}
-    />
-  </mesh>
-);
+// const FallbackBox = ({
+//   isHovered,
+//   isDragging,
+// }: {
+//   isHovered: boolean;
+//   isDragging: boolean;
+// }) => (
+//   <mesh>
+//     <boxGeometry args={[0.1, 0.1, 0.1]} />
+//     <meshStandardMaterial
+//       color={isDragging ? "#ffcc00" : isHovered ? "#66aaff" : "#888888"}
+//       transparent
+//       opacity={0.8}
+//     />
+//   </mesh>
+// );
 
 /**
  * GLTF model with hover/drag highlight
