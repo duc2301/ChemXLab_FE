@@ -50,6 +50,10 @@ export const Login = async (LoginData: LoginForm): Promise<boolean | null> => {
 
 export const Logout = (): void => {
   localStorage.removeItem("jwtToken");
+  localStorage.removeItem("UserId");
+  localStorage.removeItem("Email");
+  localStorage.removeItem("Role");
+  localStorage.removeItem("AvatarUrl");
 }
 
 export const register = async (RegisterData: RegisterForm): Promise<string | null> => {
@@ -72,8 +76,15 @@ export const register = async (RegisterData: RegisterForm): Promise<string | nul
       return null;
     }
   } catch (error: any) {
-    const errorMsg = error.response?.data?.message || "Lỗi kết nối đến server. Vui lòng thử lại sau.";
-    message.error(errorMsg);
+    const responseData = error.response?.data;
+    if (responseData?.errors && responseData.errors.length > 0) {
+      responseData.errors.forEach((err: any) => {
+        message.error(err.message);
+      });
+    } else {
+      const errorMsg = responseData?.message || "Lỗi kết nối đến server. Vui lòng thử lại sau.";
+      message.error(errorMsg);
+    }
     return null;
   }
 }
@@ -131,6 +142,51 @@ export const ResetPassword = async (payload: any): Promise<boolean> => {
   } catch (error: any) {
     const errorMsg = error.response?.data?.message || "Mã OTP không đúng hoặc đã hết hạn.";
     message.error(errorMsg);
+    return false;
+  }
+};
+
+export const GoogleLogin = async (credential: string): Promise<boolean> => {
+  try {
+    const response = await api.post("Auth/GoogleLogin", { idToken: credential });
+    const data: ResponseDTO<string> = response.data;
+
+    if (data.isSuccess) {
+      localStorage.setItem("jwtToken", data.result);
+
+      const decodedToken: any = await DecodeJwt(data.result);
+
+      if (decodedToken) {
+        const userId = decodedToken["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"]
+          || decodedToken.nameid
+          || decodedToken.sub
+          || decodedToken.UserId;
+
+        if (userId) {
+          localStorage.setItem("UserId", userId);
+        }
+
+        localStorage.setItem("Email", decodedToken.email || decodedToken["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"] || "");
+        localStorage.setItem("Role", decodedToken.role || decodedToken["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] || "");
+        localStorage.setItem("AvatarUrl", decodedToken.AvatarUrl || "");
+      }
+
+      message.success("Đăng nhập bằng Google thành công!");
+      return true;
+    } else {
+      message.error(data.message || "Đăng nhập bằng Google thất bại.");
+      return false;
+    }
+  } catch (error: any) {
+    const responseData = error.response?.data;
+    if (responseData?.errors && responseData.errors.length > 0) {
+      responseData.errors.forEach((err: any) => {
+        message.error(err.message);
+      });
+    } else {
+      const errorMsg = responseData?.message || "Lỗi kết nối đến server. Vui lòng thử lại sau.";
+      message.error(errorMsg);
+    }
     return false;
   }
 };

@@ -1,8 +1,9 @@
+import { useGoogleLogin } from "@react-oauth/google";
 import { message } from "antd";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import type { LoginForm } from "../../../entities/Auth";
-import { Login } from "../../../features/Auth";
+import { GoogleLogin as GoogleLoginAuth, Login } from "../../../features/Auth";
 
 // Import icons
 import { ArrowLeft, Eye, EyeOff, LogIn, UserPlus } from "lucide-react";
@@ -15,6 +16,7 @@ const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -43,6 +45,29 @@ const LoginPage = () => {
       setIsLoading(false);
     }
   }
+
+  const googleLogin = useGoogleLogin({
+    flow: 'implicit',
+    onSuccess: async (tokenResponse) => {
+      setIsGoogleLoading(true);
+      try {
+        const result = await GoogleLoginAuth(tokenResponse.access_token);
+        if (result) {
+          const role = localStorage.getItem("Role");
+          if (role?.toUpperCase() === "ADMIN") {
+            navigate('/admin');
+          } else {
+            navigate('/');
+          }
+        }
+      } finally {
+        setIsGoogleLoading(false);
+      }
+    },
+    onError: () => {
+      message.error("Đăng nhập Google thất bại. Vui lòng thử lại.");
+    },
+  });
 
   // 2. Hàm xử lý phím Enter
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -136,9 +161,13 @@ const LoginPage = () => {
 
         {/* Social Buttons */}
         <div className="space-y-3">
-          <button className="w-full border border-gray-200 rounded-lg py-3 flex items-center justify-center gap-3 hover:bg-gray-50 transition-colors font-medium text-gray-700 text-sm">
+          <button
+            onClick={() => googleLogin()}
+            disabled={isGoogleLoading}
+            className={`w-full border border-gray-200 rounded-lg py-3 flex items-center justify-center gap-3 hover:bg-gray-50 transition-colors font-medium text-gray-700 text-sm ${isGoogleLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+          >
             <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-5 h-5" alt="Google" />
-            Tiếp tục với Google
+            {isGoogleLoading ? "Đang xử lý..." : "Tiếp tục với Google"}
           </button>
         </div>
 
