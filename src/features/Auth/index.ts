@@ -98,6 +98,32 @@ export const DecodeJwt = async (token: string): Promise<JwtDecode | null> => {
   }
 }
 
+export const SendRegisterOtp = async (email: string): Promise<boolean> => {
+  try {
+    const response = await api.post("Auth/send-otp", { email });
+    const data: ResponseDTO<null> = response.data;
+
+    if (data.isSuccess) {
+      message.success("Mã OTP đã được gửi đến email của bạn. Vui lòng kiểm tra!");
+      return true;
+    } else {
+      message.error(data.message || "Không thể gửi OTP. Vui lòng thử lại.");
+      return false;
+    }
+  } catch (error: any) {
+    const responseData = error.response?.data;
+    if (responseData?.errors && responseData.errors.length > 0) {
+      responseData.errors.forEach((err: any) => {
+        message.error(err.message);
+      });
+    } else {
+      const errorMsg = responseData?.message || "Lỗi kết nối đến server. Vui lòng thử lại sau.";
+      message.error(errorMsg);
+    }
+    return false;
+  }
+};
+
 export const SendOtp = async (email: string): Promise<boolean> => {
   try {
     const response = await api.post("Auth/forgot-password", { email });
