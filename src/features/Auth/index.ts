@@ -50,7 +50,6 @@ export const Login = async (LoginData: LoginForm): Promise<boolean | null> => {
 
 export const Logout = (): void => {
   localStorage.removeItem("jwtToken");
-  window.location.href = "/login";
 }
 
 export const register = async (RegisterData: RegisterForm): Promise<string | null> => {
