@@ -1,8 +1,9 @@
+import { useGoogleLogin } from "@react-oauth/google";
 import { message } from "antd";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import type { RegisterForm } from "../../../entities/Auth";
-import { register } from "../../../features/Auth";
+import { GoogleLogin as GoogleLoginAuth, register } from "../../../features/Auth";
 
 // Import icons
 import { ArrowLeft, Eye, EyeOff, LogIn, UserPlus } from "lucide-react";
@@ -13,6 +14,7 @@ const RegisterPage = () => {
   const [registerData, setRegisterData] = useState<RegisterForm>();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   const handleRegister = async () => {
     if (!registerData?.email || !registerData?.passwordHash || !registerData?.fullName || !registerData?.confirmPassword) {
@@ -33,6 +35,28 @@ const RegisterPage = () => {
     }
   }
 
+  const googleLogin = useGoogleLogin({
+    flow: 'implicit',
+    onSuccess: async (tokenResponse) => {
+      setIsGoogleLoading(true);
+      try {
+        const result = await GoogleLoginAuth(tokenResponse.access_token);
+        if (result) {
+          const role = localStorage.getItem("Role");
+          if (role?.toUpperCase() === "ADMIN") {
+            navigate('/admin');
+          } else {
+            navigate('/');
+          }
+        }
+      } finally {
+        setIsGoogleLoading(false);
+      }
+    },
+    onError: () => {
+      message.error("Đăng nhập Google thất bại. Vui lòng thử lại.");
+    },
+  });
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
@@ -149,9 +173,13 @@ const RegisterPage = () => {
 
         {/* Social Buttons */}
         <div className="space-y-3">
-          <button className="w-full border border-gray-200 rounded-lg py-3 flex items-center justify-center gap-3 hover:bg-gray-50 transition-colors font-medium text-gray-700 text-sm">
+          <button
+            onClick={() => googleLogin()}
+            disabled={isGoogleLoading}
+            className={`w-full border border-gray-200 rounded-lg py-3 flex items-center justify-center gap-3 hover:bg-gray-50 transition-colors font-medium text-gray-700 text-sm ${isGoogleLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+          >
             <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-5 h-5" alt="Google" />
-            Tiếp tục với Google
+            {isGoogleLoading ? "Đang xử lý..." : "Tiếp tục với Google"}
           </button>
         </div>
 

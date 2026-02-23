@@ -44,8 +44,78 @@ const TABLE_TOP_SIZE: [number, number, number] = [6, 0.08, 3]; // width, thickne
 const TABLE_HEIGHT = 0.85; // Height of table surface from ground (~85cm)
 const LEG_SIZE: [number, number, number] = [0.08, TABLE_HEIGHT - TABLE_TOP_SIZE[1], 0.08];
 
+// Lab room dimensions
+const ROOM_WIDTH = 14;
+const ROOM_DEPTH = 10;
+const ROOM_HEIGHT = 5;
+
 /**
- * Realistic Lab Table - white ceramic top with metal frame
+ * Lab Room - walls, ceiling, and fluorescent lights
+ */
+const LabRoom = () => {
+  const WALL_COLOR = "#9aa3ad";
+  const CEILING_COLOR = "#bcc3cb";
+
+  return (
+    <group>
+      {/* === WALLS === */}
+      {/* Back wall */}
+      <mesh position={[0, ROOM_HEIGHT / 2, -ROOM_DEPTH / 2]}>
+        <planeGeometry args={[ROOM_WIDTH, ROOM_HEIGHT]} />
+        <meshBasicMaterial color={WALL_COLOR} />
+      </mesh>
+      {/* Left wall */}
+      <mesh position={[-ROOM_WIDTH / 2, ROOM_HEIGHT / 2, 0]} rotation={[0, Math.PI / 2, 0]}>
+        <planeGeometry args={[ROOM_DEPTH, ROOM_HEIGHT]} />
+        <meshBasicMaterial color={WALL_COLOR} />
+      </mesh>
+      {/* Right wall */}
+      <mesh position={[ROOM_WIDTH / 2, ROOM_HEIGHT / 2, 0]} rotation={[0, -Math.PI / 2, 0]}>
+        <planeGeometry args={[ROOM_DEPTH, ROOM_HEIGHT]} />
+        <meshBasicMaterial color={WALL_COLOR} />
+      </mesh>
+      {/* Front wall (behind camera) */}
+      <mesh position={[0, ROOM_HEIGHT / 2, ROOM_DEPTH / 2]} rotation={[0, Math.PI, 0]}>
+        <planeGeometry args={[ROOM_WIDTH, ROOM_HEIGHT]} />
+        <meshBasicMaterial color={WALL_COLOR} />
+      </mesh>
+
+      {/* === CEILING === */}
+      <mesh position={[0, ROOM_HEIGHT, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[ROOM_WIDTH, ROOM_DEPTH]} />
+        <meshBasicMaterial color={CEILING_COLOR} />
+      </mesh>
+
+      {/* === FLUORESCENT CEILING LIGHTS === */}
+      {[-1.5, 1.5].map((x) => (
+        <group key={x} position={[x, ROOM_HEIGHT - 0.05, 0]}>
+          {/* Light fixture housing */}
+          <mesh>
+            <boxGeometry args={[0.3, 0.05, 2.5]} />
+            <meshBasicMaterial color="#788490" />
+          </mesh>
+          {/* Light panel (glowing) */}
+          <mesh position={[0, -0.03, 0]}>
+            <boxGeometry args={[0.25, 0.01, 2.3]} />
+            <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.8} />
+          </mesh>
+          {/* Light source */}
+          <rectAreaLight
+            width={0.25}
+            height={2.3}
+            intensity={3}
+            color="#f0f4ff"
+            position={[0, -0.05, 0]}
+            rotation={[Math.PI / 2, 0, 0]}
+          />
+        </group>
+      ))}
+    </group>
+  );
+};
+
+/**
+ * Realistic Lab Table - ceramic top with metal frame
  * Giống bàn thí nghiệm thực tế
  */
 const LabTable = () => {
@@ -58,22 +128,22 @@ const LabTable = () => {
 
   return (
     <group>
-      {/* White ceramic table top - like real lab tables */}
+      {/* Lab table top - medium gray for contrast with glass/metal equipment */}
       <RigidBody type="fixed" position={[0, TABLE_HEIGHT, 0]} name="table-surface">
         <CuboidCollider args={[TABLE_TOP_SIZE[0] / 2, TABLE_TOP_SIZE[1] / 2, TABLE_TOP_SIZE[2] / 2]} />
         <mesh receiveShadow castShadow>
           <boxGeometry args={TABLE_TOP_SIZE} />
           <meshStandardMaterial
-            color="#d4d4d4"
-            roughness={0.35}
-            metalness={0}
+            color="#b8c0c8"
+            roughness={0.4}
+            metalness={0.05}
           />
         </mesh>
 
         {/* Raised edge around table (spill containment) */}
         <mesh position={[0, TABLE_TOP_SIZE[1] / 2 + 0.015, 0]} receiveShadow>
           <boxGeometry args={[TABLE_TOP_SIZE[0] + 0.04, 0.03, TABLE_TOP_SIZE[2] + 0.04]} />
-          <meshStandardMaterial color="#c0c0c0" roughness={0.3} />
+          <meshStandardMaterial color="#9ca3af" roughness={0.3} metalness={0.3} />
         </mesh>
 
         {/* Metal frame under table top */}
@@ -125,15 +195,15 @@ const LabTable = () => {
 };
 
 /**
- * Floor with subtle grid pattern
+ * Lab floor - light tile pattern
  */
 const LabFloor = () => {
   return (
     <RigidBody type="fixed" position={[0, -0.05, 0]} name="lab-floor">
-      <CuboidCollider args={[10, 0.05, 10]} name='lab-floor'/>
+      <CuboidCollider args={[10, 0.05, 10]} name='lab-floor' />
       <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[20, 20]} />
-        <meshStandardMaterial color="#1f2937" roughness={0.9} />
+        <planeGeometry args={[ROOM_WIDTH, ROOM_DEPTH]} />
+        <meshBasicMaterial color="#a0a8b0" />
       </mesh>
     </RigidBody>
   );
@@ -152,12 +222,12 @@ const ExperimentCanvasContent = ({
 
   return (
     <>
-      {/* Lighting & Environment */}
-      <Environment preset="studio" />
-      <ambientLight intensity={0.5} />
+      {/* Lighting - realistic lab room */}
+      <Environment preset="apartment" background={false} />
+      <ambientLight intensity={0.45} color="#f0f4ff" />
       <directionalLight
-        position={[5, 10, 5]}
-        intensity={1.2}
+        position={[3, 8, 5]}
+        intensity={1.0}
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
         shadow-camera-far={50}
@@ -167,7 +237,11 @@ const ExperimentCanvasContent = ({
         shadow-camera-bottom={-10}
         castShadow
       />
-      <pointLight position={[-3, 3, 0]} intensity={0.3} color="#88ccff" />
+      {/* Fill light from front */}
+      <directionalLight position={[-2, 4, 6]} intensity={0.5} color="#e8ecf0" />
+      {/* Soft side lights */}
+      <pointLight position={[-4, 3, 0]} intensity={0.3} color="#e0e8ff" />
+      <pointLight position={[4, 3, 0]} intensity={0.3} color="#e0e8ff" />
 
       {/* Camera điều khiển - disabled when dragging objects */}
       <OrbitControls
@@ -181,6 +255,9 @@ const ExperimentCanvasContent = ({
         panSpeed={0.8}
         rotateSpeed={0.6}
       />
+
+      {/* Lab Room (walls, ceiling, lights) */}
+      <LabRoom />
 
       {/* Physics World */}
       <Physics gravity={[0, -9.8, 0]} debug={false} paused={false}>
@@ -221,7 +298,8 @@ export const ExperimentEnvironment = ({
           stencil: false,
           depth: true,
         }}
-        camera={{ position: [0, 2.5, 5], fov: 50 }}
+        camera={{ position: [0, 2.5, 4], fov: 50 }}
+        style={{ background: '#9aa3ad' }}
       >
         <Suspense fallback={null}>
           <ExperimentCanvasContent
