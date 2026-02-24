@@ -20,49 +20,74 @@ import { Link } from "react-router-dom";
 const AboutPage = () => {
   return (
     <div className="min-h-screen bg-white font-sans text-slate-900">
-      {/* Hero Section - Light with blue accent */}
-      <section className="relative pt-24 pb-16 overflow-hidden bg-white">
-        {/* Decorative Background */}
+      {/* Integrated Hero & TVC Section */}
+      <section className="relative pt-24 pb-20 overflow-hidden bg-white">
+        {/* Decorative Background Elements */}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
-          <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] bg-blue-100/50 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] bg-cyan-100/40 rounded-full blur-3xl"></div>
+          <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-blue-50 rounded-full blur-3xl opacity-60"></div>
+          <div className="absolute bottom-[10%] left-[-5%] w-[500px] h-[500px] bg-cyan-50 rounded-full blur-3xl opacity-50"></div>
+          {/* Subtle floating circles */}
+          <div className="absolute top-1/4 left-1/4 w-4 h-4 bg-blue-200 rounded-full animate-pulse"></div>
+          <div className="absolute bottom-1/3 right-1/4 w-6 h-6 bg-cyan-200 rounded-full animate-pulse delay-700"></div>
         </div>
 
         <div className="container mx-auto px-6 relative z-10">
-          <div className="max-w-4xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full text-sm font-semibold mb-6">
-              <Sparkles className="w-4 h-4" />
-              Nền tảng giáo dục Hóa học hàng đầu Việt Nam
+          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+
+            {/* Left Column: Text Content */}
+            <div className="w-full lg:w-1/2 text-center lg:text-left">
+              <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full text-sm font-semibold mb-6">
+                <Sparkles className="w-4 h-4" />
+                Nền tảng giáo dục Hóa học hàng đầu Việt Nam
+              </div>
+
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-slate-900 mb-6 leading-tight">
+                Chào mừng đến với{" "}
+                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">
+                  ChemXLab
+                </span>
+              </h1>
+
+              <p className="text-lg text-slate-600 max-w-2xl mx-auto lg:mx-0 leading-relaxed mb-10">
+                ChemXLab là nền tảng tiên phong ứng dụng công nghệ thực tế ảo và mô phỏng 3D vào giáo dục Hóa học.
+                Chúng tôi trực quan hóa kiến thức, biến những công thức khô khan thành trải nghiệm sinh động.
+              </p>
+
+              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
+                <Link
+                  to="/labtest"
+                  className="w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-blue-600/30 hover:shadow-xl flex items-center justify-center gap-2 group"
+                >
+                  <FlaskConical className="w-5 h-5 group-hover:rotate-12 transition-transform" />
+                  Trải nghiệm ngay
+                </Link>
+                <Link
+                  to="/library"
+                  className="w-full sm:w-auto px-8 py-4 bg-white hover:bg-slate-50 text-slate-700 border-2 border-slate-200 font-bold rounded-xl transition-all flex items-center justify-center gap-2"
+                >
+                  Khám phá thư viện
+                  <ArrowRight className="w-5 h-5" />
+                </Link>
+              </div>
             </div>
 
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-slate-900 mb-6 leading-tight">
-              Chào mừng đến với{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">
-                ChemXLab
-              </span>
-            </h1>
+            {/* Right Column: TVC Video */}
+            <div className="w-full lg:w-1/2 relative group">
+              {/* Cinematic background glow for video */}
+              <div className="absolute -inset-4 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-3xl blur-2xl opacity-20 group-hover:opacity-30 transition-opacity"></div>
 
-            <p className="text-lg md:text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed mb-8">
-              ChemXLab là nền tảng tiên phong ứng dụng công nghệ thực tế ảo và mô phỏng 3D vào giáo dục Hóa học.
-              Chúng tôi tin rằng việc trực quan hóa kiến thức sẽ mở ra cánh cửa mới cho thế hệ nhà khoa học tương lai.
-            </p>
-
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link
-                to="/labtest"
-                className="w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-blue-600/30 hover:shadow-xl flex items-center justify-center gap-2"
-              >
-                <FlaskConical className="w-5 h-5" />
-                Trải nghiệm ngay
-              </Link>
-              <Link
-                to="/library"
-                className="w-full sm:w-auto px-8 py-4 bg-white hover:bg-slate-50 text-slate-700 border-2 border-slate-200 font-bold rounded-xl transition-all flex items-center justify-center gap-2"
-              >
-                Khám phá thư viện
-                <ArrowRight className="w-5 h-5" />
-              </Link>
+              <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-blue-900/10 border-4 border-white aspect-[1.72/1] bg-white transform hover:scale-[1.02] transition-transform duration-500">
+                <iframe
+                  src="https://www.youtube.com/embed/9m_JT0zb88w?autoplay=1&playlist=9m_JT0zb88w&loop=1&vq=hd1080&controls=1&rel=0&modestbranding=1"
+                  title="ChemXLab TVC"
+                  allow="autoplay; encrypted-media"
+                  allowFullScreen
+                  className="absolute inset-0 w-full h-full scale-[1.04]"
+                  style={{ border: 0 }}
+                />
+              </div>
             </div>
+
           </div>
         </div>
       </section>
