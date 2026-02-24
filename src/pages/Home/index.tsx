@@ -340,16 +340,9 @@ const HomePage = () => {
             >
               Đăng ký tài khoản miễn phí
             </Link>
-            <Link
-              to="/contact"
-              className="w-full sm:w-auto px-10 py-4 border-2 border-blue-400 text-blue-100 font-bold rounded-full hover:bg-blue-900/50 hover:text-white transition-all backdrop-blur-sm"
-            >
-              Liên hệ tư vấn trường học
-            </Link>
           </div>
         </div>
       </section>
-
     </div>
   );
 };
