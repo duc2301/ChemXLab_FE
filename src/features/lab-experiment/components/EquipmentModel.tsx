@@ -7,9 +7,16 @@ import {
   type CollisionEnterPayload,
   type CollisionExitPayload,
 } from "@react-three/rapier";
-import { useCallback, useMemo, useRef, useState } from "react";
+import {
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import * as THREE from "three";
-import { getEquipmentById } from "../services/equipmentRegistry";
+import { EQUIPMENT_IDS, getEquipmentById } from "../services/equipmentRegistry";
 import type { DroppedItem } from "../types/equipment";
 
 interface EquipmentModelProps {
@@ -19,15 +26,6 @@ interface EquipmentModelProps {
   onRemove?: (itemId: string) => void;
 }
 
-// Note: Objects can now move freely without bounds
-
-/**
- * 3D Equipment Model with drag-on-table functionality
- *
- * - Click + drag để kéo trên mặt bàn
- * - Raycast từ camera đến plane ngang tại tableHeight
- * - Physics pause khi drag, resume khi thả
- */
 export const EquipmentModel = ({
   droppedItem,
   tableHeight = 0.9,
@@ -37,6 +35,8 @@ export const EquipmentModel = ({
   const rigidBodyRef = useRef<RapierRigidBody>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [colliderEnabled, setColliderEnabled] = useState(true);
+
   const ignoredCollisions = ["lab-floor", "table-surface", ""];
 
   const { camera, gl, pointer } = useThree();
@@ -49,6 +49,7 @@ export const EquipmentModel = ({
     [tableHeight],
   );
   const intersectionPoint = useMemo(() => new THREE.Vector3(), []);
+
   useFrame(() => {
     if (isDragging && rigidBodyRef.current) {
       raycaster.setFromCamera(pointer, camera);
@@ -56,7 +57,7 @@ export const EquipmentModel = ({
       rigidBodyRef.current.setTranslation(intersectionPoint, true);
     }
   });
-  // Start dragging
+
   const handlePointerDown = useCallback(
     (e: ThreeEvent<PointerEvent>) => {
       e.stopPropagation();
@@ -71,7 +72,6 @@ export const EquipmentModel = ({
       onDragChange?.(true); // Notify parent to disable OrbitControls
       gl.domElement.style.cursor = "grabbing";
 
-      // Switch to kinematic (disable physics)
       if (rigidBodyRef.current) {
         rigidBodyRef.current.setBodyType(2, true); // kinematicPosition
         rigidBodyRef.current.setLinvel({ x: 0, y: 0, z: 0 }, true);
@@ -119,28 +119,56 @@ export const EquipmentModel = ({
     }
   }, [gl.domElement, isDragging]);
 
-  const handleCollisionEnter = useCallback((e: CollisionEnterPayload) => {
-    if (ignoredCollisions.includes(e.colliderObject?.name || "")) {
-      return; // Ignore floor collisions
-    }
-    if (e.colliderObject?.name === "iron-ring") {
-      if (rigidBodyRef.current) {
-        // const currentPos = rigidBodyRef.current.translation();
-        // rigidBodyRef.current.setTranslation(
-        //   { x: currentPos.x, y: currentPos.y + 2, z: currentPos.z },
-        //   true,
-        // );
-      }
-    }
-    console.log("hover: ", e.colliderObject?.name);
+  const isNear = (
+    nameA: string,
+    nameB: string,
+    checkedNameA: string,
+    checkedNameB: string,
+  ) => {
+    return (
+      (checkedNameA === nameA && checkedNameB === nameB) ||
+      (checkedNameA === nameB && checkedNameB === nameA)
+    );
+  };
 
-    // Optional: Add collision sound or effects here
-  }, []);
+  const handleCollisionEnter = useCallback(
+    (e: CollisionEnterPayload) => {
+      if (
+        !e.colliderObject ||
+        ignoredCollisions.includes(e.colliderObject?.name || "")
+      )
+        return;
+
+      if (
+        isNear(
+          e.colliderObject.name,
+          droppedItem.equipmentId,
+          EQUIPMENT_IDS.TEST_TUBE,
+          EQUIPMENT_IDS.THERMOMETER,
+        )
+      ) {
+        if (rigidBodyRef.current) {
+          // Đặt lại vị trí để nhiệt kế nằm trong ống nghiệm
+          // issue: not change root position in the state
+          // const currentPos = rigidBodyRef.current.translation();
+          // rigidBodyRef.current.setTranslation( { x: currentPos.x, y: currentPos.y + 2, z: currentPos.z }, false );
+
+          // Tắt collider và chuyển sang kinematic để không bị dịch chuyển
+          setColliderEnabled(false);
+          setIsDragging(false);
+          setIsHovered(false);
+        }
+      }
+    },
+    [droppedItem.equipmentId],
+  );
+
   const handleCollisionExit = useCallback((e: CollisionExitPayload) => {
-    if (ignoredCollisions.includes(e.colliderObject?.name || "")) {
-      return; // Ignore floor collisions
-    }
-    console.log("out: ", e.colliderObject?.name);
+    // if (ignoredCollisions.includes(e.colliderObject?.name || "")) return;
+    // setColliderEnabled(true);
+    // if (rigidBodyRef.current) {
+    //   rigidBodyRef.current.setBodyType(0, true); // dynamic
+    // }
   }, []);
 
   if (!equipment) {
@@ -153,10 +181,11 @@ export const EquipmentModel = ({
   return (
     <RigidBody
       ref={rigidBodyRef}
-      type="kinematicPosition"
+      type={colliderEnabled ? "dynamic" : "fixed"}
+      // must be rendered with position in the store
       position={[droppedItem.position[0], tableHeight, droppedItem.position[2]]}
       rotation={droppedItem.rotation}
-      colliders={"hull"}
+      colliders={colliderEnabled ? "cuboid" : false}
       name={droppedItem.equipmentId}
       onCollisionEnter={handleCollisionEnter}
       onCollisionExit={handleCollisionExit}
@@ -168,11 +197,18 @@ export const EquipmentModel = ({
         onPointerEnter={handlePointerEnter}
         onPointerLeave={handlePointerLeave}
       >
-        <Model
-          modelPath={equipment.modelPath}
-          isHovered={isHovered}
-          isDragging={isDragging}
-        />
+        <Suspense
+          fallback={
+            <FallbackBox isHovered={isHovered} isDragging={isDragging} />
+          }
+        >
+          <Model
+            modelPath={equipment.modelPath}
+            isHovered={isHovered}
+            isDragging={isDragging}
+            animation={!colliderEnabled}
+          />
+        </Suspense>
       </group>
     </RigidBody>
   );
@@ -181,22 +217,22 @@ export const EquipmentModel = ({
 /**
  * Fallback box while model loads
  */
-// const FallbackBox = ({
-//   isHovered,
-//   isDragging,
-// }: {
-//   isHovered: boolean;
-//   isDragging: boolean;
-// }) => (
-//   <mesh>
-//     <boxGeometry args={[0.1, 0.1, 0.1]} />
-//     <meshStandardMaterial
-//       color={isDragging ? "#ffcc00" : isHovered ? "#66aaff" : "#888888"}
-//       transparent
-//       opacity={0.8}
-//     />
-//   </mesh>
-// );
+const FallbackBox = ({
+  isHovered,
+  isDragging,
+}: {
+  isHovered: boolean;
+  isDragging: boolean;
+}) => (
+  <mesh>
+    <boxGeometry args={[0.1, 0.1, 0.1]} />
+    <meshStandardMaterial
+      color={isDragging ? "#ffcc00" : isHovered ? "#66aaff" : "#888888"}
+      transparent
+      opacity={0.8}
+    />
+  </mesh>
+);
 
 /**
  * GLTF model with hover/drag highlight
@@ -205,13 +241,16 @@ const Model = ({
   modelPath,
   isHovered,
   isDragging,
+  animation,
 }: {
   modelPath: string;
   isHovered: boolean;
   isDragging: boolean;
+  animation: boolean;
 }) => {
   const { scene } = useGLTF(modelPath);
-
+  const armatureRef = useRef<THREE.Object3D | null>(null);
+  const [angle, setAngle] = useState(0);
   const clonedScene = useMemo(() => {
     const clone = scene.clone();
     clone.traverse((child) => {
@@ -222,6 +261,33 @@ const Model = ({
     });
     return clone;
   }, [scene]);
+
+  useFrame(() => {
+    if (animation && armatureRef.current && angle < THREE.MathUtils.degToRad(10)) {
+      const newAngle = Math.min(angle + 0.01, THREE.MathUtils.degToRad(10));
+      setAngle(newAngle);
+      const pos = armatureRef.current.position.clone();
+      const cos = Math.cos(newAngle);
+      const sin = Math.sin(newAngle);
+      const x = pos.x;
+      const y = pos.y;
+      const z = pos.z;
+      const newX = -x * cos - z * sin;
+      const newZ = x * sin + z * cos;
+      const newY = y;
+      //issue: not change position
+      armatureRef.current.position.set(newX, newY, newZ);
+      armatureRef.current.rotation.y = newAngle;
+    }
+  });
+
+  useEffect(() => {
+    clonedScene.traverse((child) => {
+      if (child.name === "Armature") {
+        armatureRef.current = child;
+      }
+    });
+  }, [clonedScene]);
 
   // Apply highlight based on state
   useMemo(() => {

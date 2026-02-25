@@ -1,10 +1,10 @@
-import { Environment, OrbitControls, useGLTF } from '@react-three/drei';
-import { Canvas, useThree } from '@react-three/fiber';
-import { CuboidCollider, Physics, RigidBody } from '@react-three/rapier';
-import type { ReactNode } from 'react';
-import { Component, Suspense, useMemo, useState } from 'react';
-import { EquipmentModel } from '../components/EquipmentModel';
-import type { DroppedItem } from '../types/equipment';
+import { Environment, OrbitControls, useGLTF } from "@react-three/drei";
+import { Canvas, useThree } from "@react-three/fiber";
+import { CuboidCollider, Physics, RigidBody } from "@react-three/rapier";
+import type { ReactNode } from "react";
+import { Component, Suspense, useMemo, useState } from "react";
+import { EquipmentModel } from "../components/EquipmentModel";
+import type { DroppedItem } from "../types/equipment";
 
 interface ExperimentCanvasProps {
   onItemDropped?: (item: DroppedItem) => void;
@@ -12,14 +12,17 @@ interface ExperimentCanvasProps {
 }
 
 // Error boundary for Canvas
-class CanvasErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+class CanvasErrorBoundary extends Component<
+  { children: ReactNode },
+  { hasError: boolean }
+> {
   constructor(props: { children: ReactNode }) {
     super(props);
     this.state = { hasError: false };
   }
 
   static getDerivedStateFromError(error: Error) {
-    console.error('Canvas error:', error);
+    console.error("Canvas error:", error);
     return { hasError: true };
   }
 
@@ -29,7 +32,9 @@ class CanvasErrorBoundary extends Component<{ children: ReactNode }, { hasError:
         <div className="w-full h-full flex items-center justify-center bg-gray-900">
           <div className="text-center">
             <p className="text-red-400 mb-2">Lỗi khi tải canvas 3D</p>
-            <p className="text-gray-400 text-sm">Vui lòng refresh trang hoặc đóng popup</p>
+            <p className="text-gray-400 text-sm">
+              Vui lòng refresh trang hoặc đóng popup
+            </p>
           </div>
         </div>
       );
@@ -42,25 +47,58 @@ class CanvasErrorBoundary extends Component<{ children: ReactNode }, { hasError:
 // Table dimensions - realistic lab table
 const TABLE_TOP_SIZE: [number, number, number] = [6, 0.08, 3]; // width, thickness, depth
 const TABLE_HEIGHT = 0.85; // Height of table surface from ground (~85cm)
-const LEG_SIZE: [number, number, number] = [0.08, TABLE_HEIGHT - TABLE_TOP_SIZE[1], 0.08];
+const LEG_SIZE: [number, number, number] = [
+  0.08,
+  TABLE_HEIGHT - TABLE_TOP_SIZE[1],
+  0.08,
+];
 
 /**
  * Realistic Lab Table - white ceramic top with metal frame
  * Giống bàn thí nghiệm thực tế
  */
 const LabTable = () => {
-  const legPositions: [number, number, number][] = useMemo(() => [
-    [-TABLE_TOP_SIZE[0] / 2 + 0.2, (TABLE_HEIGHT - TABLE_TOP_SIZE[1]) / 2, -TABLE_TOP_SIZE[2] / 2 + 0.2],
-    [TABLE_TOP_SIZE[0] / 2 - 0.2, (TABLE_HEIGHT - TABLE_TOP_SIZE[1]) / 2, -TABLE_TOP_SIZE[2] / 2 + 0.2],
-    [-TABLE_TOP_SIZE[0] / 2 + 0.2, (TABLE_HEIGHT - TABLE_TOP_SIZE[1]) / 2, TABLE_TOP_SIZE[2] / 2 - 0.2],
-    [TABLE_TOP_SIZE[0] / 2 - 0.2, (TABLE_HEIGHT - TABLE_TOP_SIZE[1]) / 2, TABLE_TOP_SIZE[2] / 2 - 0.2],
-  ], []);
+  const legPositions: [number, number, number][] = useMemo(
+    () => [
+      [
+        -TABLE_TOP_SIZE[0] / 2 + 0.2,
+        (TABLE_HEIGHT - TABLE_TOP_SIZE[1]) / 2,
+        -TABLE_TOP_SIZE[2] / 2 + 0.2,
+      ],
+      [
+        TABLE_TOP_SIZE[0] / 2 - 0.2,
+        (TABLE_HEIGHT - TABLE_TOP_SIZE[1]) / 2,
+        -TABLE_TOP_SIZE[2] / 2 + 0.2,
+      ],
+      [
+        -TABLE_TOP_SIZE[0] / 2 + 0.2,
+        (TABLE_HEIGHT - TABLE_TOP_SIZE[1]) / 2,
+        TABLE_TOP_SIZE[2] / 2 - 0.2,
+      ],
+      [
+        TABLE_TOP_SIZE[0] / 2 - 0.2,
+        (TABLE_HEIGHT - TABLE_TOP_SIZE[1]) / 2,
+        TABLE_TOP_SIZE[2] / 2 - 0.2,
+      ],
+    ],
+    [],
+  );
 
   return (
     <group>
       {/* White ceramic table top - like real lab tables */}
-      <RigidBody type="fixed" position={[0, TABLE_HEIGHT, 0]} name="table-surface">
-        <CuboidCollider args={[TABLE_TOP_SIZE[0] / 2, TABLE_TOP_SIZE[1] / 2, TABLE_TOP_SIZE[2] / 2]} />
+      <RigidBody
+        type="fixed"
+        position={[0, TABLE_HEIGHT, 0]}
+        name="table-surface"
+      >
+        <CuboidCollider
+          args={[
+            TABLE_TOP_SIZE[0] / 2,
+            TABLE_TOP_SIZE[1] / 2,
+            TABLE_TOP_SIZE[2] / 2,
+          ]}
+        />
         <mesh receiveShadow castShadow>
           <boxGeometry args={TABLE_TOP_SIZE} />
           <meshStandardMaterial
@@ -72,14 +110,22 @@ const LabTable = () => {
 
         {/* Raised edge around table (spill containment) */}
         <mesh position={[0, TABLE_TOP_SIZE[1] / 2 + 0.015, 0]} receiveShadow>
-          <boxGeometry args={[TABLE_TOP_SIZE[0] + 0.04, 0.03, TABLE_TOP_SIZE[2] + 0.04]} />
+          <boxGeometry
+            args={[TABLE_TOP_SIZE[0] + 0.04, 0.03, TABLE_TOP_SIZE[2] + 0.04]}
+          />
           <meshStandardMaterial color="#c0c0c0" roughness={0.3} />
         </mesh>
 
         {/* Metal frame under table top */}
         <mesh position={[0, -TABLE_TOP_SIZE[1] / 2 - 0.025, 0]} receiveShadow>
-          <boxGeometry args={[TABLE_TOP_SIZE[0] - 0.1, 0.05, TABLE_TOP_SIZE[2] - 0.1]} />
-          <meshStandardMaterial color="#4a5568" roughness={0.4} metalness={0.6} />
+          <boxGeometry
+            args={[TABLE_TOP_SIZE[0] - 0.1, 0.05, TABLE_TOP_SIZE[2] - 0.1]}
+          />
+          <meshStandardMaterial
+            color="#4a5568"
+            roughness={0.4}
+            metalness={0.6}
+          />
         </mesh>
       </RigidBody>
 
@@ -88,36 +134,72 @@ const LabTable = () => {
         <RigidBody key={index} type="fixed" position={pos} name="table-surface">
           <mesh receiveShadow castShadow>
             <boxGeometry args={LEG_SIZE} />
-            <meshStandardMaterial color="#4a5568" roughness={0.4} metalness={0.6} />
+            <meshStandardMaterial
+              color="#4a5568"
+              roughness={0.4}
+              metalness={0.6}
+            />
           </mesh>
         </RigidBody>
       ))}
 
       {/* Support bars connecting legs */}
-      <RigidBody type="fixed" position={[0, 0.25, -TABLE_TOP_SIZE[2] / 2 + 0.2]} name="table-surface">
+      <RigidBody
+        type="fixed"
+        position={[0, 0.25, -TABLE_TOP_SIZE[2] / 2 + 0.2]}
+        name="table-surface"
+      >
         <mesh receiveShadow>
           <boxGeometry args={[TABLE_TOP_SIZE[0] - 0.4, 0.04, 0.04]} />
-          <meshStandardMaterial color="#4a5568" roughness={0.4} metalness={0.6} />
+          <meshStandardMaterial
+            color="#4a5568"
+            roughness={0.4}
+            metalness={0.6}
+          />
         </mesh>
       </RigidBody>
-      <RigidBody type="fixed" position={[0, 0.25, TABLE_TOP_SIZE[2] / 2 - 0.2]} name="table-surface">
+      <RigidBody
+        type="fixed"
+        position={[0, 0.25, TABLE_TOP_SIZE[2] / 2 - 0.2]}
+        name="table-surface"
+      >
         <mesh receiveShadow>
           <boxGeometry args={[TABLE_TOP_SIZE[0] - 0.4, 0.04, 0.04]} />
-          <meshStandardMaterial color="#4a5568" roughness={0.4} metalness={0.6} />
+          <meshStandardMaterial
+            color="#4a5568"
+            roughness={0.4}
+            metalness={0.6}
+          />
         </mesh>
       </RigidBody>
 
       {/* Side support bars */}
-      <RigidBody type="fixed" position={[-TABLE_TOP_SIZE[0] / 2 + 0.2, 0.25, 0]} name="table-surface">
+      <RigidBody
+        type="fixed"
+        position={[-TABLE_TOP_SIZE[0] / 2 + 0.2, 0.25, 0]}
+        name="table-surface"
+      >
         <mesh receiveShadow>
           <boxGeometry args={[0.04, 0.04, TABLE_TOP_SIZE[2] - 0.4]} />
-          <meshStandardMaterial color="#4a5568" roughness={0.4} metalness={0.6} />
+          <meshStandardMaterial
+            color="#4a5568"
+            roughness={0.4}
+            metalness={0.6}
+          />
         </mesh>
       </RigidBody>
-      <RigidBody type="fixed" position={[TABLE_TOP_SIZE[0] / 2 - 0.2, 0.25, 0]} name="table-surface">
+      <RigidBody
+        type="fixed"
+        position={[TABLE_TOP_SIZE[0] / 2 - 0.2, 0.25, 0]}
+        name="table-surface"
+      >
         <mesh receiveShadow>
           <boxGeometry args={[0.04, 0.04, TABLE_TOP_SIZE[2] - 0.4]} />
-          <meshStandardMaterial color="#4a5568" roughness={0.4} metalness={0.6} />
+          <meshStandardMaterial
+            color="#4a5568"
+            roughness={0.4}
+            metalness={0.6}
+          />
         </mesh>
       </RigidBody>
     </group>
@@ -130,7 +212,7 @@ const LabTable = () => {
 const LabFloor = () => {
   return (
     <RigidBody type="fixed" position={[0, -0.05, 0]} name="lab-floor">
-      <CuboidCollider args={[10, 0.05, 10]} name='lab-floor'/>
+      <CuboidCollider args={[10, 0.05, 10]} name="lab-floor" />
       <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[20, 20]} />
         <meshStandardMaterial color="#1f2937" roughness={0.9} />
@@ -142,9 +224,7 @@ const LabFloor = () => {
 /**
  * Canvas content - được render bên trong <Canvas> từ ExperimentEnvironment
  */
-const ExperimentCanvasContent = ({
-  droppedItems,
-}: ExperimentCanvasProps) => {
+const ExperimentCanvasContent = ({ droppedItems }: ExperimentCanvasProps) => {
   useThree();
 
   // Track if any object is being dragged - used to disable camera controls
@@ -190,16 +270,18 @@ const ExperimentCanvasContent = ({
         {/* Lab Floor */}
         <LabFloor />
 
-        {/* Dropped items - drag to move on table */}
-        {droppedItems &&
-          Array.from(droppedItems.values()).map((item) => (
-            <EquipmentModel
-              key={item.id}
-              droppedItem={item}
-              tableHeight={TABLE_HEIGHT + TABLE_TOP_SIZE[1] / 2}
-              onDragChange={setIsDragging}
-            />
-          ))}
+        <group position={[0, 0, 0]}>
+          {/* Dropped items - drag to move on table */}
+          {droppedItems &&
+            Array.from(droppedItems.values()).map((item) => (
+              <EquipmentModel
+                key={item.id}
+                droppedItem={item}
+                tableHeight={TABLE_HEIGHT + TABLE_TOP_SIZE[1] / 2}
+                onDragChange={setIsDragging}
+              />
+            ))}
+        </group>
       </Physics>
     </>
   );
@@ -236,7 +318,7 @@ export const ExperimentEnvironment = ({
 
 // Preload table model if available
 try {
-  useGLTF.preload('/models/table.glb');
+  useGLTF.preload("/models/table.glb");
 } catch {
   // Ignore preload errors
 }

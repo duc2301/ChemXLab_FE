@@ -2,6 +2,8 @@
  * Equipment types cho Lab Experiment
  */
 
+import type { RigidBodyAutoCollider } from "@react-three/rapier";
+
 export type EquipmentCategory = 'tools' | 'substances' | 'containers' | 'measuring';
 
 export interface EquipmentItem {
@@ -28,6 +30,7 @@ export interface DroppedItem {
   position: [number, number, number]; // World position on table
   rotation: [number, number, number];
   timestamp: number;
+  collider: RigidBodyAutoCollider | false
 }
 
 export interface ExperimentState {

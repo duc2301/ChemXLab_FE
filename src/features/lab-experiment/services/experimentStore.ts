@@ -1,5 +1,6 @@
-import { create } from 'zustand';
-import type { DroppedItem, ExperimentState } from '../types/equipment';
+import { create } from "zustand";
+import type { DroppedItem, ExperimentState } from "../types/equipment";
+import type { RigidBodyAutoCollider } from "@react-three/rapier";
 
 interface ExperimentStore extends ExperimentState {
   openModal: () => void;
@@ -9,6 +10,7 @@ interface ExperimentStore extends ExperimentState {
   addDroppedItem: (item: DroppedItem) => void;
   removeDroppedItem: (itemId: string) => void;
   setSelectedEquipment: (id?: string) => void;
+  setCollider: (id: string, value: RigidBodyAutoCollider | false) => void;
 }
 
 export const useExperimentStore = create<ExperimentStore>((set) => ({
@@ -56,5 +58,24 @@ export const useExperimentStore = create<ExperimentStore>((set) => ({
   setSelectedEquipment: (id?: string) =>
     set({
       selectedEquipmentId: id,
+    }),
+
+  setCollider: (id: string, value: RigidBodyAutoCollider | false) =>
+    set((state) => {
+      const newItems = new Map(state.droppedItems);
+      const item = newItems.get(id);
+      if (item) {
+        const droppedItem: DroppedItem = {
+          id: item.id,
+          equipmentId: item.id,
+          position: item.position, // Y = above table for physics drop
+          rotation: item.position, // Random rotation
+          timestamp: item.timestamp,
+          collider: value,
+        };
+        newItems.set(id, droppedItem);
+      }
+
+      return { droppedItems: newItems };
     }),
 }));

@@ -143,6 +143,21 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
   },
 ];
 
+export const EQUIPMENT_IDS = {
+  BEAKER_150ML: "beaker-150ml",
+  BEAKER_250ML: "beaker-250ml",
+  BEAKER_500ML: "beaker-500ml",
+  FLASK_ROUND: "flask-round",
+  TEST_TUBE: "test-tube",
+  THERMOMETER: "thermometer",
+  DROPPER: "dropper",
+  FUNNEL: "funnel",
+  ALCOHOL_LAMP: "alcohol-lamp",
+  IRON_RING: "iron-ring",
+  CAP_CONNECTOR: "cap-connector",
+  FILTER_PAPER: "filter-paper",
+};
+
 /**
  * Group equipment by category
  */

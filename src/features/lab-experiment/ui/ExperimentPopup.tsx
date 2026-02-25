@@ -117,8 +117,9 @@ export const ExperimentPopup = () => {
       id: generateUUID(),
       equipmentId: equipment.id,
       position: [tableX, 1.5, tableZ], // Y = above table for physics drop
-      rotation: [0, Math.random() * Math.PI * 2, 0], // Random rotation
+      rotation: [0, 0, 0],
       timestamp: Date.now(),
+      collider: "cuboid"
     };
 
     console.log('Item dropped:', equipment.name, 'at position:', droppedItem.position);
