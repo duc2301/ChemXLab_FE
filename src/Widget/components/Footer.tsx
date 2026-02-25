@@ -26,26 +26,22 @@ const Footer = () => {
         <div className="container mx-auto">
           <div className="flex flex-col lg:flex-row items-center lg:items-start justify-between gap-12 lg:gap-8">
 
-            {/* COLUMN 1: Newsletter */}
+            {/* COLUMN 1: Fanpage CTA */}
             <div className="w-full lg:w-1/3 flex flex-col items-center lg:items-start text-center lg:text-left">
-              <h3 className="text-[#0B3B69] font-bold text-lg mb-2">Đăng ký thông tin</h3>
+              <h3 className="text-[#0B3B69] font-bold text-lg mb-2">Theo dõi ChemXLab</h3>
               <p className="text-slate-500 text-xs mb-4 max-w-xs leading-relaxed">
-                Đăng ký thông tin để nhận ngay thông tin mới nhất từ ChemXLab nhé!
+                Hãy theo dõi Fanpage của ChemXLab để cập nhật những thông tin mới nhất nhé!
               </p>
 
-              <form className="relative w-full max-w-xs sm:max-w-sm flex items-center shadow-lg rounded-full">
-                <input
-                  type="email"
-                  placeholder="Email"
-                  className="w-full bg-white/70 backdrop-blur-sm border border-blue-100 rounded-full py-3.5 pl-6 pr-24 text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all placeholder:text-slate-400"
-                />
-                <button
-                  type="button"
-                  className="absolute right-2 top-1.5 bottom-1.5 bg-[#EAF5FF] hover:bg-white text-[#0B3B69] text-xs font-bold px-4 rounded-full transition-all border border-blue-100 shadow-sm"
-                >
-                  Đăng ký
-                </button>
-              </form>
+              <a
+                href="https://www.facebook.com/ChemxLab201"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 bg-[#0B3B69] hover:bg-[#0EA5E9] text-white text-sm font-bold px-6 py-3 rounded-full transition-all duration-300 shadow-lg shadow-blue-900/20 hover:-translate-y-0.5"
+              >
+                <Facebook size={18} />
+                Theo dõi Fanpage
+              </a>
             </div>
 
             {/* COLUMN 2: Logo - Centered */}

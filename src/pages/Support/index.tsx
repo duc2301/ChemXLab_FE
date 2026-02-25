@@ -39,10 +39,6 @@ const SupportPage = () => {
       a: "Có, ChemXLab hỗ trợ đầy đủ tiếng Việt cho cả giao diện và nội dung học tập. Đây là một trong những ưu tiên hàng đầu của chúng tôi để phục vụ học sinh Việt Nam.",
     },
     {
-      q: "Tôi có thể sử dụng ChemXLab trên thiết bị di động không?",
-      a: "Có, ChemXLab tương thích với mọi thiết bị bao gồm máy tính, máy tính bảng và điện thoại. Giao diện được tối ưu hóa cho từng loại màn hình.",
-    },
-    {
       q: "Làm sao để nâng cấp gói dịch vụ?",
       a: "Bạn có thể nâng cấp gói dịch vụ bất cứ lúc nào bằng cách vào trang 'Trải nghiệm' và chọn gói phù hợp. Chi phí sẽ được tính toán dựa trên thời gian còn lại của gói hiện tại.",
     },

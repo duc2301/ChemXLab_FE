@@ -1,6 +1,6 @@
 import { Menu, User, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Logout } from "../../features/Auth";
 import logo from "../../shared/assets/Logo/logo.png";
 
@@ -39,6 +39,8 @@ const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState<boolean>(false);
   const [scrolled, setScrolled] = useState<boolean>(false);
+
+  const navigate = useNavigate();
 
   // --- REFS ---
   const userDropdownRef = useRef<HTMLDivElement>(null);
@@ -158,7 +160,7 @@ const Navbar = () => {
                       <Link to="/admin" className="block px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-indigo-600">Trang Admin</Link>
                     )}
                     <div className="border-t border-gray-100 my-1"></div>
-                    <button onClick={Logout} className="block w-full text-left px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50">Đăng xuất</button>
+                    <button onClick={() => { Logout(); navigate("/login"); }} className="block w-full text-left px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50">Đăng xuất</button>
                   </div>
                 </div>
               )}
@@ -195,7 +197,7 @@ const Navbar = () => {
           {token ? (
             <div className="flex flex-col items-center gap-4 w-full">
               <Link to="/profile" className="text-slate-700 font-medium hover:text-blue-600">Hồ sơ</Link>
-              <button onClick={Logout} className="text-red-500 font-bold">Đăng xuất</button>
+              <button onClick={() => { Logout(); navigate("/login"); }} className="text-red-500 font-bold">Đăng xuất</button>
             </div>
           ) : (
             <div className="flex flex-col gap-3 w-3/4">

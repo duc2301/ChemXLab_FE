@@ -289,7 +289,7 @@ const Model = ({
     });
   }, [clonedScene]);
 
-  // Apply highlight based on state
+  // Apply highlight based on state - subtle glow by default for visibility
   useMemo(() => {
     clonedScene.traverse((child) => {
       if (child instanceof THREE.Mesh && child.material) {
@@ -301,10 +301,11 @@ const Model = ({
           material.emissiveIntensity = 0.5;
         } else if (isHovered) {
           material.emissive = new THREE.Color("#4488ff");
-          material.emissiveIntensity = 0.25;
+          material.emissiveIntensity = 0.3;
         } else {
-          material.emissive = new THREE.Color("#000000");
-          material.emissiveIntensity = 0;
+          // Subtle glow to make equipment visible against table
+          material.emissive = new THREE.Color("#a0c4e8");
+          material.emissiveIntensity = 0.12;
         }
       }
     });
