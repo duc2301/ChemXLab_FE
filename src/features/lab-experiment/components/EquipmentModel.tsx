@@ -197,18 +197,18 @@ export const EquipmentModel = ({
         onPointerEnter={handlePointerEnter}
         onPointerLeave={handlePointerLeave}
       >
-        <Suspense
+        {/* <Suspense
           fallback={
             <FallbackBox isHovered={isHovered} isDragging={isDragging} />
           }
-        >
+        > */}
           <Model
             modelPath={equipment.modelPath}
             isHovered={isHovered}
             isDragging={isDragging}
             animation={!colliderEnabled}
           />
-        </Suspense>
+        {/* </Suspense> */}
       </group>
     </RigidBody>
   );

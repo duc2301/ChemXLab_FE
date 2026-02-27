@@ -335,7 +335,6 @@ const ExperimentCanvasContent = ({ droppedItems }: ExperimentCanvasProps) => {
         {/* Lab Floor */}
         <LabFloor />
 
-        <group position={[0, 0, 0]}>
           {/* Dropped items - drag to move on table */}
           {droppedItems &&
             Array.from(droppedItems.values()).map((item) => (
@@ -346,7 +345,6 @@ const ExperimentCanvasContent = ({ droppedItems }: ExperimentCanvasProps) => {
                 onDragChange={setIsDragging}
               />
             ))}
-        </group>
       </Physics>
     </>
   );
