@@ -55,7 +55,7 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     id: 'test-tube',
     name: 'Ống nghiệm',
     category: 'containers',
-    modelPath: '/models/duathuytinh.glb',
+    modelPath: '/models/ong_nghiem_init.glb',
     mass: 0.05,
     isDraggable: true,
     dimensions: { width: 0.02, height: 0.15, depth: 0.02 },

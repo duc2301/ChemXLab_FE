@@ -6,6 +6,7 @@ import {
   RigidBody,
 } from "@react-three/rapier";
 import {
+  Suspense,
   useCallback,
   useEffect,
   useMemo,
@@ -14,11 +15,10 @@ import {
 } from "react";
 import * as THREE from "three";
 import { EQUIPMENT_IDS, getEquipmentById } from "../services/equipmentRegistry";
-import { useExperimentStore } from "../services/experimentStore";
 import type { DroppedItem } from "../types/equipment";
 
 // ─── Hằng số snap ────────────────────────────────────────────────────────────
-const SNAP_OFFSET_Y = 0.5;
+const SNAP_OFFSET_Y = 0.6;
 const SNAP_RADIUS = 0.4; // khoảng cách world để trigger snap
 
 // ─── Collision Groups (Rapier bitmask: upper 16 bits = filter, lower 16 = membership) ─
@@ -41,24 +41,21 @@ interface EquipmentModelProps {
 
 // ─── Module-level registry: nhiệt kế tự đăng ký rigid body của mình ─────────
 const thermometerRegistry = new Map<string, RapierRigidBody>();
-// Lưu ID của test-tube đang chiếm dụng thermometer ID
-const occupiedThermometers = new Map<string, string>();
 
 export const EquipmentModel = ({
   droppedItem,
   tableHeight = 0.9,
   onDragChange,
+  onRemove: _onRemove,
 }: EquipmentModelProps) => {
   const rigidBodyRef = useRef<RapierRigidBody>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  const setContextMenu = useExperimentStore((s) => s.setContextMenu);
 
   // ─── Snap state (chỉ dùng cho test-tube) ─────────────────────────────────
   const isSnappedRef = useRef(false);
   const [isSnapped, setIsSnapped] = useState(false);
   const snappedToBodyRef = useRef<RapierRigidBody | null>(null);
-  const snappedToThermoIdRef = useRef<string | null>(null);
 
   const dragOffset = useRef(new THREE.Vector3());
 
@@ -88,18 +85,8 @@ export const EquipmentModel = ({
     return () => {
       clearInterval(interval);
       thermometerRegistry.delete(droppedItem.id);
-      occupiedThermometers.delete(droppedItem.id);
     };
   }, [isThermometer, droppedItem.id]);
-
-  // Hủy đăng ký snap nếu test-tube bị xóa khỏi scene
-  useEffect(() => {
-    return () => {
-      if (isTestTube && isSnappedRef.current && snappedToThermoIdRef.current) {
-        occupiedThermometers.delete(snappedToThermoIdRef.current);
-      }
-    };
-  }, [isTestTube]);
 
   // ─── useFrame: follow nhiệt kế, drag, và proximity snap check ───────────────
   useFrame((state) => {
@@ -107,23 +94,11 @@ export const EquipmentModel = ({
 
     // 1. Follow nhiệt kế khi đang snap
     if (isTestTube && isSnappedRef.current && snappedToBodyRef.current) {
-      try {
-        const tp = snappedToBodyRef.current.translation();
-        rigidBodyRef.current.setTranslation(
-          { x: tp.x - 0.0263, y: tp.y + SNAP_OFFSET_Y, z: tp.z + 0.385 },
-          true,
-        );
-      } catch {
-        // Nhiệt kế đã bị xóa khỏi scene (Rapier freed the body) — hủy snap
-        if (snappedToThermoIdRef.current) {
-          occupiedThermometers.delete(snappedToThermoIdRef.current);
-        }
-        isSnappedRef.current = false;
-        setIsSnapped(false);
-        snappedToBodyRef.current = null;
-        snappedToThermoIdRef.current = null;
-        rigidBodyRef.current.setBodyType(0, true); // trả về dynamic
-      }
+      const tp = snappedToBodyRef.current.translation();
+      rigidBodyRef.current.setTranslation(
+        { x: tp.x - 0.035, y: tp.y + SNAP_OFFSET_Y, z: tp.z + 0.235 },
+        true,
+      );
       return;
     }
 
@@ -132,40 +107,13 @@ export const EquipmentModel = ({
       raycaster.setFromCamera(state.pointer, state.camera);
       if (raycaster.ray.intersectPlane(dragPlane, intersectionPoint)) {
         intersectionPoint.add(dragOffset.current);
-
-        // Kiểm tra chặn viền cho ống nghiệm nếu nhiệt kế đã có người chiếm
-        if (isTestTube && thermometerRegistry.size > 0) {
-          for (const [thermoId, thermoBody] of thermometerRegistry) {
-            if (occupiedThermometers.has(thermoId) && occupiedThermometers.get(thermoId) !== droppedItem.id) {
-              const tp = thermoBody.translation();
-              const dx = intersectionPoint.x - tp.x;
-              const dz = intersectionPoint.z - tp.z;
-              const dist2D = Math.sqrt(dx * dx + dz * dz);
-              const EDGE_DISTANCE = 0.35;
-
-              if (dist2D < EDGE_DISTANCE) {
-                if (dist2D > 0) {
-                  const scale = EDGE_DISTANCE / dist2D;
-                  intersectionPoint.x = tp.x + dx * scale;
-                  intersectionPoint.z = tp.z + dz * scale;
-                }
-              }
-            }
-          }
-        }
-
         rigidBodyRef.current.setTranslation(intersectionPoint, true);
       }
 
       // 3. Proximity snap: kiểm tra khoảng cách tới nhiệt kế khi đang kéo
       if (isTestTube && !isSnappedRef.current && thermometerRegistry.size > 0) {
         const myPos = rigidBodyRef.current.translation();
-        for (const [thermoId, thermoBody] of thermometerRegistry) {
-          // Bỏ qua nếu nhiệt kế này đã có một ống nghiệm khác bám vào
-          if (occupiedThermometers.has(thermoId) && occupiedThermometers.get(thermoId) !== droppedItem.id) {
-            continue;
-          }
-
+        for (const [, thermoBody] of thermometerRegistry) {
           const tp = thermoBody.translation();
           const dx = myPos.x - tp.x;
           const dy = myPos.y - tp.y;
@@ -175,7 +123,7 @@ export const EquipmentModel = ({
           if (dist < SNAP_RADIUS) {
             // Snap ngay lập tức
             rigidBodyRef.current.setTranslation(
-              { x: tp.x - 0.04, y: tp.y + SNAP_OFFSET_Y, z: tp.z + 0.38 },
+              { x: tp.x - 0.04, y: tp.y + SNAP_OFFSET_Y, z: tp.z + 0.235 },
               true,
             );
             rigidBodyRef.current.setBodyType(2, true); // kinematicPosition
@@ -183,9 +131,6 @@ export const EquipmentModel = ({
             rigidBodyRef.current.setAngvel({ x: 0, y: 0, z: 0 }, true);
 
             snappedToBodyRef.current = thermoBody;
-            snappedToThermoIdRef.current = thermoId;
-            occupiedThermometers.set(thermoId, droppedItem.id);
-
             isSnappedRef.current = true;
             setIsSnapped(true);
             setIsDragging(false);
@@ -203,15 +148,9 @@ export const EquipmentModel = ({
   const handlePointerDown = useCallback(
     (e: ThreeEvent<PointerEvent>) => {
       e.stopPropagation();
-      // Bỏ qua chuột phải – để onContextMenu xử lý
-      if (e.nativeEvent.button === 2) return;
 
       // DETACH nếu đang snap
       if (isTestTube && isSnappedRef.current) {
-        if (snappedToThermoIdRef.current) {
-          occupiedThermometers.delete(snappedToThermoIdRef.current);
-          snappedToThermoIdRef.current = null;
-        }
         isSnappedRef.current = false;
         setIsSnapped(false);
         snappedToBodyRef.current = null;
@@ -279,16 +218,6 @@ export const EquipmentModel = ({
     if (!isDragging) gl.domElement.style.cursor = "auto";
   }, [gl.domElement, isDragging]);
 
-  // ─── Right-click: lưu vào store để ExperimentPopup render menu ───────────
-  const handleContextMenu = useCallback(
-    (e: ThreeEvent<MouseEvent>) => {
-      e.stopPropagation();
-      e.nativeEvent.preventDefault();
-      setContextMenu({ x: e.nativeEvent.clientX, y: e.nativeEvent.clientY, itemId: droppedItem.id });
-    },
-    [setContextMenu, droppedItem.id],
-  );
-
   if (!equipment) {
     console.warn(`Equipment not found: ${droppedItem.equipmentId}`);
     return null;
@@ -318,18 +247,43 @@ export const EquipmentModel = ({
         onPointerUp={handlePointerUp}
         onPointerEnter={handlePointerEnter}
         onPointerLeave={handlePointerLeave}
-        onContextMenu={handleContextMenu}
       >
-        <Model
-          modelPath={equipment.modelPath}
-          isHovered={isHovered}
-          isDragging={isDragging}
-          isSnapped={isSnapped}
-        />
+        <Suspense
+          fallback={
+            <FallbackBox isHovered={isHovered} isDragging={isDragging} />
+          }
+        >
+          <Model
+            modelPath={equipment.modelPath}
+            isHovered={isHovered}
+            isDragging={isDragging}
+            isSnapped={isSnapped}
+          />
+        </Suspense>
       </group>
     </RigidBody>
   );
 };
+
+/**
+ * Fallback box while model loads
+ */
+const FallbackBox = ({
+  isHovered,
+  isDragging,
+}: {
+  isHovered: boolean;
+  isDragging: boolean;
+}) => (
+  <mesh>
+    <boxGeometry args={[0.1, 0.1, 0.1]} />
+    <meshStandardMaterial
+      color={isDragging ? "#ffcc00" : isHovered ? "#66aaff" : "#888888"}
+      transparent
+      opacity={0.8}
+    />
+  </mesh>
+);
 
 /**
  * GLTF model with hover/drag highlight
@@ -377,7 +331,10 @@ const Model = ({
 
   useEffect(() => {
     clonedScene.traverse((child) => {
+
       if (child.name === "Armature") {
+        console.log(child);
+
         armatureRef.current = child;
       }
     });
@@ -385,36 +342,24 @@ const Model = ({
 
   useMemo(() => {
     clonedScene.traverse((child) => {
-      if (!(child instanceof THREE.Mesh) || !child.material) return;
-
-      const materials = Array.isArray(child.material)
-        ? child.material
-        : [child.material];
-
-      const cloned = materials.map((mat) => {
-        const m = mat.clone();
-
-        // Chỉ set emissive nếu material hỗ trợ (MeshStandardMaterial, MeshPhongMaterial...)
-        if (!("emissive" in m)) return m;
+      if (child instanceof THREE.Mesh && child.material) {
+        const material = child.material.clone();
+        child.material = material;
 
         if (isDragging) {
-          m.emissive = new THREE.Color("#ffaa00");
-          m.emissiveIntensity = 0.5;
+          material.emissive = new THREE.Color("#ffaa00");
+          material.emissiveIntensity = 0.5;
         } else if (isSnapped) {
-          m.emissive = new THREE.Color("#a0c4e8");
-          m.emissiveIntensity = 0.12;
+          material.emissive = new THREE.Color("#00ff88");
+          material.emissiveIntensity = 0.25;
         } else if (isHovered) {
-          m.emissive = new THREE.Color("#4488ff");
-          m.emissiveIntensity = 0.3;
+          material.emissive = new THREE.Color("#4488ff");
+          material.emissiveIntensity = 0.3;
         } else {
-          m.emissive = new THREE.Color("#a0c4e8");
-          m.emissiveIntensity = 0.12;
+          material.emissive = new THREE.Color("#a0c4e8");
+          material.emissiveIntensity = 0.12;
         }
-
-        return m;
-      });
-
-      child.material = Array.isArray(child.material) ? cloned : cloned[0];
+      }
     });
 
     clonedScene.children.forEach((child) => {

@@ -22,7 +22,10 @@ export const ExperimentPopup = () => {
     closeModal,
     droppedItems,
     addDroppedItem,
+    removeDroppedItem,
     setCursorVisible,
+    contextMenu,
+    setContextMenu,
   } = useExperimentStore();
 
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -42,6 +45,19 @@ export const ExperimentPopup = () => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isModalOpen, closeModal, setCursorVisible]);
+
+  // Đóng context menu khi click ra ngoài hoặc nhấn Escape
+  useEffect(() => {
+    if (!contextMenu) return;
+    const close = () => setContextMenu(null);
+    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') close(); };
+    document.addEventListener('pointerdown', close);
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.removeEventListener('pointerdown', close);
+      document.removeEventListener('keydown', handleKey);
+    };
+  }, [contextMenu, setContextMenu]);
 
   // Cursor visibility management
   useEffect(() => {
@@ -160,7 +176,7 @@ export const ExperimentPopup = () => {
           <div className="flex-1 flex flex-col">
             {/* Info bar */}
             <div className="px-4 py-2 bg-gray-800 border-b border-gray-700 text-sm text-gray-400">
-              <p>Kéo dụng cụ từ bên trái xuống bàn. Click giữ để di chuyển. Nhấn ESC để thoát.</p>
+              <p>Kéo dụng cụ từ bên trái xuống bàn. Click giữ để di chuyển. Chuột phải để xóa. Nhấn ESC để thoát.</p>
             </div>
 
             {/* Canvas */}
@@ -173,6 +189,7 @@ export const ExperimentPopup = () => {
               <ExperimentEnvironment
                 droppedItems={droppedItems}
                 onItemDropped={addDroppedItem}
+                onRemove={removeDroppedItem}
               />
             </div>
           </div>
@@ -183,6 +200,67 @@ export const ExperimentPopup = () => {
           <span>Dụng cụ: {droppedItems.size} </span>
         </div>
       </div>
+
+      {/* Context menu xóa vật thể - render ở đây, ngoài Canvas */}
+      {contextMenu && (
+        <div
+          onPointerDown={(e) => e.stopPropagation()}
+          style={{
+            position: "fixed",
+            top: contextMenu.y,
+            left: contextMenu.x,
+            zIndex: 9999,
+            background: "#1e2530",
+            border: "1px solid #374151",
+            borderRadius: "8px",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
+            padding: "4px",
+            minWidth: "160px",
+            fontFamily: "sans-serif",
+          }}
+        >
+          <div
+            style={{
+              padding: "4px 8px 6px",
+              fontSize: "11px",
+              color: "#6b7280",
+              borderBottom: "1px solid #374151",
+              marginBottom: "4px",
+              userSelect: "none",
+            }}
+          >
+            Vật thể
+          </div>
+          <button
+            onClick={() => {
+              removeDroppedItem(contextMenu.itemId);
+              setContextMenu(null);
+            }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              width: "100%",
+              padding: "8px 12px",
+              background: "none",
+              border: "none",
+              borderRadius: "6px",
+              color: "#f87171",
+              fontSize: "13px",
+              cursor: "pointer",
+              transition: "background 0.15s",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.background = "rgba(239,68,68,0.15)";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.background = "none";
+            }}
+          >
+            🗑&nbsp; Xóa vật thể
+          </button>
+        </div>
+      )}
     </>
   );
 };

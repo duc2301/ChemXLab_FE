@@ -11,6 +11,8 @@ interface ExperimentStore extends ExperimentState {
   removeDroppedItem: (itemId: string) => void;
   setSelectedEquipment: (id?: string) => void;
   setCollider: (id: string, value: RigidBodyAutoCollider | false) => void;
+  contextMenu: { x: number; y: number; itemId: string } | null;
+  setContextMenu: (menu: { x: number; y: number; itemId: string } | null) => void;
 }
 
 export const useExperimentStore = create<ExperimentStore>((set) => ({
@@ -18,6 +20,7 @@ export const useExperimentStore = create<ExperimentStore>((set) => ({
   isCursorVisible: false,
   droppedItems: new Map(),
   selectedEquipmentId: undefined,
+  contextMenu: null,
 
   openModal: () =>
     set({
@@ -78,4 +81,6 @@ export const useExperimentStore = create<ExperimentStore>((set) => ({
 
       return { droppedItems: newItems };
     }),
+
+  setContextMenu: (menu) => set({ contextMenu: menu }),
 }));

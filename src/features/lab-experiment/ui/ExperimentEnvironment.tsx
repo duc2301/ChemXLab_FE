@@ -9,6 +9,7 @@ import type { DroppedItem } from "../types/equipment";
 interface ExperimentCanvasProps {
   onItemDropped?: (item: DroppedItem) => void;
   droppedItems?: Map<string, DroppedItem>;
+  onRemove?: (itemId: string) => void;
 }
 
 // Error boundary for Canvas
@@ -282,7 +283,7 @@ const LabFloor = () => {
 /**
  * Canvas content - được render bên trong <Canvas> từ ExperimentEnvironment
  */
-const ExperimentCanvasContent = ({ droppedItems }: ExperimentCanvasProps) => {
+const ExperimentCanvasContent = ({ droppedItems, onRemove }: ExperimentCanvasProps) => {
   useThree();
 
   // Track if any object is being dragged - used to disable camera controls
@@ -335,16 +336,17 @@ const ExperimentCanvasContent = ({ droppedItems }: ExperimentCanvasProps) => {
         {/* Lab Floor */}
         <LabFloor />
 
-          {/* Dropped items - drag to move on table */}
-          {droppedItems &&
-            Array.from(droppedItems.values()).map((item) => (
-              <EquipmentModel
-                key={item.id}
-                droppedItem={item}
-                tableHeight={TABLE_HEIGHT + TABLE_TOP_SIZE[1] / 2}
-                onDragChange={setIsDragging}
-              />
-            ))}
+        {/* Dropped items - drag to move on table */}
+        {droppedItems &&
+          Array.from(droppedItems.values()).map((item) => (
+            <EquipmentModel
+              key={item.id}
+              droppedItem={item}
+              tableHeight={TABLE_HEIGHT + TABLE_TOP_SIZE[1] / 2}
+              onDragChange={setIsDragging}
+              onRemove={onRemove}
+            />
+          ))}
       </Physics>
     </>
   );
@@ -356,6 +358,7 @@ const ExperimentCanvasContent = ({ droppedItems }: ExperimentCanvasProps) => {
 export const ExperimentEnvironment = ({
   onItemDropped,
   droppedItems,
+  onRemove,
 }: ExperimentCanvasProps) => {
   return (
     <CanvasErrorBoundary>
@@ -373,6 +376,7 @@ export const ExperimentEnvironment = ({
           <ExperimentCanvasContent
             onItemDropped={onItemDropped}
             droppedItems={droppedItems}
+            onRemove={onRemove}
           />
         </Suspense>
       </Canvas>
