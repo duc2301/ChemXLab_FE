@@ -1,7 +1,7 @@
 import { X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { EquipmentPanel } from '../components/EquipmentPanel';
-import { SUBSTANCE_COLORS, getEquipmentById } from '../services/equipmentRegistry';
+import { EQUIPMENT_IDS, SUBSTANCE_COLORS, getEquipmentById } from '../services/equipmentRegistry';
 import { useExperimentStore } from '../services/experimentStore';
 import { generateUUID } from '../services/idGenerator';
 import type { DroppedItem } from '../types/equipment';
@@ -33,6 +33,8 @@ export const ExperimentPopup = () => {
     setContextMenu,
     heldSubstance,
     setHeldSubstance,
+    alcoholLampStatus,
+    toggleAlcoholLamp,
   } = useExperimentStore();
 
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -135,6 +137,8 @@ export const ExperimentPopup = () => {
     ? getEquipmentById(contextMenuItem.equipmentId)
     : null;
   const isSubstance = contextEquipment?.category === 'substances';
+  const isAlcoholLamp = contextEquipment?.id === EQUIPMENT_IDS.ALCOHOL_LAMP;
+  const isBurning = contextMenu ? (alcoholLampStatus.get(contextMenu.itemId) ?? false) : false;
 
   if (!isModalOpen) return null;
 
@@ -277,6 +281,23 @@ export const ExperimentPopup = () => {
               }}
             >
               🧪&nbsp; Lấy bột
+            </button>
+          )}
+
+          {isAlcoholLamp && (
+            <button
+              style={{ 
+                ...menuBtnStyle, 
+                color: isBurning ? "#f59e0b" : "#60a5fa" 
+              }}
+              onClick={() => {
+                toggleAlcoholLamp(contextMenu.itemId);
+                setContextMenu(null);
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = "rgba(245,158,11,0.1)"}
+              onMouseLeave={(e) => e.currentTarget.style.background = "none"}
+            >
+              {isBurning ? "🔥 Tắt lửa" : "🔥 Thắp lửa"}
             </button>
           )}
 

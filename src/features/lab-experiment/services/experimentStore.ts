@@ -8,6 +8,12 @@ export interface HeldSubstance {
   color: string;
 }
 
+export interface AlcoholLampData {
+  id: string;
+  name: string;
+  status: boolean;
+}
+
 interface ExperimentStore extends ExperimentState {
   openModal: () => void;
   closeModal: () => void;
@@ -24,6 +30,8 @@ interface ExperimentStore extends ExperimentState {
   setHeldSubstance: (sub: HeldSubstance | null) => void;
   testTubeContents: Map<string, string[]>; // testTubeInstanceId -> substanceId[]
   addSubstanceToTestTube: (testTubeId: string, substanceId: string) => void;
+  alcoholLampStatus: Map<string, boolean>; // instanceId -> isBurning
+  toggleAlcoholLamp: (id: string) => void;
 }
 
 export const useExperimentStore = create<ExperimentStore>((set) => ({
@@ -68,10 +76,16 @@ export const useExperimentStore = create<ExperimentStore>((set) => ({
     set((state) => {
       const newItems = new Map(state.droppedItems);
       newItems.delete(itemId);
-      // Xóa luôn contents nếu là test tube
       const newContents = new Map(state.testTubeContents);
       newContents.delete(itemId);
-      return { droppedItems: newItems, testTubeContents: newContents };
+      // Xóa trạng thái đèn khi xóa vật thể
+      const newLampStatus = new Map(state.alcoholLampStatus);
+      newLampStatus.delete(itemId);
+      return { 
+        droppedItems: newItems, 
+        testTubeContents: newContents, 
+        alcoholLampStatus: newLampStatus 
+      };
     }),
 
   setSelectedEquipment: (id?: string) =>
@@ -100,6 +114,15 @@ export const useExperimentStore = create<ExperimentStore>((set) => ({
   setContextMenu: (menu) => set({ contextMenu: menu }),
 
   setHeldSubstance: (sub) => set({ heldSubstance: sub }),
+  alcoholLampStatus: new Map(),
+
+  toggleAlcoholLamp: (id) =>
+    set((state) => {
+      const newStatus = new Map(state.alcoholLampStatus);
+      const current = newStatus.get(id) ?? false;
+      newStatus.set(id, !current);
+      return { alcoholLampStatus: newStatus };
+    }),
 
   addSubstanceToTestTube: (testTubeId, substanceId) =>
     set((state) => {

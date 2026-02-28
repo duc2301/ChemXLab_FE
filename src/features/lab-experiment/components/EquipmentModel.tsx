@@ -48,6 +48,7 @@ export const EquipmentModel = ({
   const setHeldSubstance = useExperimentStore((s) => s.setHeldSubstance);
   const addSubstanceToTestTube = useExperimentStore((s) => s.addSubstanceToTestTube);
   const testTubeContents = useExperimentStore((s) => s.testTubeContents);
+  const alcoholLampStatus = useExperimentStore((s) => s.alcoholLampStatus);
   const isHoldingSubstance = heldSubstance !== null;
   const [showFull, setShowFull] = useState(false);
 
@@ -79,6 +80,7 @@ export const EquipmentModel = ({
   const isTestTube = droppedItem.equipmentId === EQUIPMENT_IDS.TEST_TUBE;
   const isThermometer = droppedItem.equipmentId === EQUIPMENT_IDS.THERMOMETER;
   const isAlcoholLamp = droppedItem.equipmentId === EQUIPMENT_IDS.ALCOHOL_LAMP;
+  const isBurning = alcoholLampStatus.get(droppedItem.id) ?? false;
 
   const raycaster = useMemo(() => new THREE.Raycaster(), []);
   const dragPlane = useMemo(() => new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), []);
@@ -391,7 +393,8 @@ export const EquipmentModel = ({
           isHighlighted={isHighlighted}
           isFullHighlight={isFullHighlight}
           isGlass={isTestTube}
-          playAnimations={droppedItem.equipmentId === EQUIPMENT_IDS.ALCOHOL_LAMP}
+          playAnimations={isAlcoholLamp ? isBurning : false}
+          isShowFire={isAlcoholLamp ? isBurning : false}
         />
 
         {/* Lớp bột có animation rơi từ miệng ống xuống đáy */}
@@ -501,6 +504,7 @@ const Model = ({
   isGlass = false,
   isFullHighlight = false,
   playAnimations = false,
+  isShowFire = false,
 }: {
   modelPath: string;
   isHovered: boolean;
@@ -510,10 +514,10 @@ const Model = ({
   isGlass?: boolean;
   isFullHighlight?: boolean;
   playAnimations?: boolean;
+  isShowFire?: boolean;
 }) => {
   const { scene, animations } = useGLTF(modelPath);
-  const armatureRef = useRef<THREE.Object3D | null>(null);
-  const [angle, setAngle] = useState(0);
+
   const clonedScene = useMemo(() => {
     const clone = scene.clone();
     clone.traverse((child) => {
@@ -525,119 +529,78 @@ const Model = ({
     return clone;
   }, [scene]);
 
-  // Play animations (chỉ cho những model có flag playAnimations)
-  const { actions, mixer } = useAnimations(animations, clonedScene);
-  useEffect(() => {
-    if (!playAnimations || !actions || Object.keys(actions).length === 0) return;
-    Object.values(actions).forEach((action) => {
-      if (action) action.reset().play();
-    });
-    return () => { mixer.stopAllAction(); };
-  }, [playAnimations, actions, mixer]);
+  const { actions } = useAnimations(animations, clonedScene);
 
-  useFrame(() => {
-    if (
-      isSnapped &&
-      armatureRef.current &&
-      angle < THREE.MathUtils.degToRad(10)
-    ) {
-      const newAngle = Math.min(angle - 0.01, THREE.MathUtils.degToRad(10));
-      setAngle(newAngle);
-      const pos = armatureRef.current.position.clone();
-      const cos = Math.cos(newAngle);
-      const sin = Math.sin(newAngle);
-      armatureRef.current.position.set(
-        -pos.x * cos - pos.z * sin,
-        pos.y,
-        pos.x * sin + pos.z * cos,
-      );
-      armatureRef.current.rotation.y = newAngle;
-    }
-  });
-
+  // 3. LOGIC ĐIỀU KHIỂN HIỂN THỊ VÀ ANIMATION LỬA
   useEffect(() => {
+    // Điều khiển ẩn hiện mesh lửa
     clonedScene.traverse((child) => {
-      if (child.name === "Armature") {
-        armatureRef.current = child;
+      if (child.name === "GLB_Flame_V260") {
+        child.visible = isShowFire;
       }
     });
-  }, [clonedScene]);
 
-  useMemo(() => {
+    // Điều khiển chạy/dừng animation
+    if (isShowFire && playAnimations && actions) {
+      Object.values(actions).forEach((action) => {
+        if (action) {
+          action.reset().fadeIn(0.2).play(); // Thêm fadeIn cho mượt
+        }
+      });
+    } else {
+      // Dùng fadeOut hoặc stop khi tắt lửa
+      Object.values(actions).forEach((action) => action?.fadeOut(0.2));
+      // Nếu muốn dừng hẳn sau khi fadeOut:
+      // setTimeout(() => mixer.stopAllAction(), 200);
+    }
+  }, [isShowFire, playAnimations, actions, clonedScene]);
+
+  // 4. LOGIC XỬ LÝ MATERIAL (Giữ nguyên logic của bạn nhưng tối ưu dependency)
+  useEffect(() => {
     clonedScene.traverse((child) => {
       if (!(child instanceof THREE.Mesh) || !child.material) return;
+      
+      // Bỏ qua mesh lửa không đổi material để tránh lỗi hiển thị lửa
+      if (child.name === "GLB_Flame_V260") return;
 
-      const materials = Array.isArray(child.material)
-        ? child.material
-        : [child.material];
+      const materials = Array.isArray(child.material) ? child.material : [child.material];
 
-      const cloned = materials.map((mat) => {
-        const m = mat.clone();
-
-        // Chỉ set emissive nếu material hỗ trợ
-        if (!("emissive" in m)) {
-          // Vẫn set transparent cho vật liệu không có emissive nếu là glass
-          if (isGlass) {
-            m.transparent = true;
-            m.opacity = 0.3;
-            if ("depthWrite" in m) m.depthWrite = false;
+      materials.forEach((m) => {
+        if ("emissive" in m) {
+          const mat = m as THREE.MeshStandardMaterial;
+          if (isDragging) {
+            mat.emissive.set("#ffaa00");
+            mat.emissiveIntensity = 0.5;
+          } else if (isFullHighlight) {
+            mat.emissive.set("#ef4444");
+            mat.emissiveIntensity = 0.55;
+          } else if (isHighlighted) {
+            mat.emissive.set("#fbbf24");
+            mat.emissiveIntensity = 0.6;
+          } else if (isSnapped || isHovered) {
+             mat.emissive.set(isHovered ? "#4488ff" : "#a0c4e8");
+             mat.emissiveIntensity = isHovered ? 0.3 : 0.12;
+          } else {
+            mat.emissive.set("#a0c4e8");
+            mat.emissiveIntensity = 0.12;
           }
-          return m;
         }
 
-        // Emissive theo trạng thái
-        if (isDragging) {
-          m.emissive = new THREE.Color("#ffaa00");
-          m.emissiveIntensity = 0.5;
-        } else if (isFullHighlight) {
-          // Đỏ: ống đầy, không có thể đổ thêm
-          m.emissive = new THREE.Color("#ef4444");
-          m.emissiveIntensity = 0.55;
-        } else if (isHighlighted) {
-          m.emissive = new THREE.Color("#fbbf24");
-          m.emissiveIntensity = 0.6;
-        } else if (isSnapped) {
-          m.emissive = new THREE.Color("#a0c4e8");
-          m.emissiveIntensity = 0.12;
-        } else if (isHovered) {
-          m.emissive = new THREE.Color("#4488ff");
-          m.emissiveIntensity = 0.3;
-        } else {
-          m.emissive = new THREE.Color("#a0c4e8");
-          m.emissiveIntensity = 0.12;
-        }
-
-        // Glass effect — trong suốt như thủy tinh
         if (isGlass) {
           m.transparent = true;
           m.opacity = 0.35;
-          if ("depthWrite" in m) m.depthWrite = false;
+          m.depthWrite = false;
         }
-
-        return m;
       });
-
-      child.material = Array.isArray(child.material) ? cloned : cloned[0];
     });
+  }, [clonedScene, isHovered, isDragging, isSnapped, isHighlighted, isGlass, isFullHighlight]);
 
+  useEffect(() => {
     clonedScene.children.forEach((child) => {
-      child.position.x = clonedScene.position.x;
-      child.position.y = clonedScene.position.y + 0.04;
-      child.position.z = clonedScene.position.z;
-      child.rotateX(clonedScene.rotation.x);
-      child.rotateY(clonedScene.rotation.y);
-      child.rotateZ(clonedScene.rotation.z);
+      child.position.y = 0.04;
       child.updateMatrixWorld();
     });
-  }, [
-    clonedScene,
-    isHovered,
-    isDragging,
-    isSnapped,
-    isHighlighted,
-    isGlass,
-    isFullHighlight,
-  ]);
+  }, [clonedScene]);
 
   return <primitive object={clonedScene} />;
 };
