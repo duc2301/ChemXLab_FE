@@ -60,13 +60,24 @@ export const EquipmentModel = ({
   const isHoldingSubstance = heldSubstance !== null;
   const [showFull, setShowFull] = useState(false);
 
-  // ─── Snap state (chỉ dùng cho test-tube) ─────────────────────────────────
+  // ─── Snap state (chỉ dùng cho test-tube) ────────────────────────────────────
   const isSnappedRef = useRef(false);
   const [isSnapped, setIsSnapped] = useState(false);
   const snappedToBodyRef = useRef<RapierRigidBody | null>(null);
   const snappedToThermoIdRef = useRef<string | null>(null);
+  // Animation: xuất phát từ cao hơn rồi ease xuống vị trí snap cuối
+  const snapAnimRef = useRef<{
+    active: boolean;
+    startY: number;
+    targetY: number;
+    snapX: number;
+    snapZ: number;
+    t: number;  // 0 → 1
+  } | null>(null);
 
   const dragOffset = useRef(new THREE.Vector3());
+  // Lưu target + pointerId để releasePointerCapture khi snap
+  const activePointerRef = useRef<{ target: HTMLElement; pointerId: number } | null>(null);
 
   const { gl } = useThree();
   const equipment = getEquipmentById(droppedItem.equipmentId);
@@ -115,8 +126,28 @@ export const EquipmentModel = ({
     if (isTestTube && isSnappedRef.current && snappedToBodyRef.current) {
       try {
         const tp = snappedToBodyRef.current.translation();
+        const finalX = tp.x - 0.0263;
+        const finalY = tp.y + SNAP_OFFSET_Y;
+        const finalZ = tp.z + 0.385;
+
+        // ─ Phase: đang chạy animation ease-down vào vị trí snap ───────────────────
+        if (snapAnimRef.current?.active) {
+          const anim = snapAnimRef.current;
+          anim.t = Math.min(1, anim.t + 0.016 * 1.8); // ~0.55s tới 1
+          // Ease-out cubic
+          const eased = 1 - Math.pow(1 - anim.t, 3);
+          const currentY = anim.startY + (anim.targetY - anim.startY) * eased;
+          rigidBodyRef.current.setTranslation(
+            { x: anim.snapX, y: currentY, z: anim.snapZ },
+            true,
+          );
+          if (anim.t >= 1) anim.active = false;
+          return;
+        }
+
+        // ─ Phase: đang follow (sau khi anim xong) ───────────────────────────
         rigidBodyRef.current.setTranslation(
-          { x: tp.x - 0.0263, y: tp.y + SNAP_OFFSET_Y, z: tp.z + 0.385 },
+          { x: finalX, y: finalY, z: finalZ },
           true,
         );
       } catch {
@@ -128,6 +159,7 @@ export const EquipmentModel = ({
         setIsSnapped(false);
         snappedToBodyRef.current = null;
         snappedToThermoIdRef.current = null;
+        snapAnimRef.current = null;
         rigidBodyRef.current.setBodyType(0, true); // trả về dynamic
       }
       return;
@@ -179,14 +211,29 @@ export const EquipmentModel = ({
           const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
 
           if (dist < SNAP_RADIUS) {
-            // Snap ngay lập tức
+            const finalX = tp.x - 0.0263;
+            const finalY = tp.y + SNAP_OFFSET_Y;
+            const finalZ = tp.z + 0.385;
+
+            // Nâng Y từ vị trí hiện tại (giữ nguyên X, Z)
+            const liftY = finalY + 0.35;
             rigidBodyRef.current.setTranslation(
-              { x: tp.x - 0.04, y: tp.y + SNAP_OFFSET_Y, z: tp.z + 0.38 },
+              { x: myPos.x, y: liftY, z: myPos.z },
               true,
             );
             rigidBodyRef.current.setBodyType(2, true); // kinematicPosition
             rigidBodyRef.current.setLinvel({ x: 0, y: 0, z: 0 }, true);
             rigidBodyRef.current.setAngvel({ x: 0, y: 0, z: 0 }, true);
+
+            // Khởi động animation ease-down (từ liftY → finalY, X/Z dồn về final)
+            snapAnimRef.current = {
+              active: true,
+              startY: liftY,
+              targetY: finalY,
+              snapX: finalX,
+              snapZ: finalZ,
+              t: 0,
+            };
 
             snappedToBodyRef.current = thermoBody;
             snappedToThermoIdRef.current = thermoId;
@@ -198,6 +245,23 @@ export const EquipmentModel = ({
             setIsHovered(false);
             onDragChange?.(false);
             gl.domElement.style.cursor = "auto";
+
+            // Dispatch synthetic pointerup để OrbitControls reset trạng thái drag
+            {
+              const pid = activePointerRef.current?.pointerId ?? 1;
+              // Release capture trước
+              if (activePointerRef.current) {
+                try { activePointerRef.current.target.releasePointerCapture(pid); } catch { /* ignore */ }
+                activePointerRef.current = null;
+              }
+              // Dispatch pointerup lên canvas để OrbitControls dừng rotate
+              try {
+                gl.domElement.dispatchEvent(
+                  new PointerEvent("pointerup", { pointerId: pid, bubbles: true, cancelable: true }),
+                );
+              } catch { /* ignore */ }
+            }
+
             break;
           }
         }
@@ -226,6 +290,7 @@ export const EquipmentModel = ({
       const target = e.target as HTMLElement;
       if (target.setPointerCapture) {
         target.setPointerCapture(e.pointerId);
+        activePointerRef.current = { target, pointerId: e.pointerId };
       }
 
       dragPlane.constant = -e.point.y;
@@ -259,6 +324,7 @@ export const EquipmentModel = ({
       if (target.releasePointerCapture) {
         target.releasePointerCapture(e.pointerId);
       }
+      activePointerRef.current = null;
 
       setIsDragging(false);
       onDragChange?.(false);
