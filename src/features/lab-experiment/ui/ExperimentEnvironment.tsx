@@ -4,12 +4,12 @@ import { CuboidCollider, Physics, RigidBody } from "@react-three/rapier";
 import type { ReactNode } from "react";
 import { Component, Suspense, useMemo, useState } from "react";
 import { EquipmentModel } from "../components/EquipmentModel";
+import { EQUIPMENT_REGISTRY } from "../services/equipmentRegistry";
+import { useExperimentStore } from "../services/experimentStore";
 import type { DroppedItem } from "../types/equipment";
 
 interface ExperimentCanvasProps {
   onItemDropped?: (item: DroppedItem) => void;
-  droppedItems?: Map<string, DroppedItem>;
-  onRemove?: (itemId: string) => void;
 }
 
 // Error boundary for Canvas
@@ -283,8 +283,12 @@ const LabFloor = () => {
 /**
  * Canvas content - được render bên trong <Canvas> từ ExperimentEnvironment
  */
-const ExperimentCanvasContent = ({ droppedItems, onRemove }: ExperimentCanvasProps) => {
+const ExperimentCanvasContent = ({ onItemDropped: _ }: ExperimentCanvasProps) => {
   useThree();
+
+  // Đọc trực tiếp từ store để tránh Canvas re-mount khi ExperimentPopup re-render
+  const droppedItems = useExperimentStore((s) => s.droppedItems);
+  const removeDroppedItem = useExperimentStore((s) => s.removeDroppedItem);
 
   // Track if any object is being dragged - used to disable camera controls
   const [isDragging, setIsDragging] = useState(false);
@@ -336,16 +340,16 @@ const ExperimentCanvasContent = ({ droppedItems, onRemove }: ExperimentCanvasPro
         {/* Lab Floor */}
         <LabFloor />
 
-        {/* Dropped items - drag to move on table */}
         {droppedItems &&
           Array.from(droppedItems.values()).map((item) => (
-            <EquipmentModel
-              key={item.id}
-              droppedItem={item}
-              tableHeight={TABLE_HEIGHT + TABLE_TOP_SIZE[1] / 2}
-              onDragChange={setIsDragging}
-              onRemove={onRemove}
-            />
+            <Suspense key={item.id} fallback={null}>
+              <EquipmentModel
+                droppedItem={item}
+                tableHeight={TABLE_HEIGHT + TABLE_TOP_SIZE[1] / 2}
+                onDragChange={setIsDragging}
+                onRemove={removeDroppedItem}
+              />
+            </Suspense>
           ))}
       </Physics>
     </>
@@ -357,9 +361,7 @@ const ExperimentCanvasContent = ({ droppedItems, onRemove }: ExperimentCanvasPro
  */
 export const ExperimentEnvironment = ({
   onItemDropped,
-  droppedItems,
-  onRemove,
-}: ExperimentCanvasProps) => {
+}: Omit<ExperimentCanvasProps, 'droppedItems' | 'onRemove'>) => {
   return (
     <CanvasErrorBoundary>
       <Canvas
@@ -372,21 +374,14 @@ export const ExperimentEnvironment = ({
         camera={{ position: [0, 2.5, 4], fov: 50 }}
         style={{ background: '#9aa3ad' }}
       >
-        <Suspense fallback={null}>
-          <ExperimentCanvasContent
-            onItemDropped={onItemDropped}
-            droppedItems={droppedItems}
-            onRemove={onRemove}
-          />
-        </Suspense>
+        {/* Không dùng Suspense bao quanh toàn bộ content — sẽ gây flash đen khi model load */}
+        <ExperimentCanvasContent onItemDropped={onItemDropped} />
       </Canvas>
     </CanvasErrorBoundary>
   );
 };
 
-// Preload table model if available
-try {
-  useGLTF.preload("/models/table.glb");
-} catch {
-  // Ignore preload errors
-}
+// Preload tất cả model đã đăng ký để useGLTF không suspend khi drop
+EQUIPMENT_REGISTRY.forEach((item) => {
+  try { useGLTF.preload(item.modelPath); } catch { /* ignore */ }
+});

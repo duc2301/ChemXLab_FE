@@ -184,9 +184,7 @@ export const ExperimentPopup = () => {
               onClick={heldSubstance ? () => setHeldSubstance(null) : undefined}
             >
               <ExperimentEnvironment
-                droppedItems={droppedItems}
                 onItemDropped={addDroppedItem}
-                onRemove={removeDroppedItem}
               />
             </div>
           </div>
