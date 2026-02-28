@@ -1,4 +1,4 @@
-import { Html, useGLTF } from "@react-three/drei";
+import { Html, useAnimations, useGLTF } from "@react-three/drei";
 import type { ThreeEvent } from "@react-three/fiber";
 import { useFrame, useThree } from "@react-three/fiber";
 import {
@@ -18,17 +18,9 @@ import type { DroppedItem } from "../types/equipment";
 
 // ─── Hằng số snap ────────────────────────────────────────────────────────────
 const SNAP_OFFSET_Y = 0.5;
-const SNAP_RADIUS = 0.4; // khoảng cách world để trigger snap
+const SNAP_RADIUS = 0.4;
 const LAMP_SNAP_OFFSET_Y = 0;
 
-// ─── Collision Groups (Rapier bitmask: upper 16 bits = filter, lower 16 = membership) ─
-// GROUP_STATIC (0x0001): bàn, sàn — không đặt tường minh, mặc định 0xFFFF
-// GROUP_EQUIPMENT (0x0002): thiết bị thông thường
-// GROUP_TESTTUBE  (0x0004): ống nghiệm
-//
-// test-tube:       membership=0x0004, filter=0x0001 (chỉ va chạm static)  → 0x00010004
-// regular equip:   membership=0x0002, filter=0x0003 (static + equipment)    → 0x00030002
-// table/floor:     default 0xFFFFFFFF (va chạm với tất cả)
 const CG_TEST_TUBE = 0x00010004;
 const CG_EQUIPMENT = 0x00030002;
 
@@ -39,11 +31,8 @@ interface EquipmentModelProps {
   onRemove?: (itemId: string) => void;
 }
 
-// ─── Module-level registry: nhiệt kế tự đăng ký rigid body của mình ─────────
 const thermometerRegistry = new Map<string, RapierRigidBody>();
-// Lưu ID của test-tube đang chiếm dụng thermometer ID
 const occupiedThermometers = new Map<string, string>();
-// Lưu ID của alcohol-lamp đang chiếm dụng thermometer ID
 const occupiedThermometersByLamp = new Map<string, string>();
 
 export const EquipmentModel = ({
@@ -57,23 +46,32 @@ export const EquipmentModel = ({
   const setContextMenu = useExperimentStore((s) => s.setContextMenu);
   const heldSubstance = useExperimentStore((s) => s.heldSubstance);
   const setHeldSubstance = useExperimentStore((s) => s.setHeldSubstance);
-  const addSubstanceToTestTube = useExperimentStore(
-    (s) => s.addSubstanceToTestTube,
-  );
+  const addSubstanceToTestTube = useExperimentStore((s) => s.addSubstanceToTestTube);
   const testTubeContents = useExperimentStore((s) => s.testTubeContents);
   const isHoldingSubstance = heldSubstance !== null;
   const [showFull, setShowFull] = useState(false);
 
-  // ─── Snap state (chỉ dùng cho test-tube) ─────────────────────────────────
+  // ─── Snap state ────────────────────────────────────────────────────────────
   const isSnappedRef = useRef(false);
   const [isSnapped, setIsSnapped] = useState(false);
   const snappedToBodyRef = useRef<RapierRigidBody | null>(null);
   const snappedToThermoIdRef = useRef<string | null>(null);
   
-  // 1. REF NÀY ĐỂ TRÁNH SNAP LẠI NGAY LẬP TỨC
+  // Tránh snap lại ngay lập tức
   const lastUnsnappedThermoIdRef = useRef<string | null>(null); 
 
+  // Animation snap
+  const snapAnimRef = useRef<{
+    active: boolean;
+    startY: number;
+    targetY: number;
+    snapX: number;
+    snapZ: number;
+    t: number; 
+  } | null>(null);
+
   const dragOffset = useRef(new THREE.Vector3());
+  const activePointerRef = useRef<{ target: HTMLElement; pointerId: number } | null>(null);
 
   const { gl } = useThree();
   const equipment = getEquipmentById(droppedItem.equipmentId);
@@ -83,10 +81,7 @@ export const EquipmentModel = ({
   const isAlcoholLamp = droppedItem.equipmentId === EQUIPMENT_IDS.ALCOHOL_LAMP;
 
   const raycaster = useMemo(() => new THREE.Raycaster(), []);
-  const dragPlane = useMemo(
-    () => new THREE.Plane(new THREE.Vector3(0, 1, 0), 0),
-    [],
-  );
+  const dragPlane = useMemo(() => new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), []);
   const intersectionPoint = useMemo(() => new THREE.Vector3(), []);
 
   useEffect(() => {
@@ -107,11 +102,8 @@ export const EquipmentModel = ({
   useEffect(() => {
     return () => {
       if (isSnappedRef.current && snappedToThermoIdRef.current) {
-        if (isTestTube) {
-          occupiedThermometers.delete(snappedToThermoIdRef.current);
-        } else if (isAlcoholLamp) {
-          occupiedThermometersByLamp.delete(snappedToThermoIdRef.current);
-        }
+        if (isTestTube) occupiedThermometers.delete(snappedToThermoIdRef.current);
+        else if (isAlcoholLamp) occupiedThermometersByLamp.delete(snappedToThermoIdRef.current);
       }
     };
   }, [isTestTube, isAlcoholLamp]);
@@ -119,58 +111,53 @@ export const EquipmentModel = ({
   useFrame((state) => {
     if (!rigidBodyRef.current) return; 
 
-    // 1. Follow nhiệt kế khi đang snap
-    if (
-      (isTestTube || isAlcoholLamp) &&
-      isSnappedRef.current &&
-      snappedToBodyRef.current
-    ) {
+    // 1. Follow / Animate snap
+    if ((isTestTube || isAlcoholLamp) && isSnappedRef.current && snappedToBodyRef.current) {
       try {
         const tp = snappedToBodyRef.current.translation();
-        
-        // 2. ĐỒNG NHẤT TỌA ĐỘ FOLLOW CỦA CẢ ỐNG NGHIỆM VÀ ĐÈN CỒN
-        if (isTestTube) {
-          rigidBodyRef.current.setTranslation(
-            { x: tp.x - 0.0263, y: tp.y + SNAP_OFFSET_Y, z: tp.z + 0.385 },
-            true,
-          );
-        } else if (isAlcoholLamp) {
-          rigidBodyRef.current.setTranslation(
-            { x: tp.x - 0.0263, y: tp.y + LAMP_SNAP_OFFSET_Y, z: tp.z + 0.385},
-            true,
-          );
+        const offset_Y = isTestTube ? SNAP_OFFSET_Y : LAMP_SNAP_OFFSET_Y;
+        const finalX = tp.x - 0.0263;
+        const finalY = tp.y + offset_Y;
+        const finalZ = tp.z + 0.385;
+
+        if (snapAnimRef.current?.active) {
+          const anim = snapAnimRef.current;
+          anim.t = Math.min(1, anim.t + 0.016 * 1.8);
+          const eased = 1 - Math.pow(1 - anim.t, 3);
+          const currentY = anim.startY + (finalY - anim.startY) * eased;
+          
+          rigidBodyRef.current.setTranslation({ x: finalX, y: currentY, z: finalZ }, true);
+          if (anim.t >= 1) anim.active = false;
+          return;
         }
+
+        rigidBodyRef.current.setTranslation({ x: finalX, y: finalY, z: finalZ }, true);
       } catch {
         if (snappedToThermoIdRef.current) {
-          if (isTestTube)
-            occupiedThermometers.delete(snappedToThermoIdRef.current);
-          if (isAlcoholLamp)
-            occupiedThermometersByLamp.delete(snappedToThermoIdRef.current);
+          if (isTestTube) occupiedThermometers.delete(snappedToThermoIdRef.current);
+          if (isAlcoholLamp) occupiedThermometersByLamp.delete(snappedToThermoIdRef.current);
         }
         isSnappedRef.current = false;
         setIsSnapped(false);
         snappedToBodyRef.current = null;
         snappedToThermoIdRef.current = null;
-        rigidBodyRef.current.setBodyType(1, true);
+        snapAnimRef.current = null;
+        rigidBodyRef.current.setBodyType(0, true);
       }
       return;
     } 
 
-    // 2. Drag bình thường
+    // 2. Drag logic
     if (isDragging) {
       raycaster.setFromCamera(state.pointer, state.camera);
       if (raycaster.ray.intersectPlane(dragPlane, intersectionPoint)) {
         intersectionPoint.add(dragOffset.current);
 
+        // Tránh va chạm với các vật đã snap khác
         if ((isTestTube || isAlcoholLamp) && thermometerRegistry.size > 0) {
-          const occupationMap = isTestTube
-            ? occupiedThermometers
-            : occupiedThermometersByLamp;
+          const occupationMap = isTestTube ? occupiedThermometers : occupiedThermometersByLamp;
           for (const [thermoId, thermoBody] of thermometerRegistry) {
-            if (
-              occupationMap.has(thermoId) &&
-              occupationMap.get(thermoId) !== droppedItem.id
-            ) {
+            if (occupationMap.has(thermoId) && occupationMap.get(thermoId) !== droppedItem.id) {
               const tp = thermoBody.translation();
               const dx = intersectionPoint.x - tp.x;
               const dz = intersectionPoint.z - tp.z;
@@ -185,72 +172,63 @@ export const EquipmentModel = ({
             }
           }
         }
-
         rigidBodyRef.current.setTranslation(intersectionPoint, true);
       } 
       
-      // 3. Proximity snap
-      if (
-        (isTestTube || isAlcoholLamp) &&
-        !isSnappedRef.current &&
-        thermometerRegistry.size > 0
-      ) {
+      // 3. Proximity snap check
+      if ((isTestTube || isAlcoholLamp) && !isSnappedRef.current && thermometerRegistry.size > 0) {
         const myPos = rigidBodyRef.current.translation();
-        const occupationMap = isTestTube
-          ? occupiedThermometers
-          : occupiedThermometersByLamp;
+        const occupationMap = isTestTube ? occupiedThermometers : occupiedThermometersByLamp;
 
         for (const [thermoId, thermoBody] of thermometerRegistry) {
-          if (
-            occupationMap.has(thermoId) &&
-            occupationMap.get(thermoId) !== droppedItem.id
-          ) {
-            continue;
-          }
+          if (occupationMap.has(thermoId) && occupationMap.get(thermoId) !== droppedItem.id) continue;
 
           const tp = thermoBody.translation();
-          const dx = myPos.x - tp.x;
-          const dy = myPos.y - tp.y;
-          const dz = myPos.z - tp.z;
-          const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+          const dist = Math.sqrt(Math.pow(myPos.x - tp.x, 2) + Math.pow(myPos.y - tp.y, 2) + Math.pow(myPos.z - tp.z, 2));
 
-          // 3. THÊM LOGIC CHẶN SNAP TỨC THÌ VÀO CÁI VỪA THÁO RA
+          // Chặn snap ngược
           if (lastUnsnappedThermoIdRef.current === thermoId) {
-             if (dist > SNAP_RADIUS + 0.1) {
-                 lastUnsnappedThermoIdRef.current = null; // Kéo ra đủ xa thì reset để sau này có thể snap lại
-             } else {
-                 continue; // Nếu vẫn còn ở gần thì bỏ qua không snap
-             }
+             if (dist > SNAP_RADIUS + 0.1) lastUnsnappedThermoIdRef.current = null;
+             else continue;
           }
 
           if (dist < SNAP_RADIUS) {
-            // 4. ĐỒNG NHẤT TỌA ĐỘ LÚC SNAP VỚI TỌA ĐỘ FOLLOW Ở TRÊN
-            if (isTestTube) {
-              rigidBodyRef.current.setTranslation(
-                { x: tp.x - 0.0263, y: tp.y + SNAP_OFFSET_Y, z: tp.z + 0.385 },
-                true,
-              );
-              occupationMap.set(thermoId, droppedItem.id);
-            } else if (isAlcoholLamp) {
-              rigidBodyRef.current.setTranslation(
-                { x: tp.x - 0.0263, y: tp.y + LAMP_SNAP_OFFSET_Y, z: tp.z + 0.385 },
-                true,
-              );
-              occupationMap.set(thermoId, droppedItem.id);
-            }
+            const offset_Y = isTestTube ? SNAP_OFFSET_Y : LAMP_SNAP_OFFSET_Y;
+            const finalX = tp.x - 0.0263;
+            const finalY = tp.y + offset_Y;
+            const finalZ = tp.z + 0.385;
+            const liftY = finalY + 0.35;
 
+            rigidBodyRef.current.setTranslation({ x: myPos.x, y: liftY, z: myPos.z }, true);
             rigidBodyRef.current.setBodyType(2, true); 
             rigidBodyRef.current.setLinvel({ x: 0, y: 0, z: 0 }, true);
             rigidBodyRef.current.setAngvel({ x: 0, y: 0, z: 0 }, true);
 
+            snapAnimRef.current = {
+              active: true,
+              startY: liftY,
+              targetY: finalY,
+              snapX: finalX,
+              snapZ: finalZ,
+              t: 0,
+            };
+
+            occupationMap.set(thermoId, droppedItem.id);
             snappedToBodyRef.current = thermoBody;
             snappedToThermoIdRef.current = thermoId;
             isSnappedRef.current = true;
             setIsSnapped(true);
             setIsDragging(false);
-            setIsHovered(false);
             onDragChange?.(false);
             gl.domElement.style.cursor = "auto";
+
+            // Reset OrbitControls
+            if (activePointerRef.current) {
+              const pid = activePointerRef.current.pointerId;
+              try { activePointerRef.current.target.releasePointerCapture(pid); } catch {}
+              activePointerRef.current = null;
+              gl.domElement.dispatchEvent(new PointerEvent("pointerup", { pointerId: pid, bubbles: true }));
+            }
             break;
           }
         }
@@ -258,22 +236,17 @@ export const EquipmentModel = ({
     }
   });
 
-  const handlePointerDown = useCallback(
-    (e: ThreeEvent<PointerEvent>) => {
+  const handlePointerDown = useCallback((e: ThreeEvent<PointerEvent>) => {
       e.stopPropagation();
       if (e.nativeEvent.button === 2) return;
 
-      // DETACH nếu đang snap
-      if ((isTestTube || isAlcoholLamp) && isSnappedRef.current) {
+      // DETACH snap: Chỉ detach khi KHÔNG đang cầm chất
+      if ((isTestTube || isAlcoholLamp) && isSnappedRef.current && !heldSubstance) {
         if (snappedToThermoIdRef.current) {
-          if (isTestTube)
-            occupiedThermometers.delete(snappedToThermoIdRef.current);
-          if (isAlcoholLamp)
-            occupiedThermometersByLamp.delete(snappedToThermoIdRef.current);
-            
-          // 5. LƯU LẠI ID ĐỂ KHÔNG BỊ HÚT NGƯỢC LẠI
+          if (isTestTube) occupiedThermometers.delete(snappedToThermoIdRef.current);
+          if (isAlcoholLamp) occupiedThermometersByLamp.delete(snappedToThermoIdRef.current);
+          
           lastUnsnappedThermoIdRef.current = snappedToThermoIdRef.current;
-          snappedToThermoIdRef.current = null;
         }
         isSnappedRef.current = false;
         setIsSnapped(false);
@@ -283,53 +256,39 @@ export const EquipmentModel = ({
       const target = e.target as HTMLElement;
       if (target.setPointerCapture) {
         target.setPointerCapture(e.pointerId);
+        activePointerRef.current = { target, pointerId: e.pointerId };
       }
 
       dragPlane.constant = -e.point.y;
-
       if (rigidBodyRef.current) {
         const currentPos = rigidBodyRef.current.translation();
-        dragOffset.current
-          .set(currentPos.x, currentPos.y, currentPos.z)
-          .sub(e.point);
+        dragOffset.current.set(currentPos.x, currentPos.y, currentPos.z).sub(e.point);
+        rigidBodyRef.current.setBodyType(2, true); 
       }
 
       setIsDragging(true);
       onDragChange?.(true);
       gl.domElement.style.cursor = "grabbing";
-
-      if (rigidBodyRef.current) {
-        rigidBodyRef.current.setBodyType(2, true); 
-        rigidBodyRef.current.setLinvel({ x: 0, y: 0, z: 0 }, true);
-        rigidBodyRef.current.setAngvel({ x: 0, y: 0, z: 0 }, true);
-      }
     },
-    [gl.domElement, onDragChange, dragPlane, isTestTube],
+    [gl.domElement, onDragChange, dragPlane, isTestTube, isAlcoholLamp, heldSubstance]
   );
 
-  const handlePointerUp = useCallback(
-    (e: ThreeEvent<PointerEvent>) => {
+  const handlePointerUp = useCallback((e: ThreeEvent<PointerEvent>) => {
       e.stopPropagation();
-
       const target = e.target as HTMLElement;
-      if (target.releasePointerCapture) {
-        target.releasePointerCapture(e.pointerId);
-      }
+      if (target.releasePointerCapture) target.releasePointerCapture(e.pointerId);
+      activePointerRef.current = null;
 
       setIsDragging(false);
       onDragChange?.(false);
       gl.domElement.style.cursor = isHovered ? "grab" : "auto";
-
-      // 6. XÓA CỜ SAU KHI THẢ CHUỘT
       lastUnsnappedThermoIdRef.current = null; 
 
       if (rigidBodyRef.current && !isSnappedRef.current) {
-        rigidBodyRef.current.setBodyType(1, true); 
-        rigidBodyRef.current.setLinvel({ x: 0, y: 0, z: 0 }, true);
-        rigidBodyRef.current.setAngvel({ x: 0, y: 0, z: 0 }, true);
+        rigidBodyRef.current.setBodyType(0, true); // Chuyển về Dynamic (0) thay vì Static (1) để trọng lực hoạt động
       }
     },
-    [gl.domElement, isHovered, onDragChange],
+    [gl.domElement, isHovered, onDragChange]
   );
 
   // ─── Hover ────────────────────────────────────────────────────────────────
@@ -432,6 +391,7 @@ export const EquipmentModel = ({
           isHighlighted={isHighlighted}
           isFullHighlight={isFullHighlight}
           isGlass={isTestTube}
+          playAnimations={droppedItem.equipmentId === EQUIPMENT_IDS.ALCOHOL_LAMP}
         />
 
         {/* Lớp bột có animation rơi từ miệng ống xuống đáy */}
@@ -540,6 +500,7 @@ const Model = ({
   isHighlighted = false,
   isGlass = false,
   isFullHighlight = false,
+  playAnimations = false,
 }: {
   modelPath: string;
   isHovered: boolean;
@@ -548,8 +509,9 @@ const Model = ({
   isHighlighted?: boolean;
   isGlass?: boolean;
   isFullHighlight?: boolean;
+  playAnimations?: boolean;
 }) => {
-  const { scene } = useGLTF(modelPath);
+  const { scene, animations } = useGLTF(modelPath);
   const armatureRef = useRef<THREE.Object3D | null>(null);
   const [angle, setAngle] = useState(0);
   const clonedScene = useMemo(() => {
@@ -562,6 +524,16 @@ const Model = ({
     });
     return clone;
   }, [scene]);
+
+  // Play animations (chỉ cho những model có flag playAnimations)
+  const { actions, mixer } = useAnimations(animations, clonedScene);
+  useEffect(() => {
+    if (!playAnimations || !actions || Object.keys(actions).length === 0) return;
+    Object.values(actions).forEach((action) => {
+      if (action) action.reset().play();
+    });
+    return () => { mixer.stopAllAction(); };
+  }, [playAnimations, actions, mixer]);
 
   useFrame(() => {
     if (
