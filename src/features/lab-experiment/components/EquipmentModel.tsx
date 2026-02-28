@@ -1,4 +1,4 @@
-import { Html, useGLTF } from "@react-three/drei";
+import { Html, useAnimations, useGLTF } from "@react-three/drei";
 import type { ThreeEvent } from "@react-three/fiber";
 import { useFrame, useThree } from "@react-three/fiber";
 import {
@@ -276,8 +276,9 @@ export const EquipmentModel = ({
       // Bỏ qua chuột phải – để onContextMenu xử lý
       if (e.nativeEvent.button === 2) return;
 
-      // DETACH nếu đang snap
-      if (isTestTube && isSnappedRef.current) {
+      // DETACH snap chỉ khi KHÔNG đang cầm chất
+      // (nếu cầm chất thì click là để đổ bột, không phải kéo ống)
+      if (isTestTube && isSnappedRef.current && !heldSubstance) {
         if (snappedToThermoIdRef.current) {
           occupiedThermometers.delete(snappedToThermoIdRef.current);
           snappedToThermoIdRef.current = null;
@@ -312,7 +313,7 @@ export const EquipmentModel = ({
         rigidBodyRef.current.setAngvel({ x: 0, y: 0, z: 0 }, true);
       }
     },
-    [gl.domElement, onDragChange, dragPlane, isTestTube],
+    [gl.domElement, onDragChange, dragPlane, isTestTube, heldSubstance],
   );
 
   // ─── Pointer Up: dừng kéo ─────────────────────────────────────────────────
@@ -423,6 +424,7 @@ export const EquipmentModel = ({
           isHighlighted={isHighlighted}
           isFullHighlight={isFullHighlight}
           isGlass={isTestTube}
+          playAnimations={droppedItem.equipmentId === EQUIPMENT_IDS.ALCOHOL_LAMP}
         />
 
         {/* Lớp bột có animation rơi từ miệng ống xuống đáy */}
@@ -515,6 +517,7 @@ const Model = ({
   isHighlighted = false,
   isGlass = false,
   isFullHighlight = false,
+  playAnimations = false,
 }: {
   modelPath: string;
   isHovered: boolean;
@@ -523,8 +526,9 @@ const Model = ({
   isHighlighted?: boolean;
   isGlass?: boolean;
   isFullHighlight?: boolean;
+  playAnimations?: boolean;
 }) => {
-  const { scene } = useGLTF(modelPath);
+  const { scene, animations } = useGLTF(modelPath);
   const armatureRef = useRef<THREE.Object3D | null>(null);
   const [angle, setAngle] = useState(0);
   const clonedScene = useMemo(() => {
@@ -537,6 +541,16 @@ const Model = ({
     });
     return clone;
   }, [scene]);
+
+  // Play animations (chỉ cho những model có flag playAnimations)
+  const { actions, mixer } = useAnimations(animations, clonedScene);
+  useEffect(() => {
+    if (!playAnimations || !actions || Object.keys(actions).length === 0) return;
+    Object.values(actions).forEach((action) => {
+      if (action) action.reset().play();
+    });
+    return () => { mixer.stopAllAction(); };
+  }, [playAnimations, actions, mixer]);
 
   useFrame(() => {
     if (isSnapped && armatureRef.current && angle < THREE.MathUtils.degToRad(10)) {
