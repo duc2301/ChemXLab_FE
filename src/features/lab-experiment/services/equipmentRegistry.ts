@@ -66,13 +66,13 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
   // Tools
   {
     id: 'thermometer',
-    name: 'Nhiệt kế',
+    name: 'Giá đỡ',
     category: 'tools',
     modelPath: '/models/decodinhongnghiem.glb',
     mass: 0.02,
     isDraggable: true,
     dimensions: { width: 0.005, height: 0.3, depth: 0.005 },
-    description: 'Đo nhiệt độ',
+    description: 'Giá đỡ ống nghiệm',
     scale: 3,
   },
   {
@@ -141,6 +141,28 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     description: 'Giấy lọc dùng trong phòng thí nghiệm',
     scale: 4,
   },
+  {
+    id: 'FE-powder',
+    name: 'FE',
+    category: 'substances',
+    modelPath: '/models/bot_fe.glb',
+    mass: 0.01,
+    isDraggable: true,
+    dimensions: { width: 0.1, height: 0.001, depth: 0.1 },
+    description: 'Bột sắt',
+    scale: 2.5,
+  },
+  {
+    id: 'S-powder',
+    name: 'S',
+    category: 'substances',
+    modelPath: '/models/bot_s.glb',
+    mass: 0.01,
+    isDraggable: true,
+    dimensions: { width: 0.1, height: 0.001, depth: 0.1 },
+    description: 'Bột lưu huỳnh',
+    scale: 2.5,
+  },
 ];
 
 export const EQUIPMENT_IDS = {
@@ -156,6 +178,14 @@ export const EQUIPMENT_IDS = {
   IRON_RING: "iron-ring",
   CAP_CONNECTOR: "cap-connector",
   FILTER_PAPER: "filter-paper",
+  FE_POWDER: "FE-powder",
+  S_POWDER: "S-powder",
+};
+
+/** Màu hiển thị tương ứng với từng chất bột */
+export const SUBSTANCE_COLORS: Record<string, string> = {
+  "FE-powder": "#9ca3af",  // xám bạc (bột sắt)
+  "S-powder": "#facc15",  // vàng (lưu huỳnh)
 };
 
 /**

@@ -2,6 +2,12 @@ import { create } from "zustand";
 import type { DroppedItem, ExperimentState } from "../types/equipment";
 import type { RigidBodyAutoCollider } from "@react-three/rapier";
 
+export interface HeldSubstance {
+  substanceId: string;
+  name: string;
+  color: string;
+}
+
 interface ExperimentStore extends ExperimentState {
   openModal: () => void;
   closeModal: () => void;
@@ -13,6 +19,11 @@ interface ExperimentStore extends ExperimentState {
   setCollider: (id: string, value: RigidBodyAutoCollider | false) => void;
   contextMenu: { x: number; y: number; itemId: string } | null;
   setContextMenu: (menu: { x: number; y: number; itemId: string } | null) => void;
+  // ─── Powder pick-and-pour ────────────────────────────────────────────────────
+  heldSubstance: HeldSubstance | null;
+  setHeldSubstance: (sub: HeldSubstance | null) => void;
+  testTubeContents: Map<string, string[]>; // testTubeInstanceId -> substanceId[]
+  addSubstanceToTestTube: (testTubeId: string, substanceId: string) => void;
 }
 
 export const useExperimentStore = create<ExperimentStore>((set) => ({
@@ -21,6 +32,8 @@ export const useExperimentStore = create<ExperimentStore>((set) => ({
   droppedItems: new Map(),
   selectedEquipmentId: undefined,
   contextMenu: null,
+  heldSubstance: null,
+  testTubeContents: new Map(),
 
   openModal: () =>
     set({
@@ -55,7 +68,10 @@ export const useExperimentStore = create<ExperimentStore>((set) => ({
     set((state) => {
       const newItems = new Map(state.droppedItems);
       newItems.delete(itemId);
-      return { droppedItems: newItems };
+      // Xóa luôn contents nếu là test tube
+      const newContents = new Map(state.testTubeContents);
+      newContents.delete(itemId);
+      return { droppedItems: newItems, testTubeContents: newContents };
     }),
 
   setSelectedEquipment: (id?: string) =>
@@ -71,16 +87,25 @@ export const useExperimentStore = create<ExperimentStore>((set) => ({
         const droppedItem: DroppedItem = {
           id: item.id,
           equipmentId: item.id,
-          position: item.position, // Y = above table for physics drop
-          rotation: item.position, // Random rotation
+          position: item.position,
+          rotation: item.position,
           timestamp: item.timestamp,
           collider: value,
         };
         newItems.set(id, droppedItem);
       }
-
       return { droppedItems: newItems };
     }),
 
   setContextMenu: (menu) => set({ contextMenu: menu }),
+
+  setHeldSubstance: (sub) => set({ heldSubstance: sub }),
+
+  addSubstanceToTestTube: (testTubeId, substanceId) =>
+    set((state) => {
+      const newContents = new Map(state.testTubeContents);
+      const existing = newContents.get(testTubeId) ?? [];
+      newContents.set(testTubeId, [...existing, substanceId]);
+      return { testTubeContents: newContents };
+    }),
 }));
