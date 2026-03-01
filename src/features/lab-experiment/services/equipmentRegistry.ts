@@ -182,6 +182,21 @@ export const EQUIPMENT_IDS = {
   S_POWDER: "S-powder",
 };
 
+export const GUIDED_EXPERIMENTS = [
+  {
+    id: 'test1',
+    name: 'Điều chế FeS trong phòng thí nghiệm',
+    description: 'description',
+    equipment: [
+      { id: EQUIPMENT_IDS.ALCOHOL_LAMP, position: [-0.5, 1.5, 0], rotation: [0, 0, 0] },
+      { id: EQUIPMENT_IDS.TEST_TUBE, position: [0, 1.5, 0], rotation: [0, 0, 0] },
+      { id: EQUIPMENT_IDS.THERMOMETER, position: [0.5, 1.5, 0], rotation: [0, 0, 0] },
+      { id: EQUIPMENT_IDS.FE_POWDER, position: [1, 1.5, 0], rotation: [0, 0, 0] },
+      { id: EQUIPMENT_IDS.S_POWDER, position: [1.5, 1.5, 0], rotation: [0, 0, 0] },
+    ]
+  }
+];
+
 /** Màu hiển thị tương ứng với từng chất bột */
 export const SUBSTANCE_COLORS: Record<string, string> = {
   "FE-powder": "#9ca3af",  // xám bạc (bột sắt)

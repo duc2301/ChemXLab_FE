@@ -1,4 +1,4 @@
-import { X } from 'lucide-react';
+import { ArrowLeft, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { EquipmentPanel } from '../components/EquipmentPanel';
 import { EQUIPMENT_IDS, SUBSTANCE_COLORS, getEquipmentById } from '../services/equipmentRegistry';
@@ -21,7 +21,7 @@ const menuBtnStyle: React.CSSProperties = {
   transition: "background 0.15s",
 };
 
-export const ExperimentPopup = () => {
+export const ExperimentPopup = ({ onBackToMenu }: { onBackToMenu: () => void }) => {
   const {
     isModalOpen,
     closeModal,
@@ -35,6 +35,7 @@ export const ExperimentPopup = () => {
     setHeldSubstance,
     alcoholLampStatus,
     toggleAlcoholLamp,
+    clearItems,
   } = useExperimentStore();
 
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -142,6 +143,12 @@ export const ExperimentPopup = () => {
 
   if (!isModalOpen) return null;
 
+  const handleBack = () => {
+    clearItems();     // 1. Dọn sạch bàn
+    closeModal();     // 2. Đóng popup hiện tại
+    onBackToMenu();   // 3. Gọi callback để hiện lại ModeMenu
+  };
+
   return (
     <>
       {/* Fullscreen backdrop */}
@@ -151,12 +158,19 @@ export const ExperimentPopup = () => {
       <div className="fixed inset-4 z-50 bg-gray-900 rounded-lg shadow-2xl border border-gray-700 flex flex-col overflow-hidden">
         {/* Header */}
         <div className="px-4 py-3 bg-gray-800 border-b border-gray-700 flex items-center justify-between">
-          <h1 className="text-white font-bold text-lg">Bàn Thí Nghiệm</h1>
-          <button
-            onClick={closeModal}
-            className="p-1 hover:bg-gray-700 rounded transition-colors"
-            title="Đóng (ESC)"
-          >
+          <div className="flex items-center gap-4">
+            {/* NÚT QUAY LẠI */}
+            <button
+              onClick={handleBack}
+              className="flex items-center gap-2 px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-md transition-colors text-sm font-medium border border-gray-600"
+            >
+              <ArrowLeft size={16} />
+              Chọn thí nghiệm khác
+            </button>
+            <h1 className="text-white font-bold text-lg">Bàn Thí Nghiệm</h1>
+          </div>
+          
+          <button onClick={closeModal} className="p-1 hover:bg-gray-700 rounded transition-colors">
             <X size={24} className="text-gray-300 hover:text-white" />
           </button>
         </div>

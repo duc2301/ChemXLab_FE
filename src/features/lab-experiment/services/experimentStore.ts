@@ -25,7 +25,9 @@ interface ExperimentStore extends ExperimentState {
   setSelectedEquipment: (id?: string) => void;
   setCollider: (id: string, value: RigidBodyAutoCollider | false) => void;
   contextMenu: { x: number; y: number; itemId: string } | null;
-  setContextMenu: (menu: { x: number; y: number; itemId: string } | null) => void;
+  setContextMenu: (
+    menu: { x: number; y: number; itemId: string } | null,
+  ) => void;
   // ─── Powder pick-and-pour ────────────────────────────────────────────────────
   heldSubstance: HeldSubstance | null;
   setHeldSubstance: (sub: HeldSubstance | null) => void;
@@ -33,6 +35,7 @@ interface ExperimentStore extends ExperimentState {
   addSubstanceToTestTube: (testTubeId: string, substanceId: string) => void;
   alcoholLampStatus: Map<string, boolean>; // instanceId -> isBurning
   toggleAlcoholLamp: (id: string) => void;
+  clearItems: () => void;
 }
 
 export const useExperimentStore = create<ExperimentStore>((set) => ({
@@ -68,7 +71,7 @@ export const useExperimentStore = create<ExperimentStore>((set) => ({
 
   addDroppedItem: (item: DroppedItem) =>
     set((state) => {
-      console.log('Adding item to store:', item.id, item.position);
+      console.log("Adding item to store:", item.id, item.position);
       const newItems = new Map(state.droppedItems);
       newItems.set(item.id, item);
       return { droppedItems: newItems };
@@ -94,10 +97,10 @@ export const useExperimentStore = create<ExperimentStore>((set) => ({
       // Xóa trạng thái đèn khi xóa vật thể
       const newLampStatus = new Map(state.alcoholLampStatus);
       newLampStatus.delete(itemId);
-      return { 
-        droppedItems: newItems, 
-        testTubeContents: newContents, 
-        alcoholLampStatus: newLampStatus 
+      return {
+        droppedItems: newItems,
+        testTubeContents: newContents,
+        alcoholLampStatus: newLampStatus,
       };
     }),
 
@@ -143,5 +146,13 @@ export const useExperimentStore = create<ExperimentStore>((set) => ({
       const existing = newContents.get(testTubeId) ?? [];
       newContents.set(testTubeId, [...existing, substanceId]);
       return { testTubeContents: newContents };
+    }),
+
+  clearItems: () =>
+    set({
+      droppedItems: new Map(),
+      alcoholLampStatus: new Map(),
+      heldSubstance: null,
+      contextMenu: null,
     }),
 }));
