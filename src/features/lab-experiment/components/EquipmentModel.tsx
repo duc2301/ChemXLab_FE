@@ -592,6 +592,15 @@ const Model = ({
         }
       });
     });
+    clonedScene.children.forEach((child) => {
+      child.position.x = clonedScene.position.x;
+      child.position.y = clonedScene.position.y + 0.04;
+      child.position.z = clonedScene.position.z;
+      child.rotateX(clonedScene.rotation.x);
+      child.rotateY(clonedScene.rotation.y);
+      child.rotateZ(clonedScene.rotation.z);
+      child.updateMatrixWorld();
+    });
   }, [clonedScene, isHovered, isDragging, isSnapped, isHighlighted, isGlass, isFullHighlight]);
 
   useEffect(() => {
