@@ -15,6 +15,7 @@ import {
 } from "../services/equipmentRegistry";
 import { useExperimentStore } from "../services/experimentStore";
 import type { DroppedItem } from "../types/equipment";
+import { useExperimentStore } from "../services/experimentStore";
 
 // ─── Hằng số snap ────────────────────────────────────────────────────────────
 const SNAP_OFFSET_Y = 0.5;

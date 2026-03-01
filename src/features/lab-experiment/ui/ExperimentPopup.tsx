@@ -195,8 +195,15 @@ export const ExperimentPopup = () => {
         </div>
 
         {/* Status bar */}
-        <div className="px-4 py-2 bg-gray-900 border-t border-gray-700 text-xs text-gray-500">
-          <span>Dụng cụ: {droppedItems.size}</span>
+        <div className="px-4 py-2 bg-gray-900 border-t border-gray-700 text-xs text-gray-500 flex justify-between">
+          <span>Dụng cụ: {droppedItems.size} </span>
+          <div className="flex gap-4">
+            {Array.from(droppedItems.values()).map(item => (
+              <span key={item.id} className="font-mono">
+                ID: {item.id.slice(0, 4)}... Pos: [{item.position.map(p => p.toFixed(2)).join(', ')}]
+              </span>
+            ))}
+          </div>
         </div>
       </div>
 

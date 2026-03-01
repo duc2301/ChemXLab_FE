@@ -62,7 +62,6 @@ export const register = async (RegisterData: RegisterForm): Promise<string | nul
     const data: ResponseDTO<UserAccount> = response.data;
     if (data.isSuccess) {
       message.success("Đăng ký thành công! Vui lòng đăng nhập.");
-      window.location.href = "/login";
       return "success";
     }
     else if (data.errors && data.errors.length > 0) {

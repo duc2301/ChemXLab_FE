@@ -137,7 +137,8 @@ const RegisterPage = () => {
       const isValid = await verifyOtp(registerData.email, otpCode);
       if (isValid) {
         // OTP verified, now register
-        await register(registerData);
+        const result: string | null = await register(registerData);
+        if(result === "success") navigate("/login")
       } else {
         message.error("Mã OTP không đúng hoặc đã hết hạn. Vui lòng thử lại.");
       }
