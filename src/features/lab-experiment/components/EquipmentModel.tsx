@@ -2,7 +2,6 @@ import { Html, useAnimations, useGLTF } from "@react-three/drei";
 import type { ThreeEvent } from "@react-three/fiber";
 import { useFrame, useThree } from "@react-three/fiber";
 import {
-  CuboidCollider,
   RapierRigidBody,
   RigidBody,
 } from "@react-three/rapier";
@@ -15,7 +14,6 @@ import {
 } from "../services/equipmentRegistry";
 import { useExperimentStore } from "../services/experimentStore";
 import type { DroppedItem } from "../types/equipment";
-import { useExperimentStore } from "../services/experimentStore";
 
 // ─── Hằng số snap ────────────────────────────────────────────────────────────
 const SNAP_OFFSET_Y = 0.5;
