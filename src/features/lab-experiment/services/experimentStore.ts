@@ -6,7 +6,14 @@ export interface HeldSubstance {
   substanceId: string;
   name: string;
   color: string;
+  amount: number;
 }
+
+export interface TubeContent {
+  substanceId: string;
+  amount: number;
+}
+
 
 interface ExperimentStore extends ExperimentState {
   openModal: () => void;
@@ -22,8 +29,10 @@ interface ExperimentStore extends ExperimentState {
   // ─── Powder pick-and-pour ────────────────────────────────────────────────────
   heldSubstance: HeldSubstance | null;
   setHeldSubstance: (sub: HeldSubstance | null) => void;
-  testTubeContents: Map<string, string[]>; // testTubeInstanceId -> substanceId[]
-  addSubstanceToTestTube: (testTubeId: string, substanceId: string) => void;
+  testTubeContents: Map<string, TubeContent[]>; // testTubeInstanceId -> TubeContent[]
+  addSubstanceToTestTube: (testTubeId: string, substanceId: string, amount?: number) => void;
+  stirredTubes: Record<string, number>; // test tube IDs -> number of layers stirred
+  stirTestTube: (testTubeId: string, layersCount: number) => void;
 }
 
 export const useExperimentStore = create<ExperimentStore>((set) => ({
@@ -34,6 +43,7 @@ export const useExperimentStore = create<ExperimentStore>((set) => ({
   contextMenu: null,
   heldSubstance: null,
   testTubeContents: new Map(),
+  stirredTubes: {},
 
   openModal: () =>
     set({
@@ -71,7 +81,9 @@ export const useExperimentStore = create<ExperimentStore>((set) => ({
       // Xóa luôn contents nếu là test tube
       const newContents = new Map(state.testTubeContents);
       newContents.delete(itemId);
-      return { droppedItems: newItems, testTubeContents: newContents };
+      const newStirred = { ...state.stirredTubes };
+      delete newStirred[itemId];
+      return { droppedItems: newItems, testTubeContents: newContents, stirredTubes: newStirred };
     }),
 
   setSelectedEquipment: (id?: string) =>
@@ -101,11 +113,19 @@ export const useExperimentStore = create<ExperimentStore>((set) => ({
 
   setHeldSubstance: (sub) => set({ heldSubstance: sub }),
 
-  addSubstanceToTestTube: (testTubeId, substanceId) =>
+  addSubstanceToTestTube: (testTubeId, substanceId, amount = 1) =>
     set((state) => {
       const newContents = new Map(state.testTubeContents);
       const existing = newContents.get(testTubeId) ?? [];
-      newContents.set(testTubeId, [...existing, substanceId]);
+      const addedItem: TubeContent = { substanceId, amount };
+      newContents.set(testTubeId, [...existing, addedItem]);
       return { testTubeContents: newContents };
+    }),
+
+  stirTestTube: (testTubeId, layersCount) =>
+    set((state) => {
+      const newStirred = { ...state.stirredTubes };
+      newStirred[testTubeId] = layersCount;
+      return { stirredTubes: newStirred };
     }),
 }));

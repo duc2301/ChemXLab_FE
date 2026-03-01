@@ -15,6 +15,7 @@ import {
 import * as THREE from "three";
 import { EQUIPMENT_IDS, SUBSTANCE_COLORS, getEquipmentById } from "../services/equipmentRegistry";
 import { useExperimentStore } from "../services/experimentStore";
+import type { TubeContent } from "../services/experimentStore";
 import type { DroppedItem } from "../types/equipment";
 
 // ─── Hằng số snap ────────────────────────────────────────────────────────────
@@ -57,6 +58,7 @@ export const EquipmentModel = ({
   const setHeldSubstance = useExperimentStore((s) => s.setHeldSubstance);
   const addSubstanceToTestTube = useExperimentStore((s) => s.addSubstanceToTestTube);
   const testTubeContents = useExperimentStore((s) => s.testTubeContents);
+  const stirredTubes = useExperimentStore((s) => s.stirredTubes);
   const isHoldingSubstance = heldSubstance !== null;
   const [showFull, setShowFull] = useState(false);
 
@@ -369,14 +371,18 @@ export const EquipmentModel = ({
       e.stopPropagation();
 
       const currentContents = testTubeContents.get(droppedItem.id) ?? [];
+      const getGrams = (arr: TubeContent[]) => arr.reduce((acc, c) => acc + c.amount, 0);
+      const remainingCapacity = MAX_TUBE_LAYERS - getGrams(currentContents);
+
       // Kiểm tra sức chứa: giới hạn định nghĩa bởi MAX_LAYERS
-      if (currentContents.length >= MAX_TUBE_LAYERS) {
+      if (remainingCapacity <= 0) {
         setShowFull(true);
         setTimeout(() => setShowFull(false), 2200);
         return;
       }
 
-      addSubstanceToTestTube(droppedItem.id, heldSubstance.substanceId);
+      const addAmount = Math.min(heldSubstance.amount || 1, remainingCapacity);
+      addSubstanceToTestTube(droppedItem.id, heldSubstance.substanceId, addAmount);
       setHeldSubstance(null);
     },
     [isTestTube, heldSubstance, addSubstanceToTestTube, droppedItem.id, setHeldSubstance, testTubeContents],
@@ -389,11 +395,31 @@ export const EquipmentModel = ({
 
   const modelScale = equipment.scale || 3;
   const contents = testTubeContents.get(droppedItem.id) ?? [];
-  const isFull = contents.length >= MAX_TUBE_LAYERS;
+  const getGrams = (arr: TubeContent[]) => arr.reduce((acc, c) => acc + c.amount, 0);
+  const totalGrams = getGrams(contents);
+  const isFull = totalGrams >= MAX_TUBE_LAYERS;
 
   // Vàng: đang cầm bột; đỏ: đang cầm bột nhưng ống đã đầy
   const isHighlighted = isTestTube && isHoldingSubstance && !isFull;
   const isFullHighlight = isTestTube && isHoldingSubstance && isFull;
+
+  // ─── Stir state ─────────────────────────────────────────────────────────────
+  const stirredCount = isTestTube ? (stirredTubes[droppedItem.id] ?? 0) : 0;
+  const isStirred = stirredCount > 0;
+
+  const mixedContents = contents.slice(0, stirredCount);
+  const unmixedContents = contents.slice(stirredCount);
+
+  // Blend all unique powder colors into a single mixed color (chỉ phần đã khuấy)
+  const blendedColor = (() => {
+    if (mixedContents.length === 0) return "#e5e7eb";
+    const uniqueIds = [...new Set(mixedContents.map(c => c.substanceId))];
+    const base = new THREE.Color(SUBSTANCE_COLORS[uniqueIds[0]] ?? "#e5e7eb");
+    for (let i = 1; i < uniqueIds.length; i++) {
+      base.lerp(new THREE.Color(SUBSTANCE_COLORS[uniqueIds[i]] ?? "#e5e7eb"), 0.5);
+    }
+    return `#${base.getHexString()}`;
+  })();
 
   return (
     <RigidBody
@@ -427,19 +453,25 @@ export const EquipmentModel = ({
           playAnimations={droppedItem.equipmentId === EQUIPMENT_IDS.ALCOHOL_LAMP}
         />
 
-        {/* Lớp bột có animation rơi từ miệng ống xuống đáy */}
-        {isTestTube && contents.map((subId, idx) => {
-          const layerH = 0.009;
-          const tubeBottomY = 0.04;
-          const settledY = tubeBottomY + idx * layerH + layerH / 2;
-          const color = SUBSTANCE_COLORS[subId] ?? "#e5e7eb";
+        {/* Sau khi khuấy: hạt bột pha trộn của các layer đã khuấy */}
+        {isTestTube && isStirred && mixedContents.length > 0 && (
+          <StirredLayer
+            key={`stirred-${mixedContents.length}`}
+            items={mixedContents}
+            totalGrams={getGrams(mixedContents)}
+          />
+        )}
+
+        {/* Lớp bột mới thêm vào (chưa khuấy) nằm đè lên trên */}
+        {isTestTube && unmixedContents.map((item, idx) => {
+          const color = SUBSTANCE_COLORS[item.substanceId] ?? "#e5e7eb";
           return (
             <PowderLayer
-              key={`${idx}-${subId}`}
+              key={`${stirredCount + idx}-${item.substanceId}`}
               color={color}
-              settledY={settledY}
-              layerH={layerH}
-              isBottom={idx === 0}
+              startGrams={getGrams(contents.slice(0, stirredCount + idx))}
+              amountGrams={item.amount}
+              totalGrams={totalGrams}
             />
           );
         })}
@@ -454,32 +486,50 @@ export const EquipmentModel = ({
         >
           <div style={{
             background: "rgba(15,20,30,0.92)",
-            border: "1px solid #374151",
+            border: `1px solid ${isStirred ? "#7c3aed" : "#374151"}`,
             borderRadius: "5px",
-            padding: "3px 7px",
+            padding: "4px 8px",
             display: "flex",
             flexDirection: "column",
-            gap: "3px",
-            width: "56px",
+            gap: "4px",
+            minWidth: "70px",
+            width: "max-content",
             fontSize: "10px",
             fontFamily: "sans-serif",
             whiteSpace: "nowrap",
           }}>
-            {contents.map((subId, i) => (
-              <div key={i} style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "5px",
-                color: SUBSTANCE_COLORS[subId] ?? "#e5e7eb",
-              }}>
+            {isStirred && (
+              <div style={{ display: "flex", alignItems: "center", gap: "5px", color: "#a78bfa", borderBottom: "1px dashed #4b5563", paddingBottom: "2px", marginBottom: "1px" }}>
                 <span style={{
                   width: 6, height: 6, borderRadius: "50%",
-                  background: SUBSTANCE_COLORS[subId] ?? "#e5e7eb",
-                  flexShrink: 0,
+                  background: blendedColor, flexShrink: 0,
                 }} />
-                {getEquipmentById(subId)?.name ?? subId}
+                Hỗn hợp ({totalGrams.toFixed(1)}g)
               </div>
-            ))}
+            )}
+            {/* Hiển thị chi tiết TẤT CẢ các thành phần có trong ống */}
+            {(() => {
+              const grouped = new Map<string, number>();
+              contents.forEach(c => {
+                grouped.set(c.substanceId, (grouped.get(c.substanceId) ?? 0) + c.amount);
+              });
+              return Array.from(grouped.entries()).map(([subId, amount], i) => (
+                <div key={i} style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "5px",
+                  color: SUBSTANCE_COLORS[subId] ?? "#e5e7eb",
+                  paddingLeft: isStirred ? "8px" : "0", // Thụt lề nhẹ nếu nằm dưới chữ "Hỗn hợp"
+                }}>
+                  <span style={{
+                    width: 6, height: 6, borderRadius: "50%",
+                    background: SUBSTANCE_COLORS[subId] ?? "#e5e7eb",
+                    flexShrink: 0,
+                  }} />
+                  {getEquipmentById(subId)?.name ?? subId} ({amount.toFixed(1)}g)
+                </div>
+              ));
+            })()}
           </div>
         </Html>
       )}
@@ -655,115 +705,349 @@ useGLTF.preload("/models/500ml-binhtamgiac.glb");
 // ─── PowderLayer: manual particle physics → fade-to-fill cylinder ────────────
 const TUBE_TOP_Y = 0.15;
 const TUBE_INNER_R = 0.008;
-const PARTICLE_R = 0.0018;
-const NUM_PARTICLES = 8;
-const GRAVITY = 1.4;
-const SETTLE_TIMEOUT = 1.3;
 
 /** Số lớp bột tối đa: giữ khoảng cách an toàn tới mép trên */
 const TUBE_BOTTOM_Y = 0.032; // đáy trong lòng ống (model space)
 const TUBE_MARGIN = 0.02;  // khoảng cách tới mép trên (model space)
-const LAYER_H_CONST = 0.009; // = layerH trong render
+const LAYER_H_CONST = 0.003; // = layerH trong render
 const MAX_TUBE_LAYERS = Math.floor((TUBE_TOP_Y - TUBE_BOTTOM_Y - TUBE_MARGIN) / LAYER_H_CONST);
 
-interface PState { pos: THREE.Vector3; vel: THREE.Vector3; settled: boolean }
+interface SDropLayerGrain {
+  startY: number;
+  targetPos: THREE.Vector3;
+  color: string;
+  delay: number;
+  currentY: number;
+  velY: number;
+  settled: boolean;
+}
+
+// ─── Shared Particle Generation Logic ─────────────────────────────────────────
+const STIR_GRAIN_R = 0.00015;
+
+const GRAINS_PER_GRAM = 5000;
+
+/** Build exactly `totalCount` packed positions filling the tube from the bottom up. */
+function buildPackedPositions(
+  tubeR: number,
+  grainR: number,
+  floorY: number,
+  totalCount: number,
+): THREE.Vector3[] {
+  const positions: THREE.Vector3[] = [];
+  const grainD = grainR * 2;
+
+  let y = 0;
+  while (positions.length < totalCount) {
+    let r_max = tubeR;
+    // Tự động thu hẹp bán kính nếu nằm ở phần đáy bán cầu
+    if (y < tubeR) {
+      const dy = y - tubeR;
+      const r2 = tubeR * tubeR - dy * dy;
+      r_max = r2 > 0 ? Math.sqrt(r2) : 0;
+    }
+
+    // safe margin from wall
+    const usableR = r_max - grainR * 0.8;
+
+    if (usableR >= 0) {
+      // Center grain
+      positions.push(new THREE.Vector3(
+        (Math.random() - 0.5) * grainR * 0.3,
+        floorY + y + (Math.random() - 0.5) * grainR * 0.1,
+        (Math.random() - 0.5) * grainR * 0.3,
+      ));
+      if (positions.length >= totalCount) break;
+
+      let ringR = grainD;
+      while (ringR <= usableR) {
+        const circumference = 2 * Math.PI * ringR;
+        const nGrains = Math.max(1, Math.floor(circumference / (grainD * 0.95)));
+        const angleStep = (2 * Math.PI) / nGrains;
+        const angleOffset = Math.random() * angleStep;
+
+        for (let j = 0; j < nGrains; j++) {
+          const a = angleOffset + j * angleStep + (Math.random() - 0.5) * angleStep * 0.2;
+          const rr = ringR + (Math.random() - 0.5) * grainR * 0.1;
+          const actualR = Math.min(rr, usableR);
+
+          positions.push(new THREE.Vector3(
+            Math.cos(a) * actualR,
+            floorY + y + (Math.random() - 0.5) * grainR * 0.2, // slight height variation
+            Math.sin(a) * actualR,
+          ));
+          if (positions.length >= totalCount) break;
+        }
+        if (positions.length >= totalCount) break;
+        ringR += grainD * 0.95;
+      }
+    }
+    y += grainD * 0.85; // overlap vertically to pack tightly
+  }
+  return positions;
+}
+
+// ─── PowderLayer: Real falling particles for individual layers ─────────
+
+interface SDropLayerGrain {
+  startY: number;
+  targetPos: THREE.Vector3;
+  color: string;
+  delay: number;
+  currentY: number;
+  velY: number;
+  settled: boolean;
+}
 
 const PowderLayer = ({
-  color, settledY, layerH, isBottom,
+  color, startGrams, amountGrams, totalGrams,
 }: {
-  color: string; settledY: number; layerH: number; isBottom: boolean;
+  color: string; startGrams: number; amountGrams: number; totalGrams: number;
 }) => {
-  const particles = useRef<PState[]>(
-    Array.from({ length: NUM_PARTICLES }, (_, i) => {
-      const angle = (i / NUM_PARTICLES) * Math.PI * 2 + Math.random() * 0.5;
-      const r = Math.random() * TUBE_INNER_R * 0.7;
+  const meshRef = useRef<THREE.InstancedMesh>(null);
+  const grainRef = useRef<SDropLayerGrain[] | null>(null);
+  const elapsed = useRef(0);
+  const doneRef = useRef(false);
+
+  // ── Lazy-init: compute once on mount ──────────────────────────────────────
+  if (grainRef.current === null) {
+    const FLOOR_Y = 0.032 + STIR_GRAIN_R;
+    const totalGrains = Math.round(totalGrams * GRAINS_PER_GRAM);
+
+    // Build entire test tube up to current ALL layers capacity!
+    // Since buildPackedPositions is deterministic, calling it with totalGrains yields the exact same array layout.
+    // So layer 0 gets positions 0-999, layer 1 gets 1000-1999 exactly above layer 0.
+    const targets = buildPackedPositions(TUBE_INNER_R, STIR_GRAIN_R, FLOOR_Y, Math.max(0, totalGrains));
+
+    // Slice only this layer's grains
+    const startIndex = Math.round(startGrams * GRAINS_PER_GRAM);
+    const endIndex = Math.round((startGrams + amountGrams) * GRAINS_PER_GRAM);
+    const layerTargets = targets.slice(startIndex, endIndex);
+
+    // Compute bounds for delay mapping
+    let minY = Infinity, maxY = -Infinity;
+    layerTargets.forEach(t => {
+      if (t.y < minY) minY = t.y;
+      if (t.y > maxY) maxY = t.y;
+    });
+    const layerHeight = maxY - minY || 0.01;
+
+    grainRef.current = layerTargets.map((t) => {
+      // Tính toán delay rơi hạt: Hạt nằm dưới rơi trước, hạt nằm trên rơi sau
+      const heightFrac = Math.max(0, Math.min(1, (t.y - minY) / layerHeight));
+
+
       return {
-        pos: new THREE.Vector3(Math.cos(angle) * r, TUBE_TOP_Y + i * 0.008, Math.sin(angle) * r),
-        vel: new THREE.Vector3((Math.random() - 0.5) * 0.01, -0.01, (Math.random() - 0.5) * 0.01),
+        startY: TUBE_TOP_Y + 0.02 + Math.random() * 0.02,
+        targetPos: t,
+        color: color,
+        delay: heightFrac * 1.5 + Math.random() * 0.4, // sequential pour delay
+        currentY: TUBE_TOP_Y + 0.02 + Math.random() * 0.02,
+        velY: -(Math.random() * 0.1 + 0.05),
         settled: false,
       };
-    }),
-  );
+    });
+  }
 
-  const elapsed = useRef(0);
-  const phaseRef = useRef<'falling' | 'done'>('falling');
-  const pRefs = useRef<(THREE.Mesh | null)[]>(Array(NUM_PARTICLES).fill(null));
-  const [isDone, setIsDone] = useState(false);
+  // Set initial colors and matrices once on mount
+  useEffect(() => {
+    if (!meshRef.current || !grainRef.current) return;
+    grainRef.current.forEach((g, i) => {
+      _dummyColor.set(g.color);
+      meshRef.current!.setColorAt(i, _dummyColor);
+
+      // Hide grains initially by scaling to 0, until their delay ends
+      _dummyObj.position.set(g.targetPos.x, g.startY, g.targetPos.z);
+      _dummyObj.scale.set(0, 0, 0);
+      _dummyObj.updateMatrix();
+      meshRef.current!.setMatrixAt(i, _dummyObj.matrix);
+    });
+    if (meshRef.current.instanceColor) meshRef.current.instanceColor.needsUpdate = true;
+    meshRef.current.instanceMatrix.needsUpdate = true;
+  }, []);
 
   useFrame((_, delta) => {
-    if (phaseRef.current === 'done') return;
+    if (doneRef.current || !meshRef.current) return;
     elapsed.current += delta;
+    const grains = grainRef.current!;
+    let allDone = true;
+    let needsUpdate = false;
 
-    let allSettled = true;
-    for (let i = 0; i < NUM_PARTICLES; i++) {
-      const p = particles.current[i];
-      if (elapsed.current < i * 0.08) { allSettled = false; continue; }
-      if (p.settled) continue;
-      allSettled = false;
+    // Use a capped delta in case of huge frame drops
+    const dt = Math.min(delta, 0.03);
 
-      p.vel.y -= GRAVITY * delta;
-      p.pos.x += p.vel.x * delta;
-      p.pos.y += p.vel.y * delta;
-      p.pos.z += p.vel.z * delta;
+    for (let i = 0; i < grains.length; i++) {
+      const g = grains[i];
+      if (g.settled) continue;
+      if (elapsed.current < g.delay) { allDone = false; continue; }
+      allDone = false;
+      needsUpdate = true;
 
-      // Va chạm thành ống
-      const xzDist = Math.sqrt(p.pos.x * p.pos.x + p.pos.z * p.pos.z);
-      const maxR = TUBE_INNER_R - PARTICLE_R;
-      if (xzDist > maxR && xzDist > 0) {
-        const nx = p.pos.x / xzDist, nz = p.pos.z / xzDist;
-        p.pos.x = nx * maxR; p.pos.z = nz * maxR;
-        const dot = p.vel.x * nx + p.vel.z * nz;
-        p.vel.x -= 2 * dot * nx * 0.25;
-        p.vel.z -= 2 * dot * nz * 0.25;
+      // Gravity
+      g.velY -= 1.8 * dt; // gravity in model-space
+      g.currentY += g.velY * dt;
+
+      // Floor collision at target Y
+      const targetY = g.targetPos.y;
+      if (g.currentY <= targetY) {
+        g.currentY = targetY;
+        g.velY = Math.abs(g.velY) * 0.2; // very small bounce
+        if (g.velY < 0.005) {
+          g.currentY = targetY;
+          g.velY = 0;
+          g.settled = true;
+        }
       }
 
-      // Va chạm đáy
-      const groundY = settledY + PARTICLE_R;
-      if (p.pos.y <= groundY) {
-        p.pos.y = groundY;
-        p.vel.x *= 0.2; p.vel.z *= 0.2; p.vel.y = 0;
-        if (Math.hypot(p.vel.x, p.vel.z) < 0.002) p.settled = true;
-      }
-
-      if (pRefs.current[i]) {
-        pRefs.current[i]!.position.set(p.pos.x, p.pos.y, p.pos.z);
-      }
+      // Update instance matrix
+      _dummyObj.position.set(g.targetPos.x, g.currentY, g.targetPos.z);
+      // Phóng to hạt 3.5 lần khi đang rơi để dễ nhìn hơn, thu về kích thước chuẩn khi đã chạm vị trí
+      const s = g.settled ? 1 : 2;
+      _dummyObj.scale.set(s, s, s);
+      _dummyObj.updateMatrix();
+      meshRef.current.setMatrixAt(i, _dummyObj.matrix);
     }
 
-    if (allSettled || elapsed.current > SETTLE_TIMEOUT) {
-      phaseRef.current = 'done';
-      setIsDone(true); // 1 lần re-render duy nhất để swap particles → fill
+    if (needsUpdate) {
+      meshRef.current.instanceMatrix.needsUpdate = true;
     }
+    if (allDone) doneRef.current = true;
   });
 
   return (
-    <group>
-      {/* Phase 1: hạt bột rơi */}
-      {!isDone && particles.current.map((p, i) => (
-        <mesh key={i} ref={el => { pRefs.current[i] = el; }} position={[p.pos.x, p.pos.y, p.pos.z]}>
-          <sphereGeometry args={[PARTICLE_R, 6, 6]} />
-          <meshStandardMaterial color={color} roughness={0.95} metalness={0} />
-        </mesh>
-      ))}
-
-      {/* Phase 2: cylinder fill hiện ra khi đã settled */}
-      {isDone && (
-        <>
-          <mesh position={[0, settledY, 0]}>
-            <cylinderGeometry args={[TUBE_INNER_R, TUBE_INNER_R, layerH, 16]} />
-            <meshStandardMaterial color={color} roughness={0.95} metalness={0} />
-          </mesh>
-
-          {/* Bán cầu đáy (bottom hemisphere) cho lớp đầu tiên */}
-          {isBottom && (
-            <mesh position={[0, settledY - layerH / 2, 0]}>
-              {/* thetaStart=PI/2 → bán cầu dưới (hướng xuống) */}
-              <sphereGeometry args={[TUBE_INNER_R, 12, 8, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2]} />
-              <meshStandardMaterial color={color} roughness={0.95} metalness={0} />
-            </mesh>
-          )}
-        </>
-      )}
-    </group>
+    <instancedMesh ref={meshRef} args={[undefined, undefined, grainRef.current!.length]} frustumCulled={false}>
+      <sphereGeometry args={[STIR_GRAIN_R, 6, 6]} />
+      <meshStandardMaterial roughness={0.85} metalness={0.05} />
+    </instancedMesh>
   );
 };
+
+// ─── StirredLayer: grains fall from tube mouth and pack at the bottom ─────────
+
+interface SGrain {
+  basePos: THREE.Vector3; // original settled position
+  color: string;
+  phaseX: number;
+  phaseZ: number;
+  speed: number;
+  radius: number; // swirl orbit radius
+}
+
+const _dummyObj = new THREE.Object3D();
+const _dummyColor = new THREE.Color();
+
+const StirredLayer = ({
+  items,
+  totalGrams,
+}: {
+  items: TubeContent[];
+  totalGrams: number;
+}) => {
+  const meshRef = useRef<THREE.InstancedMesh>(null);
+  const grainRef = useRef<SGrain[] | null>(null);
+  const FLOOR_Y = 0.032 + STIR_GRAIN_R; // visual inner bottom of tube (+ particle radius)
+
+  // ── Lazy-init: compute once on mount ──────────────────────────────────────
+  if (grainRef.current === null) {
+    const totalGrains = Math.round(totalGrams * GRAINS_PER_GRAM);
+
+    const targets = buildPackedPositions(TUBE_INNER_R, STIR_GRAIN_R, FLOOR_Y, Math.max(0, totalGrains));
+
+    const colorsArray: string[] = [];
+    items.forEach(c => {
+      const g = Math.round(c.amount * GRAINS_PER_GRAM);
+      const col = SUBSTANCE_COLORS[c.substanceId] ?? "#e5e7eb";
+      for (let i = 0; i < g; i++) colorsArray.push(col);
+    });
+    // Fallback if rounding causes colorsArray to be slightly shorter than targets
+    while (colorsArray.length < targets.length && items.length > 0) {
+      colorsArray.push(SUBSTANCE_COLORS[items[items.length - 1].substanceId] ?? "#e5e7eb");
+    }
+    // Shuffle the array perfectly using Fisher-Yates
+    for (let i = colorsArray.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [colorsArray[i], colorsArray[j]] = [colorsArray[j], colorsArray[i]];
+    }
+
+    grainRef.current = targets.map((t, i) => {
+      return {
+        basePos: t,
+        color: colorsArray[i] || "#e5e7eb",
+        phaseX: Math.random() * Math.PI * 2,
+        phaseZ: Math.random() * Math.PI * 2,
+        speed: 1.5 + Math.random() * 2, // swirl speed mod
+        radius: Math.random() * 0.0003, // small swirling radius offset
+      };
+    });
+  }
+
+  // Set initial colors and matrices once on mount
+  useEffect(() => {
+    if (!meshRef.current || !grainRef.current) return;
+    grainRef.current.forEach((g, i) => {
+      _dummyColor.set(g.color);
+      meshRef.current!.setColorAt(i, _dummyColor);
+
+      // Place grains at their target directly
+      _dummyObj.position.copy(g.basePos);
+      _dummyObj.scale.set(1, 1, 1);
+      _dummyObj.updateMatrix();
+      meshRef.current!.setMatrixAt(i, _dummyObj.matrix);
+    });
+    if (meshRef.current.instanceColor) meshRef.current.instanceColor.needsUpdate = true;
+    meshRef.current.instanceMatrix.needsUpdate = true;
+  }, []);
+
+  const elapsed = useRef(0);
+  const doneRef = useRef(false);
+  const STIR_DURATION = 1.8; // seconds to stir before settling
+
+  useFrame((state, delta) => {
+    if (doneRef.current || !meshRef.current) return;
+    elapsed.current += delta;
+
+    // Calculate how intense the stirring is (1.0 = max, 0.0 = stopped)
+    // Fade out smoothly using a simple polynomial decay
+    let intensity = 1.0;
+    if (elapsed.current > STIR_DURATION) {
+      if (elapsed.current > STIR_DURATION + 0.5) {
+        intensity = 0;
+        doneRef.current = true;
+      } else {
+        const t = (elapsed.current - STIR_DURATION) / 0.5; // 0 to 1
+        intensity = 1.0 - (t * t * (3 - 2 * t)); // smoothstep
+      }
+    }
+
+    const grains = grainRef.current!;
+    const t = state.clock.getElapsedTime();
+
+    for (let i = 0; i < grains.length; i++) {
+      const g = grains[i];
+
+      // Small swirling/vibrating effect around base position
+      const dx = Math.sin(t * g.speed + g.phaseX) * g.radius * intensity;
+      const dz = Math.cos(t * g.speed + g.phaseZ) * g.radius * intensity;
+
+      // Update instance matrix
+      _dummyObj.position.set(g.basePos.x + dx, g.basePos.y, g.basePos.z + dz);
+
+      // Khởi tạo ngẫu nhiên scale chút xíu cho hạt có vẻ lấp lánh (sparkle) hoặc rung động nhẹ
+      const scaleVariation = 1.0 + (Math.sin(t * 10 + g.phaseX) * 0.1 * intensity);
+      _dummyObj.scale.set(scaleVariation, scaleVariation, scaleVariation);
+
+      _dummyObj.updateMatrix();
+      meshRef.current.setMatrixAt(i, _dummyObj.matrix);
+    }
+
+    meshRef.current.instanceMatrix.needsUpdate = true;
+  });
+
+  return (
+    <instancedMesh ref={meshRef} args={[undefined, undefined, grainRef.current!.length]} frustumCulled={false}>
+      <sphereGeometry args={[STIR_GRAIN_R, 6, 6]} />
+      <meshStandardMaterial roughness={0.85} metalness={0.05} />
+    </instancedMesh>
+  );
+};
+

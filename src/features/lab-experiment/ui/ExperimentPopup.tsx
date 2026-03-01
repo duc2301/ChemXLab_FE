@@ -1,7 +1,7 @@
 import { X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { EquipmentPanel } from '../components/EquipmentPanel';
-import { SUBSTANCE_COLORS, getEquipmentById } from '../services/equipmentRegistry';
+import { EQUIPMENT_IDS, SUBSTANCE_COLORS, getEquipmentById } from '../services/equipmentRegistry';
 import { useExperimentStore } from '../services/experimentStore';
 import { generateUUID } from '../services/idGenerator';
 import type { DroppedItem } from '../types/equipment';
@@ -33,6 +33,9 @@ export const ExperimentPopup = () => {
     setContextMenu,
     heldSubstance,
     setHeldSubstance,
+    testTubeContents,
+    stirredTubes,
+    stirTestTube,
   } = useExperimentStore();
 
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -127,7 +130,6 @@ export const ExperimentPopup = () => {
     addDroppedItem(droppedItem);
   };
 
-  // Tìm item đang được right-click để biết nó có phải substance không
   const contextMenuItem = contextMenu
     ? droppedItems.get(contextMenu.itemId)
     : null;
@@ -135,6 +137,12 @@ export const ExperimentPopup = () => {
     ? getEquipmentById(contextMenuItem.equipmentId)
     : null;
   const isSubstance = contextEquipment?.category === 'substances';
+  const isTestTubeItem = contextEquipment?.id === EQUIPMENT_IDS.TEST_TUBE;
+  const tubeContents = contextMenu ? (testTubeContents.get(contextMenu.itemId) ?? []) : [];
+  const uniquePowderTypes = new Set(tubeContents).size;
+  const stirredCount = contextMenu ? (stirredTubes[contextMenu.itemId] ?? 0) : 0;
+  const canStir = isTestTubeItem && uniquePowderTypes >= 2 && stirredCount < tubeContents.length;
+  const alreadyStirred = isTestTubeItem && stirredCount >= tubeContents.length && tubeContents.length > 0;
 
   if (!isModalOpen) return null;
 
@@ -166,7 +174,7 @@ export const ExperimentPopup = () => {
             <div className="px-4 py-2 bg-gray-800 border-b border-gray-700 text-sm text-gray-400">
               {heldSubstance ? (
                 <p style={{ color: heldSubstance.color }}>
-                  🧪 Đang cầm <strong>{heldSubstance.name}</strong> — Click vào ống nghiệm để đổ vào. ESC để huỷ.
+                  🧪 Đang cầm <strong>{heldSubstance.amount}g {heldSubstance.name}</strong> — Click vào ống nghiệm để đổ vào. ESC để huỷ.
                 </p>
               ) : (
                 <p>Kéo dụng cụ từ bên trái xuống bàn. Chuột phải để xem tùy chọn. ESC để thoát.</p>
@@ -257,27 +265,87 @@ export const ExperimentPopup = () => {
             {contextEquipment?.name ?? "Vật thể"}
           </div>
 
-          {/* Lấy bột — chỉ hiện nếu là substance */}
-          {isSubstance && contextEquipment && (
+          {/* Khuấy bột — chỉ hiện khi là ống nghiệm có ≥ 2 loại bột và chưa khuấy hết */}
+          {canStir && (
             <button
-              style={{ ...menuBtnStyle, color: SUBSTANCE_COLORS[contextEquipment.id] ?? "#a3e635" }}
+              style={{ ...menuBtnStyle, color: "#a78bfa" }}
               onClick={() => {
-                setHeldSubstance({
-                  substanceId: contextEquipment.id,
-                  name: contextEquipment.name,
-                  color: SUBSTANCE_COLORS[contextEquipment.id] ?? "#a3e635",
-                });
+                stirTestTube(contextMenu!.itemId, tubeContents.length);
                 setContextMenu(null);
               }}
               onMouseEnter={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.background = "rgba(163,230,53,0.1)";
+                (e.currentTarget as HTMLButtonElement).style.background = "rgba(167,139,250,0.12)";
               }}
               onMouseLeave={(e) => {
                 (e.currentTarget as HTMLButtonElement).style.background = "none";
               }}
             >
-              🧪&nbsp; Lấy bột
+              🥄&nbsp; {stirredCount > 0 ? "Khuấy tiếp" : "Khuấy bột"}
             </button>
+          )}
+
+          {/* Hiện thị trạng thái đã khuấy */}
+          {alreadyStirred && (
+            <div style={{
+              padding: "6px 12px",
+              fontSize: "12px",
+              color: "#a78bfa",
+              opacity: 0.7,
+              userSelect: "none",
+            }}>
+              ✨ Đã khuấy trộn
+            </div>
+          )}
+
+
+          {isSubstance && contextEquipment && (
+            <div style={{ display: "flex", gap: "4px", padding: "0 4px" }}>
+              <input
+                id="powder-amount-input"
+                type="number"
+                min={0.1}
+                max={15}
+                step={0.1}
+                defaultValue={1}
+                onClick={(e) => e.stopPropagation()}
+                onKeyDown={(e) => e.stopPropagation()}
+                style={{
+                  width: "70px",
+                  background: "rgba(0,0,0,0.3)",
+                  border: "1px solid #374151",
+                  borderRadius: "4px",
+                  color: "white",
+                  padding: "2px 4px",
+                  fontSize: "12px",
+                  outline: "none"
+                }}
+                title="Số gram bột cần lấy"
+              />
+              <button
+                style={{ ...menuBtnStyle, flex: 1, color: SUBSTANCE_COLORS[contextEquipment.id] ?? "#a3e635" }}
+                onClick={() => {
+                  const input = document.getElementById("powder-amount-input") as HTMLInputElement;
+                  let amt = parseFloat(input?.value || "1");
+                  if (isNaN(amt) || amt <= 0) amt = 1;
+
+                  setHeldSubstance({
+                    substanceId: contextEquipment.id,
+                    name: contextEquipment.name,
+                    color: SUBSTANCE_COLORS[contextEquipment.id] ?? "#a3e635",
+                    amount: amt,
+                  });
+                  setContextMenu(null);
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.background = "rgba(163,230,53,0.1)";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.background = "none";
+                }}
+              >
+                🧪&nbsp; Lấy bột
+              </button>
+            </div>
           )}
 
           {/* Xóa vật thể */}
