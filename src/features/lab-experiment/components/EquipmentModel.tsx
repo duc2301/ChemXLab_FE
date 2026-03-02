@@ -7,11 +7,10 @@ import {
   type CollisionEnterPayload,
   type CollisionExitPayload,
 } from "@react-three/rapier";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { getEquipmentById } from "../services/equipmentRegistry";
 import type { DroppedItem } from "../types/equipment";
-import { useExperimentStore } from "../services/experimentStore";
 
 interface EquipmentModelProps {
   droppedItem: DroppedItem;
@@ -38,7 +37,6 @@ export const EquipmentModel = ({
   const rigidBodyRef = useRef<RapierRigidBody>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  const updateDroppedItem = useExperimentStore((state) => state.updateDroppedItem);
   const ignoredCollisions = ["lab-floor", "table-surface", ""];
 
   const { camera, gl, pointer } = useThree();
@@ -59,30 +57,6 @@ export const EquipmentModel = ({
     }
   });
 
-  // Sync physics body with store position/rotation changes (Reactivity)
-  useEffect(() => {
-    if (!rigidBodyRef.current || isDragging) return;
-
-    const currentPos = rigidBodyRef.current.translation();
-    const storePos = droppedItem.position;
-
-    // Check if store position is different enough to warrant a teleport
-    const posChanged =
-      Math.abs(currentPos.x - storePos[0]) > 0.01 ||
-      Math.abs(currentPos.y - storePos[1]) > 0.01 ||
-      Math.abs(currentPos.z - storePos[2]) > 0.01;
-
-    if (posChanged) {
-      rigidBodyRef.current.setTranslation({ x: storePos[0], y: storePos[1], z: storePos[2] }, true);
-    }
-
-    // Similar logic for rotation if needed
-    const storeRot = droppedItem.rotation;
-    // For simplicity, we can just set it if we detect a change in the store's Euler rotation
-    // Note: This part might be tricky with quaternions vs eulers, but setting it is fine
-    rigidBodyRef.current.setRotation(new THREE.Quaternion().setFromEuler(new THREE.Euler(...storeRot)), true);
-
-  }, [droppedItem.position, droppedItem.rotation, isDragging]);
   // Start dragging
   const handlePointerDown = useCallback(
     (e: ThreeEvent<PointerEvent>) => {
@@ -126,15 +100,9 @@ export const EquipmentModel = ({
       // Switch back to dynamic physics
       if (rigidBodyRef.current) {
         rigidBodyRef.current.setBodyType(0, true); // dynamic
-
-        // Update store with final position
-        const finalPos = rigidBodyRef.current.translation();
-        updateDroppedItem(droppedItem.id, {
-          position: [finalPos.x, finalPos.y, finalPos.z]
-        });
-      }
+         }
     },
-    [gl.domElement, isHovered, onDragChange, droppedItem.id, updateDroppedItem],
+    [gl.domElement, isHovered, onDragChange],
   );
 
   // Hover effects
