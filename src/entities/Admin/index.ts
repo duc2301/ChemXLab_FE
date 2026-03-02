@@ -8,6 +8,7 @@ export interface UserAdmin {
     role: string;  // "ADMIN" | "TEACHER" | "STUDENT"
     avatarUrl: string | null;
     createdAt: string;
+    status: string; // "active" | "inactive" | "banned"
 }
 
 // Form type for updating user (for future API)

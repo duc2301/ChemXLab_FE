@@ -1,290 +1,509 @@
 import {
-    ArrowUpRight,
     GraduationCap,
-    Package,
+    RefreshCw,
+    TrendingUp,
     UserCog,
-    Users
+    Users,
 } from "lucide-react";
-import { useEffect, useState } from "react";
-import type { DashboardStats, PackageAdmin, UserAdmin } from "../../../entities/Admin";
-import { getAllPackagesAdmin, getAllUsers, getDashboardStats } from "../../../features/Admin";
+import { useEffect, useRef, useState } from "react";
+import type { DashboardTransaction } from "../../../entities/Dashboard";
+import type { UserAdmin } from "../../../entities/Admin";
+import { getDashboardTransactions } from "../../../features/Dashboard";
+import { getAllUsers } from "../../../features/Admin";
 
-// Stat Card Component
-interface StatCardProps {
+// ─── helpers ────────────────────────────────────────────────────────────────
+const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(amount);
+
+const toLocalDatetimeInput = (date: Date) => {
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+};
+
+const toApiDateTime = (localInputValue: string) =>
+    localInputValue ? new Date(localInputValue).toISOString().slice(0, 19) : "";
+
+// ─── SVG Line Chart ──────────────────────────────────────────────────────────
+interface ChartPoint {
+    label: string;
+    value: number;
+}
+
+const LineChart = ({ points }: { points: ChartPoint[] }) => {
+    const W = 780;
+    const H = 280;
+    const PAD = { top: 30, right: 30, bottom: 50, left: 80 };
+
+    if (points.length === 0) {
+        return (
+            <div className="flex h-64 items-center justify-center text-gray-400 text-sm">
+                Không có dữ liệu trong khoảng thời gian này
+            </div>
+        );
+    }
+
+    const maxV = Math.max(...points.map((p) => p.value), 1);
+    const minV = 0;
+    const chartW = W - PAD.left - PAD.right;
+    const chartH = H - PAD.top - PAD.bottom;
+
+    const xScale = (i: number) =>
+        points.length === 1
+            ? PAD.left + chartW / 2
+            : PAD.left + (i / (points.length - 1)) * chartW;
+    const yScale = (v: number) =>
+        PAD.top + chartH - ((v - minV) / (maxV - minV)) * chartH;
+
+    // Build smooth polyline path using cardinal spline
+    const buildPath = () => {
+        if (points.length === 1) {
+            const x = xScale(0);
+            const y = yScale(points[0].value);
+            return `M ${x} ${y}`;
+        }
+        const coords = points.map((p, i) => [xScale(i), yScale(p.value)]);
+        let d = `M ${coords[0][0]} ${coords[0][1]}`;
+        for (let i = 0; i < coords.length - 1; i++) {
+            const [x0, y0] = coords[i];
+            const [x1, y1] = coords[i + 1];
+            const cpx = (x0 + x1) / 2;
+            d += ` C ${cpx} ${y0}, ${cpx} ${y1}, ${x1} ${y1}`;
+        }
+        return d;
+    };
+
+    const buildAreaPath = () => {
+        const linePart = buildPath();
+        const last = points.length - 1;
+        return `${linePart} L ${xScale(last)} ${PAD.top + chartH} L ${xScale(0)} ${PAD.top + chartH} Z`;
+    };
+
+    // Y-axis tick values
+    const ticks = 5;
+    const yTicks = Array.from({ length: ticks + 1 }, (_, i) =>
+        Math.round((maxV / ticks) * i)
+    );
+
+    const gradientId = "lineChartGrad";
+    const areaGradientId = "areaGrad";
+
+    return (
+        <svg
+            viewBox={`0 0 ${W} ${H}`}
+            className="w-full"
+            style={{ height: H }}
+            preserveAspectRatio="xMidYMid meet"
+        >
+            <defs>
+                <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#6366f1" />
+                    <stop offset="100%" stopColor="#818cf8" />
+                </linearGradient>
+                <linearGradient id={areaGradientId} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#6366f1" stopOpacity="0.2" />
+                    <stop offset="100%" stopColor="#6366f1" stopOpacity="0" />
+                </linearGradient>
+            </defs>
+
+            {/* Horizontal grid lines */}
+            {yTicks.map((tick) => {
+                const y = yScale(tick);
+                return (
+                    <g key={tick}>
+                        <line
+                            x1={PAD.left}
+                            y1={y}
+                            x2={W - PAD.right}
+                            y2={y}
+                            stroke="#f1f5f9"
+                            strokeWidth={1}
+                        />
+                        <text
+                            x={PAD.left - 10}
+                            y={y + 4}
+                            textAnchor="end"
+                            fontSize={11}
+                            fill="#94a3b8"
+                        >
+                            {tick >= 1000000
+                                ? `${(tick / 1000000).toFixed(1)}M`
+                                : tick >= 1000
+                                    ? `${(tick / 1000).toFixed(0)}K`
+                                    : tick}
+                        </text>
+                    </g>
+                );
+            })}
+
+            {/* Area fill */}
+            <path d={buildAreaPath()} fill={`url(#${areaGradientId})`} />
+
+            {/* Line */}
+            <path
+                d={buildPath()}
+                fill="none"
+                stroke={`url(#${gradientId})`}
+                strokeWidth={3}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+
+            {/* Data points + x-labels + tooltips */}
+            {points.map((p, i) => {
+                const x = xScale(i);
+                const y = yScale(p.value);
+                return (
+                    <g key={i}>
+                        {/* X axis label */}
+                        <text
+                            x={x}
+                            y={PAD.top + chartH + 20}
+                            textAnchor="middle"
+                            fontSize={10}
+                            fill="#94a3b8"
+                        >
+                            {p.label}
+                        </text>
+
+                        {/* Dot with hover */}
+                        <circle cx={x} cy={y} r={5} fill="#6366f1" stroke="#fff" strokeWidth={2} />
+                        <title>
+                            {p.label}: {formatCurrency(p.value)}
+                        </title>
+                    </g>
+                );
+            })}
+        </svg>
+    );
+};
+
+// ─── Stat card ───────────────────────────────────────────────────────────────
+const StatCard = ({
+    title,
+    value,
+    icon,
+    color,
+}: {
     title: string;
     value: string | number;
     icon: React.ReactNode;
-    trend?: number;
-    trendLabel?: string;
     color: string;
-}
-
-const StatCard = ({ title, value, icon, trend, trendLabel, color }: StatCardProps) => {
-    const isPositive = trend && trend > 0;
-
-    return (
-        <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-start justify-between">
-                <div>
-                    <p className="text-sm text-gray-500 font-medium">{title}</p>
-                    <p className="text-3xl font-bold text-gray-900 mt-2">{value}</p>
-                    {trend !== undefined && (
-                        <div className="flex items-center gap-1 mt-2">
-                            <ArrowUpRight size={16} className={isPositive ? "text-green-500" : "text-gray-400"} />
-                            <span className={`text-sm font-medium ${isPositive ? "text-green-500" : "text-gray-400"}`}>
-                                {Math.abs(trend)}%
-                            </span>
-                            <span className="text-sm text-gray-400">{trendLabel}</span>
-                        </div>
-                    )}
-                </div>
-                <div className={`w-12 h-12 rounded-xl ${color} flex items-center justify-center`}>
-                    {icon}
-                </div>
+}) => (
+    <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
+        <div className="flex items-start justify-between">
+            <div>
+                <p className="text-sm text-gray-500 font-medium">{title}</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">{value}</p>
+            </div>
+            <div className={`w-12 h-12 rounded-xl ${color} flex items-center justify-center`}>
+                {icon}
             </div>
         </div>
-    );
-};
+    </div>
+);
 
-// Simple Bar Chart Component
-interface BarChartProps {
-    data: { month: string; revenue: number }[];
-}
-
-const SimpleBarChart = ({ data }: BarChartProps) => {
-    const maxValue = Math.max(...data.map((d) => d.revenue));
-
-    return (
-        <div className="h-64 flex items-end justify-between gap-2 px-4">
-            {data.map((item, index) => {
-                const height = (item.revenue / maxValue) * 100;
-                return (
-                    <div key={index} className="flex flex-col items-center flex-1">
-                        <div
-                            className="w-full bg-gradient-to-t from-indigo-600 to-indigo-400 rounded-t-lg transition-all duration-500 hover:from-indigo-700 hover:to-indigo-500 cursor-pointer relative group"
-                            style={{ height: `${height}%` }}
-                        >
-                            <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                                {(item.revenue / 1000000).toFixed(1)}M VNĐ
-                            </div>
-                        </div>
-                        <span className="text-xs text-gray-500 mt-2">{item.month}</span>
-                    </div>
-                );
-            })}
-        </div>
-    );
-};
-
-// Format currency
-const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-        style: "currency",
-        currency: "VND",
-    }).format(amount);
-};
-
+// ─── Main page ───────────────────────────────────────────────────────────────
 const AdminDashboard = () => {
-    const [stats, setStats] = useState<DashboardStats | null>(null);
+    // Default range: last 30 days → now
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now);
+    thirtyDaysAgo.setDate(now.getDate() - 30);
+
+    const [fromInput, setFromInput] = useState(toLocalDatetimeInput(thirtyDaysAgo));
+    const [toInput, setToInput] = useState(toLocalDatetimeInput(now));
+
+    const [transactions, setTransactions] = useState<DashboardTransaction[]>([]);
     const [users, setUsers] = useState<UserAdmin[]>([]);
-    const [packages, setPackages] = useState<PackageAdmin[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(false);
+    const [usersLoading, setUsersLoading] = useState(true);
 
+    const abortRef = useRef<AbortController | null>(null);
+
+    // Fetch users once
     useEffect(() => {
-        const fetchData = async () => {
-            // Fetch real data from APIs
-            const [usersData, packagesData] = await Promise.all([
-                getAllUsers(),
-                getAllPackagesAdmin(),
-            ]);
-
-            setUsers(usersData);
-            setPackages(packagesData);
-
-            // Calculate dashboard stats
-            const dashboardStats = await getDashboardStats(usersData, packagesData);
-            setStats(dashboardStats);
-            setIsLoading(false);
-        };
-
-        fetchData();
+        getAllUsers().then((u) => {
+            setUsers(u);
+            setUsersLoading(false);
+        });
     }, []);
 
-    // Count users by role
+    const fetchTransactions = async () => {
+        if (abortRef.current) abortRef.current.abort();
+        abortRef.current = new AbortController();
+        setIsLoading(true);
+        const data = await getDashboardTransactions(
+            toApiDateTime(fromInput),
+            toApiDateTime(toInput)
+        );
+        setTransactions(data);
+        setIsLoading(false);
+    };
+
+    // Auto-fetch when dates change
+    useEffect(() => {
+        fetchTransactions();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    // ── Aggregate transactions per day for chart ──────────────────────────────
+    const chartPoints: ChartPoint[] = (() => {
+        const map: Record<string, number> = {};
+        transactions
+            .filter((t) => t.status === "PAID")
+            .forEach((t) => {
+                const day = t.paidAt.slice(0, 10); // yyyy-mm-dd
+                map[day] = (map[day] ?? 0) + t.amount;
+            });
+        return Object.entries(map)
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([date, value]) => ({
+                label: date.slice(5), // mm-dd
+                value,
+            }));
+    })();
+
+    const totalRevenue = transactions
+        .filter((t) => t.status === "PAID")
+        .reduce((s, t) => s + t.amount, 0);
+
     const countByRole = (role: string) => users.filter((u) => u.role === role).length;
-
-    if (isLoading) {
-        return (
-            <div className="flex items-center justify-center h-[calc(100vh-120px)]">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-                    <p className="text-gray-500">Đang tải dữ liệu...</p>
-                </div>
-            </div>
-        );
-    }
-
-    if (!stats) {
-        return (
-            <div className="flex items-center justify-center h-[calc(100vh-120px)]">
-                <p className="text-gray-500">Không thể tải dữ liệu thống kê</p>
-            </div>
-        );
-    }
 
     return (
         <div className="space-y-6">
-            {/* Page Header */}
+            {/* Header */}
             <div>
                 <h1 className="text-2xl font-bold text-gray-900">Bảng điều khiển</h1>
-                <p className="text-gray-500 mt-1">Tổng quan về hoạt động hệ thống</p>
+                <p className="text-gray-500 mt-1">Tổng quan hoạt động hệ thống</p>
             </div>
 
-            {/* Stats Grid */}
+            {/* Stat cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <StatCard
                     title="Tổng người dùng"
-                    value={users.length.toLocaleString()}
+                    value={usersLoading ? "—" : users.length.toLocaleString()}
                     icon={<Users size={24} className="text-white" />}
                     color="bg-gradient-to-br from-blue-500 to-blue-600"
                 />
                 <StatCard
                     title="Học sinh"
-                    value={countByRole("STUDENT")}
+                    value={usersLoading ? "—" : countByRole("STUDENT")}
                     icon={<GraduationCap size={24} className="text-white" />}
                     color="bg-gradient-to-br from-green-500 to-green-600"
                 />
                 <StatCard
                     title="Giáo viên"
-                    value={countByRole("TEACHER")}
+                    value={usersLoading ? "—" : countByRole("TEACHER")}
                     icon={<UserCog size={24} className="text-white" />}
                     color="bg-gradient-to-br from-purple-500 to-purple-600"
                 />
                 <StatCard
-                    title="Gói dịch vụ"
-                    value={packages.length}
-                    icon={<Package size={24} className="text-white" />}
-                    color="bg-gradient-to-br from-orange-500 to-orange-600"
+                    title="Doanh thu (kỳ đã chọn)"
+                    value={isLoading ? "—" : formatCurrency(totalRevenue)}
+                    icon={<TrendingUp size={24} className="text-white" />}
+                    color="bg-gradient-to-br from-indigo-500 to-indigo-600"
                 />
             </div>
 
-            {/* Charts and Stats Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Revenue Chart */}
-                <div className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm">
-                    <div className="flex items-center justify-between mb-6">
-                        <div>
-                            <h2 className="text-lg font-semibold text-gray-900">Doanh thu theo tháng</h2>
-                            <p className="text-sm text-gray-500">6 tháng gần nhất (dữ liệu mẫu)</p>
-                        </div>
-                    </div>
-                    <SimpleBarChart data={stats.monthlyRevenue} />
-                </div>
-
-                {/* Quick Stats */}
-                <div className="bg-white rounded-2xl p-6 shadow-sm">
-                    <h2 className="text-lg font-semibold text-gray-900 mb-4">Thống kê theo vai trò</h2>
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
-                                    <UserCog size={20} className="text-purple-600" />
-                                </div>
-                                <div>
-                                    <p className="text-sm font-medium text-gray-900">Admin</p>
-                                    <p className="text-xs text-gray-500">Quản trị viên</p>
-                                </div>
-                            </div>
-                            <span className="text-xl font-bold text-gray-900">{countByRole("ADMIN")}</span>
-                        </div>
-                        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                                    <UserCog size={20} className="text-blue-600" />
-                                </div>
-                                <div>
-                                    <p className="text-sm font-medium text-gray-900">Giáo viên</p>
-                                    <p className="text-xs text-gray-500">Người giảng dạy</p>
-                                </div>
-                            </div>
-                            <span className="text-xl font-bold text-gray-900">{countByRole("TEACHER")}</span>
-                        </div>
-                        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
-                                    <GraduationCap size={20} className="text-green-600" />
-                                </div>
-                                <div>
-                                    <p className="text-sm font-medium text-gray-900">Học sinh</p>
-                                    <p className="text-xs text-gray-500">Người học</p>
-                                </div>
-                            </div>
-                            <span className="text-xl font-bold text-gray-900">{countByRole("STUDENT")}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Package Overview */}
+            {/* Revenue Line Chart */}
             <div className="bg-white rounded-2xl p-6 shadow-sm">
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
                     <div>
-                        <h2 className="text-lg font-semibold text-gray-900">Danh sách gói dịch vụ</h2>
-                        <p className="text-sm text-gray-500">Tổng quan các gói hiện có</p>
+                        <h2 className="text-lg font-semibold text-gray-900">Thống kê doanh thu</h2>
+                        <p className="text-sm text-gray-500">Doanh thu giao dịch PAID theo ngày</p>
+                    </div>
+
+                    {/* Date range picker */}
+                    <div className="flex flex-wrap items-end gap-3">
+                        <div className="flex flex-col gap-1">
+                            <label className="text-xs font-medium text-gray-500">Từ ngày</label>
+                            <input
+                                type="datetime-local"
+                                value={fromInput}
+                                onChange={(e) => setFromInput(e.target.value)}
+                                className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                            />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                            <label className="text-xs font-medium text-gray-500">Đến ngày</label>
+                            <input
+                                type="datetime-local"
+                                value={toInput}
+                                onChange={(e) => setToInput(e.target.value)}
+                                className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                            />
+                        </div>
+                        <button
+                            onClick={fetchTransactions}
+                            disabled={isLoading}
+                            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white text-sm font-medium rounded-lg transition-colors"
+                        >
+                            <RefreshCw size={14} className={isLoading ? "animate-spin" : ""} />
+                            Áp dụng
+                        </button>
                     </div>
                 </div>
 
-                <div className="overflow-x-auto">
-                    <table className="w-full">
-                        <thead>
-                            <tr className="border-b border-gray-100">
-                                <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                    ID
-                                </th>
-                                <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                    Tên gói
-                                </th>
-                                <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                    Giá
-                                </th>
-                                <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                    Thời hạn
-                                </th>
-                                <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                    Số tính năng
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {packages.map((pkg) => (
-                                <tr key={pkg.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                                    <td className="py-4 px-4">
-                                        <span className="text-sm font-mono text-gray-600">{pkg.id}</span>
-                                    </td>
-                                    <td className="py-4 px-4">
-                                        <span className="text-sm font-medium text-gray-900">{pkg.name}</span>
-                                    </td>
-                                    <td className="py-4 px-4">
-                                        <span className="text-sm font-semibold text-gray-900">
-                                            {pkg.price === 0 ? "Miễn phí" : formatCurrency(pkg.price)}
-                                        </span>
-                                    </td>
-                                    <td className="py-4 px-4">
-                                        <span className="text-sm text-gray-600">
-                                            {pkg.durationDays === 0 ? "Theo hợp đồng" : `${pkg.durationDays} ngày`}
-                                        </span>
-                                    </td>
-                                    <td className="py-4 px-4">
-                                        <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700">
-                                            {pkg.features.length} tính năng
-                                        </span>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                {isLoading ? (
+                    <div className="flex h-64 items-center justify-center">
+                        <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                    </div>
+                ) : (
+                    <LineChart points={chartPoints} />
+                )}
             </div>
+
+            {/* Users table */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm">
+                <div className="mb-6">
+                    <h2 className="text-lg font-semibold text-gray-900">Danh sách người dùng</h2>
+                    <p className="text-sm text-gray-500">Tất cả người dùng trong hệ thống</p>
+                </div>
+                {usersLoading ? (
+                    <div className="flex h-40 items-center justify-center">
+                        <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                    </div>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="w-full">
+                            <thead>
+                                <tr className="border-b border-gray-100">
+                                    {["Người dùng", "Vai trò", "Trạng thái", "Ngày tạo"].map((h) => (
+                                        <th
+                                            key={h}
+                                            className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                                        >
+                                            {h}
+                                        </th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {users.map((u) => (
+                                    <tr
+                                        key={u.id}
+                                        className="border-b border-gray-50 hover:bg-gray-50 transition-colors"
+                                    >
+                                        <td className="py-3 px-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden shrink-0">
+                                                    {u.avatarUrl ? (
+                                                        <img src={u.avatarUrl} alt={u.fullName} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <span className="text-gray-600 font-semibold text-sm">
+                                                            {u.fullName?.charAt(0)?.toUpperCase() ?? "?"}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-medium text-gray-900">{u.fullName}</p>
+                                                    <p className="text-xs text-gray-500">{u.email}</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="py-3 px-4">
+                                            <span
+                                                className={`px-2.5 py-1 rounded-full text-xs font-medium ${u.role?.toUpperCase() === "ADMIN"
+                                                    ? "bg-purple-100 text-purple-700"
+                                                    : u.role?.toUpperCase() === "TEACHER"
+                                                        ? "bg-blue-100 text-blue-700"
+                                                        : "bg-green-100 text-green-700"
+                                                    }`}
+                                            >
+                                                {u.role}
+                                            </span>
+                                        </td>
+                                        <td className="py-3 px-4">
+                                            {(() => {
+                                                const s = u.status?.toLowerCase();
+                                                const cls = s === "active"
+                                                    ? "bg-emerald-100 text-emerald-700"
+                                                    : s === "banned"
+                                                        ? "bg-red-100 text-red-700"
+                                                        : "bg-gray-100 text-gray-600";
+                                                return (
+                                                    <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${cls}`}>
+                                                        {u.status}
+                                                    </span>
+                                                );
+                                            })()}
+                                        </td>
+                                        <td className="py-3 px-4 text-sm text-gray-500">
+                                            {new Date(u.createdAt).toLocaleDateString("vi-VN")}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
+
+            {/* Transaction list */}
+            {transactions.length > 0 && (
+                <div className="bg-white rounded-2xl p-6 shadow-sm">
+                    <div className="mb-6">
+                        <h2 className="text-lg font-semibold text-gray-900">Danh sách giao dịch</h2>
+                        <p className="text-sm text-gray-500">
+                            {transactions.length} giao dịch trong kỳ đã chọn
+                        </p>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="w-full">
+                            <thead>
+                                <tr className="border-b border-gray-100">
+                                    {[
+                                        "Mã giao dịch",
+                                        "Số tiền",
+                                        "Phương thức",
+                                        "Trạng thái",
+                                        "Ngày thanh toán",
+                                    ].map((h) => (
+                                        <th
+                                            key={h}
+                                            className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                                        >
+                                            {h}
+                                        </th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {transactions.map((t) => (
+                                    <tr
+                                        key={t.id}
+                                        className="border-b border-gray-50 hover:bg-gray-50 transition-colors"
+                                    >
+                                        <td className="py-3 px-4 text-sm font-mono text-gray-600 max-w-[200px] truncate">
+                                            {t.transactionCode}
+                                        </td>
+                                        <td className="py-3 px-4 text-sm font-semibold text-gray-900">
+                                            {formatCurrency(t.amount)}
+                                        </td>
+                                        <td className="py-3 px-4 text-sm text-gray-600">
+                                            {t.paymentMethod}
+                                        </td>
+                                        <td className="py-3 px-4">
+                                            <span
+                                                className={`px-2.5 py-1 rounded-full text-xs font-medium ${t.status === "PAID"
+                                                    ? "bg-emerald-100 text-emerald-700"
+                                                    : t.status === "PENDING"
+                                                        ? "bg-yellow-100 text-yellow-700"
+                                                        : "bg-red-100 text-red-700"
+                                                    }`}
+                                            >
+                                                {t.status}
+                                            </span>
+                                        </td>
+                                        <td className="py-3 px-4 text-sm text-gray-500">
+                                            {new Date(t.paidAt).toLocaleString("vi-VN")}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

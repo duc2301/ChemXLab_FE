@@ -253,6 +253,7 @@ const AdminUsers = () => {
                                 <th className="text-left py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Người dùng</th>
                                 <th className="text-left py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Vai trò</th>
                                 <th className="text-left py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Ngày tạo</th>
+                                <th className="text-left py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Trạng thái</th>
                                 <th className="text-right py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Thao tác</th>
                             </tr>
                         </thead>
@@ -277,6 +278,7 @@ const AdminUsers = () => {
                                         </td>
                                         <td className="py-4 px-6"><RoleBadge role={user.role} /></td>
                                         <td className="py-4 px-6 text-sm text-gray-600">{formatDate(user.createdAt)}</td>
+                                        <td className="py-4 px-6 text-sm text-gray-600">{formatDate(user.status)}</td>
                                         <td className="py-4 px-6 text-right">
                                             <div className="flex items-center justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
                                                 <button onClick={() => setViewingUser(user)} className="p-2 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-all" title="Xem chi tiết">
