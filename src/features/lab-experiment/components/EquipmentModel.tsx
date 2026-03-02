@@ -5,31 +5,22 @@ import {
   RapierRigidBody,
   RigidBody,
 } from "@react-three/rapier";
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
-import { EQUIPMENT_IDS, SUBSTANCE_COLORS, getEquipmentById } from "../services/equipmentRegistry";
+import {
+  EQUIPMENT_IDS,
+  SUBSTANCE_COLORS,
+  getEquipmentById,
+} from "../services/equipmentRegistry";
 import { useExperimentStore } from "../services/experimentStore";
 import type { TubeContent } from "../services/experimentStore";
 import type { DroppedItem } from "../types/equipment";
 
 // ─── Hằng số snap ────────────────────────────────────────────────────────────
 const SNAP_OFFSET_Y = 0.5;
-const SNAP_RADIUS = 0.4; // khoảng cách world để trigger snap
+const SNAP_RADIUS = 0.4;
+const LAMP_SNAP_OFFSET_Y = 0;
 
-// ─── Collision Groups (Rapier bitmask: upper 16 bits = filter, lower 16 = membership) ─
-// GROUP_STATIC (0x0001): bàn, sàn — không đặt tường minh, mặc định 0xFFFF
-// GROUP_EQUIPMENT (0x0002): thiết bị thông thường
-// GROUP_TESTTUBE  (0x0004): ống nghiệm
-//
-// test-tube:       membership=0x0004, filter=0x0001 (chỉ va chạm static)  → 0x00010004
-// regular equip:   membership=0x0002, filter=0x0003 (static + equipment)    → 0x00030002
-// table/floor:     default 0xFFFFFFFF (va chạm với tất cả)
 const CG_TEST_TUBE = 0x00010004;
 const CG_EQUIPMENT = 0x00030002;
 
@@ -40,10 +31,9 @@ interface EquipmentModelProps {
   onRemove?: (itemId: string) => void;
 }
 
-// ─── Module-level registry: nhiệt kế tự đăng ký rigid body của mình ─────────
 const thermometerRegistry = new Map<string, RapierRigidBody>();
-// Lưu ID của test-tube đang chiếm dụng thermometer ID
 const occupiedThermometers = new Map<string, string>();
+const occupiedThermometersByLamp = new Map<string, string>();
 
 export const EquipmentModel = ({
   droppedItem,
@@ -59,26 +49,30 @@ export const EquipmentModel = ({
   const addSubstanceToTestTube = useExperimentStore((s) => s.addSubstanceToTestTube);
   const testTubeContents = useExperimentStore((s) => s.testTubeContents);
   const stirredTubes = useExperimentStore((s) => s.stirredTubes);
+  const alcoholLampStatus = useExperimentStore((s) => s.alcoholLampStatus);
   const isHoldingSubstance = heldSubstance !== null;
   const [showFull, setShowFull] = useState(false);
 
-  // ─── Snap state (chỉ dùng cho test-tube) ────────────────────────────────────
+  // ─── Snap state ────────────────────────────────────────────────────────────
   const isSnappedRef = useRef(false);
   const [isSnapped, setIsSnapped] = useState(false);
   const snappedToBodyRef = useRef<RapierRigidBody | null>(null);
   const snappedToThermoIdRef = useRef<string | null>(null);
-  // Animation: xuất phát từ cao hơn rồi ease xuống vị trí snap cuối
+
+  // Tránh snap lại ngay lập tức
+  const lastUnsnappedThermoIdRef = useRef<string | null>(null);
+
+  // Animation snap
   const snapAnimRef = useRef<{
     active: boolean;
     startY: number;
     targetY: number;
     snapX: number;
     snapZ: number;
-    t: number;  // 0 → 1
+    t: number;
   } | null>(null);
 
   const dragOffset = useRef(new THREE.Vector3());
-  // Lưu target + pointerId để releasePointerCapture khi snap
   const activePointerRef = useRef<{ target: HTMLElement; pointerId: number } | null>(null);
 
   const { gl } = useThree();
@@ -86,16 +80,13 @@ export const EquipmentModel = ({
 
   const isTestTube = droppedItem.equipmentId === EQUIPMENT_IDS.TEST_TUBE;
   const isThermometer = droppedItem.equipmentId === EQUIPMENT_IDS.THERMOMETER;
+  const isAlcoholLamp = droppedItem.equipmentId === EQUIPMENT_IDS.ALCOHOL_LAMP;
+  const isBurning = alcoholLampStatus.get(droppedItem.id) ?? false;
 
-  // Raycast setup for dragging on table surface
   const raycaster = useMemo(() => new THREE.Raycaster(), []);
-  const dragPlane = useMemo(
-    () => new THREE.Plane(new THREE.Vector3(0, 1, 0), 0),
-    [],
-  );
+  const dragPlane = useMemo(() => new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), []);
   const intersectionPoint = useMemo(() => new THREE.Vector3(), []);
 
-  // ─── Đăng ký nhiệt kế vào registry ──────────────────────────────────────────
   useEffect(() => {
     if (!isThermometer) return;
     const interval = setInterval(() => {
@@ -111,123 +102,111 @@ export const EquipmentModel = ({
     };
   }, [isThermometer, droppedItem.id]);
 
-  // Hủy đăng ký snap nếu test-tube bị xóa khỏi scene
   useEffect(() => {
     return () => {
-      if (isTestTube && isSnappedRef.current && snappedToThermoIdRef.current) {
-        occupiedThermometers.delete(snappedToThermoIdRef.current);
+      if (isSnappedRef.current && snappedToThermoIdRef.current) {
+        if (isTestTube) occupiedThermometers.delete(snappedToThermoIdRef.current);
+        else if (isAlcoholLamp) occupiedThermometersByLamp.delete(snappedToThermoIdRef.current);
       }
     };
-  }, [isTestTube]);
+  }, [isTestTube, isAlcoholLamp]);
 
-  // ─── useFrame: follow nhiệt kế, drag, và proximity snap check ───────────────
   useFrame((state) => {
     if (!rigidBodyRef.current) return;
 
-    // 1. Follow nhiệt kế khi đang snap
-    if (isTestTube && isSnappedRef.current && snappedToBodyRef.current) {
+    // 1. Follow / Animate snap
+    if ((isTestTube || isAlcoholLamp) && isSnappedRef.current && snappedToBodyRef.current) {
       try {
         const tp = snappedToBodyRef.current.translation();
+        const offset_Y = isTestTube ? SNAP_OFFSET_Y : LAMP_SNAP_OFFSET_Y;
         const finalX = tp.x - 0.0263;
-        const finalY = tp.y + SNAP_OFFSET_Y;
+        const finalY = tp.y + offset_Y;
         const finalZ = tp.z + 0.385;
 
-        // ─ Phase: đang chạy animation ease-down vào vị trí snap ───────────────────
         if (snapAnimRef.current?.active) {
           const anim = snapAnimRef.current;
-          anim.t = Math.min(1, anim.t + 0.016 * 1.8); // ~0.55s tới 1
-          // Ease-out cubic
+          anim.t = Math.min(1, anim.t + 0.016 * 1.8);
           const eased = 1 - Math.pow(1 - anim.t, 3);
-          const currentY = anim.startY + (anim.targetY - anim.startY) * eased;
-          rigidBodyRef.current.setTranslation(
-            { x: anim.snapX, y: currentY, z: anim.snapZ },
-            true,
-          );
+          const currentY = anim.startY + (finalY - anim.startY) * eased;
+
+          rigidBodyRef.current.setTranslation({ x: finalX, y: currentY, z: finalZ }, true);
           if (anim.t >= 1) anim.active = false;
           return;
         }
 
-        // ─ Phase: đang follow (sau khi anim xong) ───────────────────────────
-        rigidBodyRef.current.setTranslation(
-          { x: finalX, y: finalY, z: finalZ },
-          true,
-        );
+        rigidBodyRef.current.setTranslation({ x: finalX, y: finalY, z: finalZ }, true);
       } catch {
-        // Nhiệt kế đã bị xóa khỏi scene (Rapier freed the body) — hủy snap
         if (snappedToThermoIdRef.current) {
-          occupiedThermometers.delete(snappedToThermoIdRef.current);
+          if (isTestTube) occupiedThermometers.delete(snappedToThermoIdRef.current);
+          if (isAlcoholLamp) occupiedThermometersByLamp.delete(snappedToThermoIdRef.current);
         }
         isSnappedRef.current = false;
         setIsSnapped(false);
         snappedToBodyRef.current = null;
         snappedToThermoIdRef.current = null;
         snapAnimRef.current = null;
-        rigidBodyRef.current.setBodyType(0, true); // trả về dynamic
+        rigidBodyRef.current.setBodyType(0, true);
       }
       return;
     }
 
-    // 2. Drag bình thường
+    // 2. Drag logic
     if (isDragging) {
       raycaster.setFromCamera(state.pointer, state.camera);
       if (raycaster.ray.intersectPlane(dragPlane, intersectionPoint)) {
         intersectionPoint.add(dragOffset.current);
 
-        // Kiểm tra chặn viền cho ống nghiệm nếu nhiệt kế đã có người chiếm
-        if (isTestTube && thermometerRegistry.size > 0) {
+        // Tránh va chạm với các vật đã snap khác
+        if ((isTestTube || isAlcoholLamp) && thermometerRegistry.size > 0) {
+          const occupationMap = isTestTube ? occupiedThermometers : occupiedThermometersByLamp;
           for (const [thermoId, thermoBody] of thermometerRegistry) {
-            if (occupiedThermometers.has(thermoId) && occupiedThermometers.get(thermoId) !== droppedItem.id) {
+            if (occupationMap.has(thermoId) && occupationMap.get(thermoId) !== droppedItem.id) {
               const tp = thermoBody.translation();
               const dx = intersectionPoint.x - tp.x;
               const dz = intersectionPoint.z - tp.z;
               const dist2D = Math.sqrt(dx * dx + dz * dz);
               const EDGE_DISTANCE = 0.35;
 
-              if (dist2D < EDGE_DISTANCE) {
-                if (dist2D > 0) {
-                  const scale = EDGE_DISTANCE / dist2D;
-                  intersectionPoint.x = tp.x + dx * scale;
-                  intersectionPoint.z = tp.z + dz * scale;
-                }
+              if (dist2D < EDGE_DISTANCE && dist2D > 0) {
+                const scale = EDGE_DISTANCE / dist2D;
+                intersectionPoint.x = tp.x + dx * scale;
+                intersectionPoint.z = tp.z + dz * scale;
               }
             }
           }
         }
-
         rigidBodyRef.current.setTranslation(intersectionPoint, true);
       }
 
-      // 3. Proximity snap: kiểm tra khoảng cách tới nhiệt kế khi đang kéo
-      if (isTestTube && !isSnappedRef.current && thermometerRegistry.size > 0) {
+      // 3. Proximity snap check
+      if ((isTestTube || isAlcoholLamp) && !isSnappedRef.current && thermometerRegistry.size > 0) {
         const myPos = rigidBodyRef.current.translation();
+        const occupationMap = isTestTube ? occupiedThermometers : occupiedThermometersByLamp;
+
         for (const [thermoId, thermoBody] of thermometerRegistry) {
-          // Bỏ qua nếu nhiệt kế này đã có một ống nghiệm khác bám vào
-          if (occupiedThermometers.has(thermoId) && occupiedThermometers.get(thermoId) !== droppedItem.id) {
-            continue;
-          }
+          if (occupationMap.has(thermoId) && occupationMap.get(thermoId) !== droppedItem.id) continue;
 
           const tp = thermoBody.translation();
-          const dx = myPos.x - tp.x;
-          const dy = myPos.y - tp.y;
-          const dz = myPos.z - tp.z;
-          const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+          const dist = Math.sqrt(Math.pow(myPos.x - tp.x, 2) + Math.pow(myPos.y - tp.y, 2) + Math.pow(myPos.z - tp.z, 2));
+
+          // Chặn snap ngược
+          if (lastUnsnappedThermoIdRef.current === thermoId) {
+            if (dist > SNAP_RADIUS + 0.1) lastUnsnappedThermoIdRef.current = null;
+            else continue;
+          }
 
           if (dist < SNAP_RADIUS) {
+            const offset_Y = isTestTube ? SNAP_OFFSET_Y : LAMP_SNAP_OFFSET_Y;
             const finalX = tp.x - 0.0263;
-            const finalY = tp.y + SNAP_OFFSET_Y;
+            const finalY = tp.y + offset_Y;
             const finalZ = tp.z + 0.385;
-
-            // Nâng Y từ vị trí hiện tại (giữ nguyên X, Z)
             const liftY = finalY + 0.35;
-            rigidBodyRef.current.setTranslation(
-              { x: myPos.x, y: liftY, z: myPos.z },
-              true,
-            );
-            rigidBodyRef.current.setBodyType(2, true); // kinematicPosition
+
+            rigidBodyRef.current.setTranslation({ x: myPos.x, y: liftY, z: myPos.z }, true);
+            rigidBodyRef.current.setBodyType(2, true);
             rigidBodyRef.current.setLinvel({ x: 0, y: 0, z: 0 }, true);
             rigidBodyRef.current.setAngvel({ x: 0, y: 0, z: 0 }, true);
 
-            // Khởi động animation ease-down (từ liftY → finalY, X/Z dồn về final)
             snapAnimRef.current = {
               active: true,
               startY: liftY,
@@ -237,33 +216,22 @@ export const EquipmentModel = ({
               t: 0,
             };
 
+            occupationMap.set(thermoId, droppedItem.id);
             snappedToBodyRef.current = thermoBody;
             snappedToThermoIdRef.current = thermoId;
-            occupiedThermometers.set(thermoId, droppedItem.id);
-
             isSnappedRef.current = true;
             setIsSnapped(true);
             setIsDragging(false);
-            setIsHovered(false);
             onDragChange?.(false);
             gl.domElement.style.cursor = "auto";
 
-            // Dispatch synthetic pointerup để OrbitControls reset trạng thái drag
-            {
-              const pid = activePointerRef.current?.pointerId ?? 1;
-              // Release capture trước
-              if (activePointerRef.current) {
-                try { activePointerRef.current.target.releasePointerCapture(pid); } catch { /* ignore */ }
-                activePointerRef.current = null;
-              }
-              // Dispatch pointerup lên canvas để OrbitControls dừng rotate
-              try {
-                gl.domElement.dispatchEvent(
-                  new PointerEvent("pointerup", { pointerId: pid, bubbles: true, cancelable: true }),
-                );
-              } catch { /* ignore */ }
+            // Reset OrbitControls
+            if (activePointerRef.current) {
+              const pid = activePointerRef.current.pointerId;
+              try { activePointerRef.current.target.releasePointerCapture(pid); } catch { }
+              activePointerRef.current = null;
+              gl.domElement.dispatchEvent(new PointerEvent("pointerup", { pointerId: pid, bubbles: true }));
             }
-
             break;
           }
         }
@@ -271,74 +239,59 @@ export const EquipmentModel = ({
     }
   });
 
-  // ─── Pointer Down: bắt đầu kéo, nếu đang snap thì detach trước ───────────
-  const handlePointerDown = useCallback(
-    (e: ThreeEvent<PointerEvent>) => {
-      e.stopPropagation();
-      // Bỏ qua chuột phải – để onContextMenu xử lý
-      if (e.nativeEvent.button === 2) return;
+  const handlePointerDown = useCallback((e: ThreeEvent<PointerEvent>) => {
+    e.stopPropagation();
+    if (e.nativeEvent.button === 2) return;
 
-      // DETACH snap chỉ khi KHÔNG đang cầm chất
-      // (nếu cầm chất thì click là để đổ bột, không phải kéo ống)
-      if (isTestTube && isSnappedRef.current && !heldSubstance) {
-        if (snappedToThermoIdRef.current) {
-          occupiedThermometers.delete(snappedToThermoIdRef.current);
-          snappedToThermoIdRef.current = null;
-        }
-        isSnappedRef.current = false;
-        setIsSnapped(false);
-        snappedToBodyRef.current = null;
+    // DETACH snap: Chỉ detach khi KHÔNG đang cầm chất
+    if ((isTestTube || isAlcoholLamp) && isSnappedRef.current && !heldSubstance) {
+      if (snappedToThermoIdRef.current) {
+        if (isTestTube) occupiedThermometers.delete(snappedToThermoIdRef.current);
+        if (isAlcoholLamp) occupiedThermometersByLamp.delete(snappedToThermoIdRef.current);
+
+        lastUnsnappedThermoIdRef.current = snappedToThermoIdRef.current;
       }
+      isSnappedRef.current = false;
+      setIsSnapped(false);
+      snappedToBodyRef.current = null;
+    }
 
-      const target = e.target as HTMLElement;
-      if (target.setPointerCapture) {
-        target.setPointerCapture(e.pointerId);
-        activePointerRef.current = { target, pointerId: e.pointerId };
-      }
+    const target = e.target as HTMLElement;
+    if (target.setPointerCapture) {
+      target.setPointerCapture(e.pointerId);
+      activePointerRef.current = { target, pointerId: e.pointerId };
+    }
 
-      dragPlane.constant = -e.point.y;
+    dragPlane.constant = -e.point.y;
+    if (rigidBodyRef.current) {
+      const currentPos = rigidBodyRef.current.translation();
+      dragOffset.current.set(currentPos.x, currentPos.y, currentPos.z).sub(e.point);
+      rigidBodyRef.current.setBodyType(2, true);
+    }
 
-      if (rigidBodyRef.current) {
-        const currentPos = rigidBodyRef.current.translation();
-        dragOffset.current
-          .set(currentPos.x, currentPos.y, currentPos.z)
-          .sub(e.point);
-      }
-
-      setIsDragging(true);
-      onDragChange?.(true);
-      gl.domElement.style.cursor = "grabbing";
-
-      if (rigidBodyRef.current) {
-        rigidBodyRef.current.setBodyType(2, true); // kinematicPosition
-        rigidBodyRef.current.setLinvel({ x: 0, y: 0, z: 0 }, true);
-        rigidBodyRef.current.setAngvel({ x: 0, y: 0, z: 0 }, true);
-      }
-    },
-    [gl.domElement, onDragChange, dragPlane, isTestTube, heldSubstance],
+    setIsDragging(true);
+    onDragChange?.(true);
+    gl.domElement.style.cursor = "grabbing";
+  },
+    [gl.domElement, onDragChange, dragPlane, isTestTube, isAlcoholLamp, heldSubstance]
   );
 
-  // ─── Pointer Up: dừng kéo ─────────────────────────────────────────────────
-  const handlePointerUp = useCallback(
-    (e: ThreeEvent<PointerEvent>) => {
-      e.stopPropagation();
+  const handlePointerUp = useCallback((e: ThreeEvent<PointerEvent>) => {
+    e.stopPropagation();
+    const target = e.target as HTMLElement;
+    if (target.releasePointerCapture) target.releasePointerCapture(e.pointerId);
+    activePointerRef.current = null;
 
-      const target = e.target as HTMLElement;
-      if (target.releasePointerCapture) {
-        target.releasePointerCapture(e.pointerId);
-      }
-      activePointerRef.current = null;
+    setIsDragging(false);
+    onDragChange?.(false);
+    gl.domElement.style.cursor = isHovered ? "grab" : "auto";
+    lastUnsnappedThermoIdRef.current = null;
 
-      setIsDragging(false);
-      onDragChange?.(false);
-      gl.domElement.style.cursor = isHovered ? "grab" : "auto";
-
-      // Trả về dynamic nếu không đang snap
-      if (rigidBodyRef.current && !isSnappedRef.current) {
-        rigidBodyRef.current.setBodyType(0, true); // dynamic
-      }
-    },
-    [gl.domElement, isHovered, onDragChange],
+    if (rigidBodyRef.current && !isSnappedRef.current) {
+      rigidBodyRef.current.setBodyType(0, true); // Chuyển về Dynamic (0) thay vì Static (1) để trọng lực hoạt động
+    }
+  },
+    [gl.domElement, isHovered, onDragChange]
   );
 
   // ─── Hover ────────────────────────────────────────────────────────────────
@@ -359,7 +312,11 @@ export const EquipmentModel = ({
     (e: ThreeEvent<MouseEvent>) => {
       e.stopPropagation();
       e.nativeEvent.preventDefault();
-      setContextMenu({ x: e.nativeEvent.clientX, y: e.nativeEvent.clientY, itemId: droppedItem.id });
+      setContextMenu({
+        x: e.nativeEvent.clientX,
+        y: e.nativeEvent.clientY,
+        itemId: droppedItem.id,
+      });
     },
     [setContextMenu, droppedItem.id],
   );
@@ -385,7 +342,14 @@ export const EquipmentModel = ({
       addSubstanceToTestTube(droppedItem.id, heldSubstance.substanceId, addAmount);
       setHeldSubstance(null);
     },
-    [isTestTube, heldSubstance, addSubstanceToTestTube, droppedItem.id, setHeldSubstance, testTubeContents],
+    [
+      isTestTube,
+      heldSubstance,
+      addSubstanceToTestTube,
+      droppedItem.id,
+      setHeldSubstance,
+      testTubeContents,
+    ],
   );
 
   if (!equipment) {
@@ -427,11 +391,15 @@ export const EquipmentModel = ({
       type={isSnapped ? "kinematicPosition" : "dynamic"}
       position={[droppedItem.position[0], tableHeight, droppedItem.position[2]]}
       rotation={droppedItem.rotation}
-      colliders={isSnapped ? false : "cuboid"}
+      colliders={isSnapped ? false : "hull"}
       collisionGroups={isTestTube ? CG_TEST_TUBE : CG_EQUIPMENT}
       name={droppedItem.equipmentId}
       gravityScale={isSnapped ? 0 : 1}
       lockRotations={true}
+      // THÊM MA SÁT
+      angularDamping={9.8} // Lực cản góc xoay
+      friction={10} // Ma sát tĩnh/động (giữ vật thể bám chặt lên bàn)
+      restitution={0}
     >
       <group
         scale={[modelScale, modelScale, modelScale]}
@@ -450,7 +418,8 @@ export const EquipmentModel = ({
           isHighlighted={isHighlighted}
           isFullHighlight={isFullHighlight}
           isGlass={isTestTube}
-          playAnimations={droppedItem.equipmentId === EQUIPMENT_IDS.ALCOHOL_LAMP}
+          playAnimations={isAlcoholLamp ? isBurning : false}
+          isShowFire={isAlcoholLamp ? isBurning : false}
         />
 
         {/* Sau khi khuấy: hạt bột pha trộn của các layer đã khuấy */}
@@ -536,18 +505,24 @@ export const EquipmentModel = ({
 
       {/* Cảnh báo ống đã đầy */}
       {isTestTube && showFull && (
-        <Html position={[0, 0.1, 0]} center style={{ pointerEvents: "none", userSelect: "none" }}>
-          <div style={{
-            background: "rgba(239,68,68,0.92)",
-            color: "#fff",
-            borderRadius: "6px",
-            padding: "4px 10px",
-            fontSize: "11px",
-            fontFamily: "sans-serif",
-            fontWeight: 600,
-            whiteSpace: "nowrap",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.4)",
-          }}>
+        <Html
+          position={[0, 0.1, 0]}
+          center
+          style={{ pointerEvents: "none", userSelect: "none" }}
+        >
+          <div
+            style={{
+              background: "rgba(239,68,68,0.92)",
+              color: "#fff",
+              borderRadius: "6px",
+              padding: "4px 10px",
+              fontSize: "11px",
+              fontFamily: "sans-serif",
+              fontWeight: 600,
+              whiteSpace: "nowrap",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.4)",
+            }}
+          >
             ⚠️ Không thể đổ thêm!
           </div>
         </Html>
@@ -568,6 +543,7 @@ const Model = ({
   isGlass = false,
   isFullHighlight = false,
   playAnimations = false,
+  isShowFire = false,
 }: {
   modelPath: string;
   isHovered: boolean;
@@ -577,10 +553,10 @@ const Model = ({
   isGlass?: boolean;
   isFullHighlight?: boolean;
   playAnimations?: boolean;
+  isShowFire?: boolean;
 }) => {
   const { scene, animations } = useGLTF(modelPath);
-  const armatureRef = useRef<THREE.Object3D | null>(null);
-  const [angle, setAngle] = useState(0);
+
   const clonedScene = useMemo(() => {
     const clone = scene.clone();
     clone.traverse((child) => {
@@ -592,97 +568,70 @@ const Model = ({
     return clone;
   }, [scene]);
 
-  // Play animations (chỉ cho những model có flag playAnimations)
-  const { actions, mixer } = useAnimations(animations, clonedScene);
-  useEffect(() => {
-    if (!playAnimations || !actions || Object.keys(actions).length === 0) return;
-    Object.values(actions).forEach((action) => {
-      if (action) action.reset().play();
-    });
-    return () => { mixer.stopAllAction(); };
-  }, [playAnimations, actions, mixer]);
+  const { actions } = useAnimations(animations, clonedScene);
 
-  useFrame(() => {
-    if (isSnapped && armatureRef.current && angle < THREE.MathUtils.degToRad(10)) {
-      const newAngle = Math.min(angle - 0.01, THREE.MathUtils.degToRad(10));
-      setAngle(newAngle);
-      const pos = armatureRef.current.position.clone();
-      const cos = Math.cos(newAngle);
-      const sin = Math.sin(newAngle);
-      armatureRef.current.position.set(
-        -pos.x * cos - pos.z * sin,
-        pos.y,
-        pos.x * sin + pos.z * cos,
-      );
-      armatureRef.current.rotation.y = newAngle;
-    }
-  });
-
+  // 3. LOGIC ĐIỀU KHIỂN HIỂN THỊ VÀ ANIMATION LỬA
   useEffect(() => {
+    // Điều khiển ẩn hiện mesh lửa
     clonedScene.traverse((child) => {
-      if (child.name === "Armature") {
-        armatureRef.current = child;
+      if (child.name === "GLB_Flame_V260") {
+        child.visible = isShowFire;
       }
     });
-  }, [clonedScene]);
 
-  useMemo(() => {
+    // Điều khiển chạy/dừng animation
+    if (isShowFire && playAnimations && actions) {
+      Object.values(actions).forEach((action) => {
+        if (action) {
+          action.reset().fadeIn(0.2).play(); // Thêm fadeIn cho mượt
+        }
+      });
+    } else {
+      // Dùng fadeOut hoặc stop khi tắt lửa
+      Object.values(actions).forEach((action) => action?.fadeOut(0.2));
+      // Nếu muốn dừng hẳn sau khi fadeOut:
+      // setTimeout(() => mixer.stopAllAction(), 200);
+    }
+  }, [isShowFire, playAnimations, actions, clonedScene]);
+
+  // 4. LOGIC XỬ LÝ MATERIAL (Giữ nguyên logic của bạn nhưng tối ưu dependency)
+  useEffect(() => {
     clonedScene.traverse((child) => {
       if (!(child instanceof THREE.Mesh) || !child.material) return;
 
-      const materials = Array.isArray(child.material)
-        ? child.material
-        : [child.material];
+      // Bỏ qua mesh lửa không đổi material để tránh lỗi hiển thị lửa
+      if (child.name === "GLB_Flame_V260") return;
 
-      const cloned = materials.map((mat) => {
-        const m = mat.clone();
+      const materials = Array.isArray(child.material) ? child.material : [child.material];
 
-        // Chỉ set emissive nếu material hỗ trợ
-        if (!("emissive" in m)) {
-          // Vẫn set transparent cho vật liệu không có emissive nếu là glass
-          if (isGlass) {
-            m.transparent = true;
-            m.opacity = 0.3;
-            if ("depthWrite" in m) m.depthWrite = false;
+      materials.forEach((m) => {
+        if ("emissive" in m) {
+          const mat = m as THREE.MeshStandardMaterial;
+          if (isDragging) {
+            mat.emissive.set("#ffaa00");
+            mat.emissiveIntensity = 0.5;
+          } else if (isFullHighlight) {
+            mat.emissive.set("#ef4444");
+            mat.emissiveIntensity = 0.55;
+          } else if (isHighlighted) {
+            mat.emissive.set("#fbbf24");
+            mat.emissiveIntensity = 0.6;
+          } else if (isSnapped || isHovered) {
+            mat.emissive.set(isHovered ? "#4488ff" : "#a0c4e8");
+            mat.emissiveIntensity = isHovered ? 0.3 : 0.12;
+          } else {
+            mat.emissive.set("#a0c4e8");
+            mat.emissiveIntensity = 0.12;
           }
-          return m;
         }
 
-        // Emissive theo trạng thái
-        if (isDragging) {
-          m.emissive = new THREE.Color("#ffaa00");
-          m.emissiveIntensity = 0.5;
-        } else if (isFullHighlight) {
-          // Đỏ: ống đầy, không có thể đổ thêm
-          m.emissive = new THREE.Color("#ef4444");
-          m.emissiveIntensity = 0.55;
-        } else if (isHighlighted) {
-          m.emissive = new THREE.Color("#fbbf24");
-          m.emissiveIntensity = 0.6;
-        } else if (isSnapped) {
-          m.emissive = new THREE.Color("#a0c4e8");
-          m.emissiveIntensity = 0.12;
-        } else if (isHovered) {
-          m.emissive = new THREE.Color("#4488ff");
-          m.emissiveIntensity = 0.3;
-        } else {
-          m.emissive = new THREE.Color("#a0c4e8");
-          m.emissiveIntensity = 0.12;
-        }
-
-        // Glass effect — trong suốt như thủy tinh
         if (isGlass) {
           m.transparent = true;
           m.opacity = 0.35;
-          if ("depthWrite" in m) m.depthWrite = false;
+          m.depthWrite = false;
         }
-
-        return m;
       });
-
-      child.material = Array.isArray(child.material) ? cloned : cloned[0];
     });
-
     clonedScene.children.forEach((child) => {
       child.position.x = clonedScene.position.x;
       child.position.y = clonedScene.position.y + 0.04;
@@ -693,6 +642,13 @@ const Model = ({
       child.updateMatrixWorld();
     });
   }, [clonedScene, isHovered, isDragging, isSnapped, isHighlighted, isGlass, isFullHighlight]);
+
+  useEffect(() => {
+    clonedScene.children.forEach((child) => {
+      child.position.y = 0.04;
+      child.updateMatrixWorld();
+    });
+  }, [clonedScene]);
 
   return <primitive object={clonedScene} />;
 };

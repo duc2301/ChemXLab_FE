@@ -1,4 +1,4 @@
-import { X } from 'lucide-react';
+import { ArrowLeft, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { EquipmentPanel } from '../components/EquipmentPanel';
 import { EQUIPMENT_IDS, SUBSTANCE_COLORS, getEquipmentById } from '../services/equipmentRegistry';
@@ -21,7 +21,7 @@ const menuBtnStyle: React.CSSProperties = {
   transition: "background 0.15s",
 };
 
-export const ExperimentPopup = () => {
+export const ExperimentPopup = ({ onBackToMenu }: { onBackToMenu: () => void }) => {
   const {
     isModalOpen,
     closeModal,
@@ -36,6 +36,9 @@ export const ExperimentPopup = () => {
     testTubeContents,
     stirredTubes,
     stirTestTube,
+    alcoholLampStatus,
+    toggleAlcoholLamp,
+    clearItems,
   } = useExperimentStore();
 
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -143,8 +146,16 @@ export const ExperimentPopup = () => {
   const stirredCount = contextMenu ? (stirredTubes[contextMenu.itemId] ?? 0) : 0;
   const canStir = isTestTubeItem && uniquePowderTypes >= 2 && stirredCount < tubeContents.length;
   const alreadyStirred = isTestTubeItem && stirredCount >= tubeContents.length && tubeContents.length > 0;
+  const isAlcoholLamp = contextEquipment?.id === EQUIPMENT_IDS.ALCOHOL_LAMP;
+  const isBurning = contextMenu ? (alcoholLampStatus.get(contextMenu.itemId) ?? false) : false;
 
   if (!isModalOpen) return null;
+
+  const handleBack = () => {
+    clearItems();     // 1. Dọn sạch bàn
+    closeModal();     // 2. Đóng popup hiện tại
+    onBackToMenu();   // 3. Gọi callback để hiện lại ModeMenu
+  };
 
   return (
     <>
@@ -155,12 +166,19 @@ export const ExperimentPopup = () => {
       <div className="fixed inset-4 z-50 bg-gray-900 rounded-lg shadow-2xl border border-gray-700 flex flex-col overflow-hidden">
         {/* Header */}
         <div className="px-4 py-3 bg-gray-800 border-b border-gray-700 flex items-center justify-between">
-          <h1 className="text-white font-bold text-lg">Bàn Thí Nghiệm</h1>
-          <button
-            onClick={closeModal}
-            className="p-1 hover:bg-gray-700 rounded transition-colors"
-            title="Đóng (ESC)"
-          >
+          <div className="flex items-center gap-4">
+            {/* NÚT QUAY LẠI */}
+            <button
+              onClick={handleBack}
+              className="flex items-center gap-2 px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-md transition-colors text-sm font-medium border border-gray-600"
+            >
+              <ArrowLeft size={16} />
+              Chọn thí nghiệm khác
+            </button>
+            <h1 className="text-white font-bold text-lg">Bàn Thí Nghiệm</h1>
+          </div>
+
+          <button onClick={closeModal} className="p-1 hover:bg-gray-700 rounded transition-colors">
             <X size={24} className="text-gray-300 hover:text-white" />
           </button>
         </div>
@@ -196,11 +214,6 @@ export const ExperimentPopup = () => {
               />
             </div>
           </div>
-        </div>
-
-        {/* Status bar */}
-        <div className="px-4 py-2 bg-gray-900 border-t border-gray-700 text-xs text-gray-500">
-          <span>Dụng cụ: {droppedItems.size}</span>
         </div>
       </div>
 
@@ -346,6 +359,23 @@ export const ExperimentPopup = () => {
                 🧪&nbsp; Lấy bột
               </button>
             </div>
+          )}
+
+          {isAlcoholLamp && (
+            <button
+              style={{
+                ...menuBtnStyle,
+                color: isBurning ? "#f59e0b" : "#60a5fa"
+              }}
+              onClick={() => {
+                toggleAlcoholLamp(contextMenu.itemId);
+                setContextMenu(null);
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = "rgba(245,158,11,0.1)"}
+              onMouseLeave={(e) => e.currentTarget.style.background = "none"}
+            >
+              {isBurning ? "🔥 Tắt lửa" : "🔥 Thắp lửa"}
+            </button>
           )}
 
           {/* Xóa vật thể */}
