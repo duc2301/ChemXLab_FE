@@ -14,6 +14,9 @@ import { ProximityDetector } from '../../../features/lab-experiment/components/P
 import { useExperimentStore } from '../../../features/lab-experiment/services/experimentStore';
 import { ExperimentPopup } from '../../../features/lab-experiment/ui/ExperimentPopup';
 import { SceneWrapper } from '../../../shared/ui/canvas/SceneWrapper';
+import { GUIDED_EXPERIMENTS } from '../../../features/lab-experiment/services/equipmentRegistry';
+import { generateUUID } from '../../../features/lab-experiment/services/idGenerator';
+import { ExperimentModeMenu } from '../../../features/lab-experiment/ui/ExperimentModeMenu';
 
 const TABLE_POSITION: [number, number, number] = [-2, 0, 2];
 const DETECTION_RADIUS = 3;
@@ -68,6 +71,7 @@ interface LabSceneContentProps {
   onInteract: () => void;
   isModalOpen: boolean;
   isPaused: boolean;
+  showModeMenu: boolean;
 }
 
 function LabSceneContent({
@@ -76,6 +80,7 @@ function LabSceneContent({
   onInteract,
   isModalOpen,
   isPaused,
+  showModeMenu,
 }: LabSceneContentProps) {
   const controlsRef = useRef<any>(null);
 
@@ -83,7 +88,7 @@ function LabSceneContent({
   useEffect(() => {
     if (!controlsRef.current) return;
 
-    if (isPaused || isModalOpen) {
+    if (isPaused || isModalOpen || showModeMenu) {
       controlsRef.current.unlock();
     } else {
       const timer = setTimeout(() => {
@@ -91,7 +96,7 @@ function LabSceneContent({
       }, 150);
       return () => clearTimeout(timer);
     }
-  }, [isPaused, isModalOpen]);
+  }, [isPaused, isModalOpen, showModeMenu]);
 
   return (
     <>
@@ -161,18 +166,53 @@ export interface LabSceneProps {
 
 export const LabScene = ({ isPaused = false, onPause }: LabSceneProps) => {
   const [showPrompt, setShowPrompt] = useState(false);
-  const { openModal, isModalOpen } = useExperimentStore();
+  const { openModal, isModalOpen, addDroppedItem, clearItems } = useExperimentStore();
+  const [showModeMenu, setShowModeMenu] = useState(false);
+
 
   const handleEnterProximity = () => setShowPrompt(true);
   const handleExitProximity = () => setShowPrompt(false);
-  const handleInteract = () => openModal();
+
+  const handleInteract = () => {
+    clearItems();
+    setShowModeMenu(true);
+    document.exitPointerLock();
+  };
+
+  const startFreeExperiment = () => {
+    setShowModeMenu(false);
+    openModal();
+  };
+
+  const startGuidedExperiment = (expId: string) => {
+    const exp = GUIDED_EXPERIMENTS.find(e => e.id === expId);
+    if (!exp) return;
+
+    // 1. Dọn bàn
+    clearItems(); 
+
+    // 2. Thả dụng cụ ra bàn
+    exp.equipment.forEach(config => {
+      addDroppedItem({
+        id: generateUUID(),
+        equipmentId: config.id,
+        position: config.position as [number, number, number],
+        rotation: (config.rotation || [0, 0, 0]) as [number, number, number],
+        timestamp: Date.now(),
+        collider: "cuboid",
+      });
+    });
+
+    setShowModeMenu(false);
+    openModal();
+  };
 
   // ESC → pause (only when playing)
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (e.key === 'Escape' && onPause && !isModalOpen) {
       e.preventDefault();
       e.stopPropagation();
-      document.exitPointerLock();
+      
       onPause();
     }
   }, [onPause, isModalOpen]);
@@ -203,12 +243,21 @@ export const LabScene = ({ isPaused = false, onPause }: LabSceneProps) => {
             onInteract={handleInteract}
             isModalOpen={isModalOpen}
             isPaused={isPaused}
+            showModeMenu={showModeMenu}
           />
         </SceneWrapper>
       </KeyboardControls>
 
-      <InteractionPrompt isVisible={showPrompt && !isPaused} />
-      <ExperimentPopup />
+      {showModeMenu && (
+        <ExperimentModeMenu 
+          onSelectFree={startFreeExperiment}
+          onSelectGuided={startGuidedExperiment}
+          onClose={() => setShowModeMenu(false)}
+        />
+      )}
+
+      <InteractionPrompt isVisible={showPrompt && !isPaused && !showModeMenu} />
+      <ExperimentPopup onBackToMenu={() => setShowModeMenu(true)}/>
     </>
   );
 };

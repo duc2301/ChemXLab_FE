@@ -1,25 +1,29 @@
-import { Environment, OrbitControls, useGLTF } from '@react-three/drei';
-import { Canvas, useThree } from '@react-three/fiber';
-import { CuboidCollider, Physics, RigidBody } from '@react-three/rapier';
-import type { ReactNode } from 'react';
-import { Component, Suspense, useMemo, useState } from 'react';
-import { EquipmentModel } from '../components/EquipmentModel';
-import type { DroppedItem } from '../types/equipment';
+import { Environment, OrbitControls, useGLTF } from "@react-three/drei";
+import { Canvas, useThree } from "@react-three/fiber";
+import { CuboidCollider, Physics, RigidBody } from "@react-three/rapier";
+import type { ReactNode } from "react";
+import { Component, Suspense, useMemo, useState } from "react";
+import { EquipmentModel } from "../components/EquipmentModel";
+import { EQUIPMENT_REGISTRY } from "../services/equipmentRegistry";
+import { useExperimentStore } from "../services/experimentStore";
+import type { DroppedItem } from "../types/equipment";
 
 interface ExperimentCanvasProps {
   onItemDropped?: (item: DroppedItem) => void;
-  droppedItems?: Map<string, DroppedItem>;
 }
 
 // Error boundary for Canvas
-class CanvasErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+class CanvasErrorBoundary extends Component<
+  { children: ReactNode },
+  { hasError: boolean }
+> {
   constructor(props: { children: ReactNode }) {
     super(props);
     this.state = { hasError: false };
   }
 
   static getDerivedStateFromError(error: Error) {
-    console.error('Canvas error:', error);
+    console.error("Canvas error:", error);
     return { hasError: true };
   }
 
@@ -29,7 +33,9 @@ class CanvasErrorBoundary extends Component<{ children: ReactNode }, { hasError:
         <div className="w-full h-full flex items-center justify-center bg-gray-900">
           <div className="text-center">
             <p className="text-red-400 mb-2">Lỗi khi tải canvas 3D</p>
-            <p className="text-gray-400 text-sm">Vui lòng refresh trang hoặc đóng popup</p>
+            <p className="text-gray-400 text-sm">
+              Vui lòng refresh trang hoặc đóng popup
+            </p>
           </div>
         </div>
       );
@@ -42,7 +48,11 @@ class CanvasErrorBoundary extends Component<{ children: ReactNode }, { hasError:
 // Table dimensions - realistic lab table
 const TABLE_TOP_SIZE: [number, number, number] = [6, 0.08, 3]; // width, thickness, depth
 const TABLE_HEIGHT = 0.85; // Height of table surface from ground (~85cm)
-const LEG_SIZE: [number, number, number] = [0.08, TABLE_HEIGHT - TABLE_TOP_SIZE[1], 0.08];
+const LEG_SIZE: [number, number, number] = [
+  0.08,
+  TABLE_HEIGHT - TABLE_TOP_SIZE[1],
+  0.08,
+];
 
 // Lab room dimensions
 const ROOM_WIDTH = 14;
@@ -119,12 +129,31 @@ const LabRoom = () => {
  * Giống bàn thí nghiệm thực tế
  */
 const LabTable = () => {
-  const legPositions: [number, number, number][] = useMemo(() => [
-    [-TABLE_TOP_SIZE[0] / 2 + 0.2, (TABLE_HEIGHT - TABLE_TOP_SIZE[1]) / 2, -TABLE_TOP_SIZE[2] / 2 + 0.2],
-    [TABLE_TOP_SIZE[0] / 2 - 0.2, (TABLE_HEIGHT - TABLE_TOP_SIZE[1]) / 2, -TABLE_TOP_SIZE[2] / 2 + 0.2],
-    [-TABLE_TOP_SIZE[0] / 2 + 0.2, (TABLE_HEIGHT - TABLE_TOP_SIZE[1]) / 2, TABLE_TOP_SIZE[2] / 2 - 0.2],
-    [TABLE_TOP_SIZE[0] / 2 - 0.2, (TABLE_HEIGHT - TABLE_TOP_SIZE[1]) / 2, TABLE_TOP_SIZE[2] / 2 - 0.2],
-  ], []);
+  const legPositions: [number, number, number][] = useMemo(
+    () => [
+      [
+        -TABLE_TOP_SIZE[0] / 2 + 0.2,
+        (TABLE_HEIGHT - TABLE_TOP_SIZE[1]) / 2,
+        -TABLE_TOP_SIZE[2] / 2 + 0.2,
+      ],
+      [
+        TABLE_TOP_SIZE[0] / 2 - 0.2,
+        (TABLE_HEIGHT - TABLE_TOP_SIZE[1]) / 2,
+        -TABLE_TOP_SIZE[2] / 2 + 0.2,
+      ],
+      [
+        -TABLE_TOP_SIZE[0] / 2 + 0.2,
+        (TABLE_HEIGHT - TABLE_TOP_SIZE[1]) / 2,
+        TABLE_TOP_SIZE[2] / 2 - 0.2,
+      ],
+      [
+        TABLE_TOP_SIZE[0] / 2 - 0.2,
+        (TABLE_HEIGHT - TABLE_TOP_SIZE[1]) / 2,
+        TABLE_TOP_SIZE[2] / 2 - 0.2,
+      ],
+    ],
+    [],
+  );
 
   return (
     <group>
@@ -148,8 +177,14 @@ const LabTable = () => {
 
         {/* Metal frame under table top */}
         <mesh position={[0, -TABLE_TOP_SIZE[1] / 2 - 0.025, 0]} receiveShadow>
-          <boxGeometry args={[TABLE_TOP_SIZE[0] - 0.1, 0.05, TABLE_TOP_SIZE[2] - 0.1]} />
-          <meshStandardMaterial color="#4a5568" roughness={0.4} metalness={0.6} />
+          <boxGeometry
+            args={[TABLE_TOP_SIZE[0] - 0.1, 0.05, TABLE_TOP_SIZE[2] - 0.1]}
+          />
+          <meshStandardMaterial
+            color="#4a5568"
+            roughness={0.4}
+            metalness={0.6}
+          />
         </mesh>
       </RigidBody>
 
@@ -158,36 +193,72 @@ const LabTable = () => {
         <RigidBody key={index} type="fixed" position={pos} name="table-surface">
           <mesh receiveShadow castShadow>
             <boxGeometry args={LEG_SIZE} />
-            <meshStandardMaterial color="#4a5568" roughness={0.4} metalness={0.6} />
+            <meshStandardMaterial
+              color="#4a5568"
+              roughness={0.4}
+              metalness={0.6}
+            />
           </mesh>
         </RigidBody>
       ))}
 
       {/* Support bars connecting legs */}
-      <RigidBody type="fixed" position={[0, 0.25, -TABLE_TOP_SIZE[2] / 2 + 0.2]} name="table-surface">
+      <RigidBody
+        type="fixed"
+        position={[0, 0.25, -TABLE_TOP_SIZE[2] / 2 + 0.2]}
+        name="table-surface"
+      >
         <mesh receiveShadow>
           <boxGeometry args={[TABLE_TOP_SIZE[0] - 0.4, 0.04, 0.04]} />
-          <meshStandardMaterial color="#4a5568" roughness={0.4} metalness={0.6} />
+          <meshStandardMaterial
+            color="#4a5568"
+            roughness={0.4}
+            metalness={0.6}
+          />
         </mesh>
       </RigidBody>
-      <RigidBody type="fixed" position={[0, 0.25, TABLE_TOP_SIZE[2] / 2 - 0.2]} name="table-surface">
+      <RigidBody
+        type="fixed"
+        position={[0, 0.25, TABLE_TOP_SIZE[2] / 2 - 0.2]}
+        name="table-surface"
+      >
         <mesh receiveShadow>
           <boxGeometry args={[TABLE_TOP_SIZE[0] - 0.4, 0.04, 0.04]} />
-          <meshStandardMaterial color="#4a5568" roughness={0.4} metalness={0.6} />
+          <meshStandardMaterial
+            color="#4a5568"
+            roughness={0.4}
+            metalness={0.6}
+          />
         </mesh>
       </RigidBody>
 
       {/* Side support bars */}
-      <RigidBody type="fixed" position={[-TABLE_TOP_SIZE[0] / 2 + 0.2, 0.25, 0]} name="table-surface">
+      <RigidBody
+        type="fixed"
+        position={[-TABLE_TOP_SIZE[0] / 2 + 0.2, 0.25, 0]}
+        name="table-surface"
+      >
         <mesh receiveShadow>
           <boxGeometry args={[0.04, 0.04, TABLE_TOP_SIZE[2] - 0.4]} />
-          <meshStandardMaterial color="#4a5568" roughness={0.4} metalness={0.6} />
+          <meshStandardMaterial
+            color="#4a5568"
+            roughness={0.4}
+            metalness={0.6}
+          />
         </mesh>
       </RigidBody>
-      <RigidBody type="fixed" position={[TABLE_TOP_SIZE[0] / 2 - 0.2, 0.25, 0]} name="table-surface">
+      <RigidBody
+        type="fixed"
+        position={[TABLE_TOP_SIZE[0] / 2 - 0.2, 0.25, 0]}
+        name="table-surface"
+      >
         <mesh receiveShadow>
           <boxGeometry args={[0.04, 0.04, TABLE_TOP_SIZE[2] - 0.4]} />
-          <meshStandardMaterial color="#4a5568" roughness={0.4} metalness={0.6} />
+          <meshStandardMaterial
+            color="#4a5568"
+            roughness={0.4}
+            metalness={0.6}
+          />
         </mesh>
       </RigidBody>
     </group>
@@ -212,10 +283,12 @@ const LabFloor = () => {
 /**
  * Canvas content - được render bên trong <Canvas> từ ExperimentEnvironment
  */
-const ExperimentCanvasContent = ({
-  droppedItems,
-}: ExperimentCanvasProps) => {
+const ExperimentCanvasContent = ({ onItemDropped: _ }: ExperimentCanvasProps) => {
   useThree();
+
+  // Đọc trực tiếp từ store để tránh Canvas re-mount khi ExperimentPopup re-render
+  const droppedItems = useExperimentStore((s) => s.droppedItems);
+  const removeDroppedItem = useExperimentStore((s) => s.removeDroppedItem);
 
   // Track if any object is being dragged - used to disable camera controls
   const [isDragging, setIsDragging] = useState(false);
@@ -267,15 +340,16 @@ const ExperimentCanvasContent = ({
         {/* Lab Floor */}
         <LabFloor />
 
-        {/* Dropped items - drag to move on table */}
         {droppedItems &&
           Array.from(droppedItems.values()).map((item) => (
-            <EquipmentModel
-              key={item.id}
-              droppedItem={item}
-              tableHeight={TABLE_HEIGHT + TABLE_TOP_SIZE[1] / 2}
-              onDragChange={setIsDragging}
-            />
+            <Suspense key={item.id} fallback={null}>
+              <EquipmentModel
+                droppedItem={item}
+                tableHeight={TABLE_HEIGHT + TABLE_TOP_SIZE[1] / 2}
+                onDragChange={setIsDragging}
+                onRemove={removeDroppedItem}
+              />
+            </Suspense>
           ))}
       </Physics>
     </>
@@ -287,8 +361,7 @@ const ExperimentCanvasContent = ({
  */
 export const ExperimentEnvironment = ({
   onItemDropped,
-  droppedItems,
-}: ExperimentCanvasProps) => {
+}: Omit<ExperimentCanvasProps, 'droppedItems' | 'onRemove'>) => {
   return (
     <CanvasErrorBoundary>
       <Canvas
@@ -301,20 +374,14 @@ export const ExperimentEnvironment = ({
         camera={{ position: [0, 2.5, 4], fov: 50 }}
         style={{ background: '#9aa3ad' }}
       >
-        <Suspense fallback={null}>
-          <ExperimentCanvasContent
-            onItemDropped={onItemDropped}
-            droppedItems={droppedItems}
-          />
-        </Suspense>
+        {/* Không dùng Suspense bao quanh toàn bộ content — sẽ gây flash đen khi model load */}
+        <ExperimentCanvasContent onItemDropped={onItemDropped} />
       </Canvas>
     </CanvasErrorBoundary>
   );
 };
 
-// Preload table model if available
-try {
-  useGLTF.preload('/models/table.glb');
-} catch {
-  // Ignore preload errors
-}
+// Preload tất cả model đã đăng ký để useGLTF không suspend khi drop
+EQUIPMENT_REGISTRY.forEach((item) => {
+  try { useGLTF.preload(item.modelPath); } catch { /* ignore */ }
+});

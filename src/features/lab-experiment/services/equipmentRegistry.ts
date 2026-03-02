@@ -55,7 +55,7 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     id: 'test-tube',
     name: 'Ống nghiệm',
     category: 'containers',
-    modelPath: '/models/duathuytinh.glb',
+    modelPath: '/models/ong_nghiem_init.glb',
     mass: 0.05,
     isDraggable: true,
     dimensions: { width: 0.02, height: 0.15, depth: 0.02 },
@@ -66,13 +66,13 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
   // Tools
   {
     id: 'thermometer',
-    name: 'Nhiệt kế',
+    name: 'Giá đỡ',
     category: 'tools',
     modelPath: '/models/decodinhongnghiem.glb',
     mass: 0.02,
     isDraggable: true,
     dimensions: { width: 0.005, height: 0.3, depth: 0.005 },
-    description: 'Đo nhiệt độ',
+    description: 'Giá đỡ ống nghiệm',
     scale: 3,
   },
   {
@@ -141,7 +141,67 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     description: 'Giấy lọc dùng trong phòng thí nghiệm',
     scale: 4,
   },
+  {
+    id: 'FE-powder',
+    name: 'FE',
+    category: 'substances',
+    modelPath: '/models/bot_fe.glb',
+    mass: 0.01,
+    isDraggable: true,
+    dimensions: { width: 0.1, height: 0.001, depth: 0.1 },
+    description: 'Bột sắt',
+    scale: 2.5,
+  },
+  {
+    id: 'S-powder',
+    name: 'S',
+    category: 'substances',
+    modelPath: '/models/bot_s.glb',
+    mass: 0.01,
+    isDraggable: true,
+    dimensions: { width: 0.1, height: 0.001, depth: 0.1 },
+    description: 'Bột lưu huỳnh',
+    scale: 2.5,
+  },
 ];
+
+export const EQUIPMENT_IDS = {
+  BEAKER_150ML: "beaker-150ml",
+  BEAKER_250ML: "beaker-250ml",
+  BEAKER_500ML: "beaker-500ml",
+  FLASK_ROUND: "flask-round",
+  TEST_TUBE: "test-tube",
+  THERMOMETER: "thermometer",
+  DROPPER: "dropper",
+  FUNNEL: "funnel",
+  ALCOHOL_LAMP: "alcohol-lamp",
+  IRON_RING: "iron-ring",
+  CAP_CONNECTOR: "cap-connector",
+  FILTER_PAPER: "filter-paper",
+  FE_POWDER: "FE-powder",
+  S_POWDER: "S-powder",
+};
+
+export const GUIDED_EXPERIMENTS = [
+  {
+    id: 'test1',
+    name: 'Điều chế FeS trong phòng thí nghiệm',
+    description: 'description',
+    equipment: [
+      { id: EQUIPMENT_IDS.ALCOHOL_LAMP, position: [-0.5, 1.5, 0], rotation: [0, 0, 0] },
+      { id: EQUIPMENT_IDS.TEST_TUBE, position: [0, 1.5, 0], rotation: [0, 0, 0] },
+      { id: EQUIPMENT_IDS.THERMOMETER, position: [0.5, 1.5, 0], rotation: [0, 0, 0] },
+      { id: EQUIPMENT_IDS.FE_POWDER, position: [1, 1.5, 0], rotation: [0, 0, 0] },
+      { id: EQUIPMENT_IDS.S_POWDER, position: [1.5, 1.5, 0], rotation: [0, 0, 0] },
+    ]
+  }
+];
+
+/** Màu hiển thị tương ứng với từng chất bột */
+export const SUBSTANCE_COLORS: Record<string, string> = {
+  "FE-powder": "#9ca3af",  // xám bạc (bột sắt)
+  "S-powder": "#facc15",  // vàng (lưu huỳnh)
+};
 
 /**
  * Group equipment by category

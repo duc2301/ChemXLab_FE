@@ -1,131 +1,153 @@
-import { X } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+import { ArrowLeft, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { EquipmentPanel } from '../components/EquipmentPanel';
-import { getEquipmentById } from '../services/equipmentRegistry';
+import { EQUIPMENT_IDS, SUBSTANCE_COLORS, getEquipmentById } from '../services/equipmentRegistry';
 import { useExperimentStore } from '../services/experimentStore';
 import { generateUUID } from '../services/idGenerator';
 import type { DroppedItem } from '../types/equipment';
 import { ExperimentEnvironment } from './ExperimentEnvironment';
 
-/**
- * Experiment Popup Modal
- * 
- * Hiển thị giao diện thí nghiệm khi người dùng bấm F gần bàn
- * - Panel công cụ bên trái (có thể kéo thả)
- * - Canvas 3D bên phải (bàn thí nghiệm cố định)
- * - ESC để đóng
- * - Ẩn chuột ngoài (show cursor bên trong)
- */
-export const ExperimentPopup = () => {
+const menuBtnStyle: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: "8px",
+  width: "100%",
+  padding: "8px 12px",
+  background: "none",
+  border: "none",
+  borderRadius: "6px",
+  fontSize: "13px",
+  cursor: "pointer",
+  transition: "background 0.15s",
+};
+
+export const ExperimentPopup = ({ onBackToMenu }: { onBackToMenu: () => void }) => {
   const {
     isModalOpen,
     closeModal,
     droppedItems,
     addDroppedItem,
+    removeDroppedItem,
     setCursorVisible,
+    contextMenu,
+    setContextMenu,
+    heldSubstance,
+    setHeldSubstance,
+    alcoholLampStatus,
+    toggleAlcoholLamp,
+    clearItems,
   } = useExperimentStore();
 
   const canvasRef = useRef<HTMLDivElement>(null);
+  const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 });
 
-  // Handle ESC key
+  // Track mouse for badge overlay
+  useEffect(() => {
+    if (!heldSubstance) return;
+    const move = (e: MouseEvent) => setCursorPos({ x: e.clientX, y: e.clientY });
+    document.addEventListener('mousemove', move);
+    return () => document.removeEventListener('mousemove', move);
+  }, [heldSubstance]);
+
+  // ESC → cancel holding or close modal
   useEffect(() => {
     if (!isModalOpen) return;
-
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.preventDefault();
-        closeModal();
-        setCursorVisible(false);
+        if (heldSubstance) {
+          setHeldSubstance(null);
+        } else {
+          closeModal();
+          setCursorVisible(false);
+        }
       }
     };
-
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isModalOpen, closeModal, setCursorVisible]);
+  }, [isModalOpen, closeModal, setCursorVisible, heldSubstance, setHeldSubstance]);
+
+  // Close context menu on outside click
+  useEffect(() => {
+    if (!contextMenu) return;
+    const close = () => setContextMenu(null);
+    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') close(); };
+    document.addEventListener('pointerdown', close);
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.removeEventListener('pointerdown', close);
+      document.removeEventListener('keydown', handleKey);
+    };
+  }, [contextMenu, setContextMenu]);
+
+  // Cursor style when holding powder
+  useEffect(() => {
+    document.body.style.cursor = heldSubstance ? 'crosshair' : 'auto';
+    return () => { document.body.style.cursor = 'auto'; };
+  }, [heldSubstance]);
 
   // Cursor visibility management
   useEffect(() => {
     if (isModalOpen) {
-      // Tắt pointer lock hoàn toàn, show cursor
-      try {
-        document.exitPointerLock?.();
-      } catch (e) {
-        console.log('exitPointerLock failed', e);
-      }
+      try { document.exitPointerLock?.(); } catch { /* ignore */ }
       setCursorVisible(true);
       document.body.style.cursor = 'auto';
-      // Đảm bảo pointer lock không hoạt động
-      document.addEventListener('click', () => {
-        document.exitPointerLock?.();
-      }, { once: true });
+      document.addEventListener('click', () => { document.exitPointerLock?.(); }, { once: true });
     } else {
-      // Restore default cursor
       document.body.style.cursor = 'auto';
     }
-
-    return () => {
-      document.body.style.cursor = 'auto';
-    };
+    return () => { document.body.style.cursor = 'auto'; };
   }, [isModalOpen, setCursorVisible]);
 
-  // Handle drag over canvas
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
     e.dataTransfer.dropEffect = 'copy';
   };
 
-  // Handle drop on canvas
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
-
     const equipmentId = e.dataTransfer.getData('equipmentId');
-    console.log('Drop event fired. Equipment ID:', equipmentId);
-
-    if (!equipmentId) {
-      console.warn('Drop failed: no equipment ID in dataTransfer');
-      return;
-    }
-
-    // Get equipment from registry
+    if (!equipmentId) return;
     const equipment = getEquipmentById(equipmentId);
-    if (!equipment) {
-      console.warn(`Equipment not found in registry: ${equipmentId}`);
-      return;
-    }
-
-    // Calculate drop position on table surface
+    if (!equipment) return;
     const canvas = canvasRef.current;
-    if (!canvas) {
-      console.warn('Canvas ref not found');
-      return;
-    }
-
+    if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
-
-    // Get position relative to canvas
     const canvasX = (e.clientX - rect.left) / rect.width;
     const canvasY = (e.clientY - rect.top) / rect.height;
-
-    // Map to 3D space (table surface at Y=0.85, size 6x3)
-    // Canvas center is (0.5, 0.5)
-    const tableX = (canvasX - 0.5) * 5; // Range: -2.5 to 2.5 (within table bounds)
-    const tableZ = (canvasY - 0.5) * 2.5; // Range: -1.25 to 1.25 (within table bounds)
-
+    const tableX = (canvasX - 0.5) * 5;
+    const tableZ = (canvasY - 0.5) * 2.5;
     const droppedItem: DroppedItem = {
       id: generateUUID(),
       equipmentId: equipment.id,
-      position: [tableX, 1.5, tableZ], // Y = above table for physics drop
-      rotation: [0, Math.random() * Math.PI * 2, 0], // Random rotation
+      position: [tableX, 1.5, tableZ],
+      rotation: [0, 0, 0],
       timestamp: Date.now(),
+      collider: "cuboid",
     };
-
-    console.log('Item dropped:', equipment.name, 'at position:', droppedItem.position);
     addDroppedItem(droppedItem);
   };
 
+  // Tìm item đang được right-click để biết nó có phải substance không
+  const contextMenuItem = contextMenu
+    ? droppedItems.get(contextMenu.itemId)
+    : null;
+  const contextEquipment = contextMenuItem
+    ? getEquipmentById(contextMenuItem.equipmentId)
+    : null;
+  const isSubstance = contextEquipment?.category === 'substances';
+  const isAlcoholLamp = contextEquipment?.id === EQUIPMENT_IDS.ALCOHOL_LAMP;
+  const isBurning = contextMenu ? (alcoholLampStatus.get(contextMenu.itemId) ?? false) : false;
+
   if (!isModalOpen) return null;
+
+  const handleBack = () => {
+    clearItems();     // 1. Dọn sạch bàn
+    closeModal();     // 2. Đóng popup hiện tại
+    onBackToMenu();   // 3. Gọi callback để hiện lại ModeMenu
+  };
 
   return (
     <>
@@ -136,59 +158,176 @@ export const ExperimentPopup = () => {
       <div className="fixed inset-4 z-50 bg-gray-900 rounded-lg shadow-2xl border border-gray-700 flex flex-col overflow-hidden">
         {/* Header */}
         <div className="px-4 py-3 bg-gray-800 border-b border-gray-700 flex items-center justify-between">
-          <h1 className="text-white font-bold text-lg">Bàn Thí Nghiệm</h1>
-          <button
-            onClick={closeModal}
-            className="p-1 hover:bg-gray-700 rounded transition-colors"
-            title="Đóng (ESC)"
-          >
+          <div className="flex items-center gap-4">
+            {/* NÚT QUAY LẠI */}
+            <button
+              onClick={handleBack}
+              className="flex items-center gap-2 px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-md transition-colors text-sm font-medium border border-gray-600"
+            >
+              <ArrowLeft size={16} />
+              Chọn thí nghiệm khác
+            </button>
+            <h1 className="text-white font-bold text-lg">Bàn Thí Nghiệm</h1>
+          </div>
+          
+          <button onClick={closeModal} className="p-1 hover:bg-gray-700 rounded transition-colors">
             <X size={24} className="text-gray-300 hover:text-white" />
           </button>
         </div>
 
         {/* Main content */}
         <div className="flex-1 flex overflow-hidden">
-          {/* Left panel - Equipment list */}
-          <EquipmentPanel
-            onSelectEquipment={() => {
-              // Selection callback no longer needed - we get ID from dataTransfer
-            }}
-          />
+          <EquipmentPanel onSelectEquipment={() => { }} />
 
-          {/* Right area - Canvas & Info */}
           <div className="flex-1 flex flex-col">
             {/* Info bar */}
             <div className="px-4 py-2 bg-gray-800 border-b border-gray-700 text-sm text-gray-400">
-              <p>Kéo dụng cụ từ bên trái xuống bàn. Click giữ để di chuyển. Nhấn ESC để thoát.</p>
+              {heldSubstance ? (
+                <p style={{ color: heldSubstance.color }}>
+                  🧪 Đang cầm <strong>{heldSubstance.name}</strong> — Click vào ống nghiệm để đổ vào. ESC để huỷ.
+                </p>
+              ) : (
+                <p>Kéo dụng cụ từ bên trái xuống bàn. Chuột phải để xem tùy chọn. ESC để thoát.</p>
+              )}
             </div>
 
             {/* Canvas */}
             <div
               ref={canvasRef}
-              className="flex-1 bg-black cursor-move"
+              className="flex-1 bg-black"
+              style={{ cursor: heldSubstance ? 'crosshair' : 'auto' }}
               onDragOver={handleDragOver}
               onDrop={handleDrop}
+              // Click ra ngoài ống nghiệm → hủy cầm bột
+              onClick={heldSubstance ? () => setHeldSubstance(null) : undefined}
             >
               <ExperimentEnvironment
-                droppedItems={droppedItems}
                 onItemDropped={addDroppedItem}
               />
             </div>
           </div>
         </div>
-
-        {/* Status bar */}
-         <div className="px-4 py-2 bg-gray-900 border-t border-gray-700 text-xs text-gray-500">
-          <span>Dụng cụ: {droppedItems.size} </span>
-          <div className="flex gap-4">
-            {Array.from(droppedItems.values()).map(item => (
-              <span key={item.id} className="font-mono">
-                ID: {item.id.slice(0, 4)}... Pos: [{item.position.map(p => p.toFixed(2)).join(', ')}]
-              </span>
-            ))}
-          </div>
-        </div>
       </div>
+
+      {/* ─── Cursor badge khi đang cầm bột ─────────────────────────── */}
+      {heldSubstance && (
+        <div
+          style={{
+            position: "fixed",
+            top: cursorPos.y + 18,
+            left: cursorPos.x + 12,
+            zIndex: 10000,
+            pointerEvents: "none",
+            background: "#1e2530",
+            border: `2px solid ${heldSubstance.color}`,
+            borderRadius: "99px",
+            padding: "3px 10px",
+            fontSize: "10px",
+            fontWeight: 600,
+            color: heldSubstance.color,
+            boxShadow: `0 2px 12px ${heldSubstance.color}66`,
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+            userSelect: "none",
+          }}
+        >
+          <span style={{
+            width: 10, height: 10, borderRadius: "50%",
+            background: heldSubstance.color, flexShrink: 0,
+          }} />
+          {heldSubstance.name}
+        </div>
+      )}
+
+      {/* ─── Context menu ───────────────────────────────────────────── */}
+      {contextMenu && (
+        <div
+          onPointerDown={(e) => e.stopPropagation()}
+          style={{
+            position: "fixed",
+            top: contextMenu.y,
+            left: contextMenu.x,
+            zIndex: 9999,
+            background: "#1e2530",
+            border: "1px solid #374151",
+            borderRadius: "8px",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
+            padding: "4px",
+            minWidth: "170px",
+            fontFamily: "sans-serif",
+          }}
+        >
+          {/* Tên vật thể */}
+          <div style={{
+            padding: "4px 8px 6px",
+            fontSize: "11px",
+            color: "#6b7280",
+            borderBottom: "1px solid #374151",
+            marginBottom: "4px",
+            userSelect: "none",
+          }}>
+            {contextEquipment?.name ?? "Vật thể"}
+          </div>
+
+          {/* Lấy bột — chỉ hiện nếu là substance */}
+          {isSubstance && contextEquipment && (
+            <button
+              style={{ ...menuBtnStyle, color: SUBSTANCE_COLORS[contextEquipment.id] ?? "#a3e635" }}
+              onClick={() => {
+                setHeldSubstance({
+                  substanceId: contextEquipment.id,
+                  name: contextEquipment.name,
+                  color: SUBSTANCE_COLORS[contextEquipment.id] ?? "#a3e635",
+                });
+                setContextMenu(null);
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.background = "rgba(163,230,53,0.1)";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.background = "none";
+              }}
+            >
+              🧪&nbsp; Lấy bột
+            </button>
+          )}
+
+          {isAlcoholLamp && (
+            <button
+              style={{ 
+                ...menuBtnStyle, 
+                color: isBurning ? "#f59e0b" : "#60a5fa" 
+              }}
+              onClick={() => {
+                toggleAlcoholLamp(contextMenu.itemId);
+                setContextMenu(null);
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = "rgba(245,158,11,0.1)"}
+              onMouseLeave={(e) => e.currentTarget.style.background = "none"}
+            >
+              {isBurning ? "🔥 Tắt lửa" : "🔥 Thắp lửa"}
+            </button>
+          )}
+
+          {/* Xóa vật thể */}
+          <button
+            style={{ ...menuBtnStyle, color: "#f87171" }}
+            onClick={() => {
+              removeDroppedItem(contextMenu.itemId);
+              setContextMenu(null);
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.background = "rgba(239,68,68,0.15)";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.background = "none";
+            }}
+          >
+            🗑&nbsp; Xóa vật thể
+          </button>
+        </div>
+      )}
     </>
   );
 };
