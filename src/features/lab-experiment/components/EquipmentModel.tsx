@@ -850,7 +850,7 @@ const PowderLayer = ({
         startY: spawnInstant ? t.y : TUBE_TOP_Y + 0.02 + Math.random() * 0.02,
         targetPos: t,
         color: color,
-        delay: spawnInstant ? 0 : heightFrac * 1.5 + Math.random() * 0.4, // sequential pour delay
+        delay: spawnInstant ? 0 : heightFrac * 0.5 + Math.random() * 0.1, // sequential pour delay
         currentY: spawnInstant ? t.y : TUBE_TOP_Y + 0.02 + Math.random() * 0.02,
         velY: spawnInstant ? 0 : -(Math.random() * 0.1 + 0.05),
         settled: spawnInstant,
@@ -888,20 +888,21 @@ const PowderLayer = ({
 
     // Glow logic
     let glowIntensity = 0;
-    if (reactionProgress > 0 && reactionProgress < 0.166) {
-      glowIntensity = reactionProgress / 0.166;
-    } else if (reactionProgress >= 0.166 && reactionProgress <= 0.833) {
+    if (reactionProgress > 0.05 && reactionProgress < 0.2) {
+      glowIntensity = (reactionProgress - 0.05) / 0.15;
+    } else if (reactionProgress >= 0.2 && reactionProgress <= 0.833) {
       glowIntensity = 1;
     } else if (reactionProgress > 0.833 && reactionProgress < 1.0) {
       glowIntensity = 1 - (reactionProgress - 0.833) / (1 - 0.833);
     }
 
     if (materialRef.current) {
-      materialRef.current.emissive.set("#ff4400");
-      materialRef.current.emissiveIntensity = glowIntensity * 2.0;
+      // Use a slightly deeper red/orange to avoid pinkish tint on grey
+      materialRef.current.emissive.set("#ff1100");
+      materialRef.current.emissiveIntensity = glowIntensity * 1.5;
     }
 
-    const wobbleActive = reactionProgress > 0.166 && reactionProgress < 0.833;
+    const wobbleActive = reactionProgress > 0.333 && reactionProgress < 0.833;
     const fractionalProgress = Math.max(0, Math.min(1, (reactionProgress - 0.166) / (0.833 - 0.166)));
     const totalGrains = Math.round(totalGrams * GRAINS_PER_GRAM);
 
@@ -913,7 +914,7 @@ const PowderLayer = ({
       // Gravity
       if (!g.settled) {
         needsUpdate = true;
-        g.velY -= 1.8 * dt; // gravity in model-space
+        g.velY -= 3.5 * dt; // stronger gravity in model-space
         g.currentY += g.velY * dt;
 
         // Floor collision at target Y
@@ -929,17 +930,20 @@ const PowderLayer = ({
         }
       }
 
-      // Wobble effect
-      let wobbleX = 0, wobbleZ = 0;
+      // Wobble effect: lighter, more random localized bubbling
+      let wobbleX = 0, wobbleY = 0, wobbleZ = 0;
       if (g.settled && wobbleActive) {
-        const tParam = elapsed.current * 10 + i;
-        wobbleX = Math.sin(tParam) * 0.0002;
-        wobbleZ = Math.cos(tParam * 1.2) * 0.0002;
+        const speedMultiplier = 12 + (i % 5); // randomize speed per particle
+        const tParam = elapsed.current * speedMultiplier + (i * 0.1); // randomize phase
+
+        wobbleX = Math.sin(tParam) * 0.0001;
+        wobbleZ = Math.cos(tParam * 1.3) * 0.0001;
+        wobbleY = Math.sin(tParam * 2.0) * 0.00015; // mostly vertical bubbling
         needsUpdate = true;
       }
 
       // Update instance matrix
-      _dummyObj.position.set(g.targetPos.x + wobbleX, g.currentY, g.targetPos.z + wobbleZ);
+      _dummyObj.position.set(g.targetPos.x + wobbleX, g.currentY + wobbleY, g.targetPos.z + wobbleZ);
       // Phóng to hạt 3.5 lần khi đang rơi để dễ nhìn hơn, thu về kích thước chuẩn khi đã chạm vị trí
       const s = g.settled ? 1 : 2;
       _dummyObj.scale.set(s, s, s);
@@ -1075,21 +1079,21 @@ const StirredLayer = ({
 
     // Glow logic
     let glowIntensity = 0;
-    if (reactionProgress > 0 && reactionProgress < 0.166) {
-      glowIntensity = reactionProgress / 0.166;
-    } else if (reactionProgress >= 0.166 && reactionProgress <= 0.833) {
+    if (reactionProgress > 0.05 && reactionProgress < 0.2) {
+      glowIntensity = (reactionProgress - 0.05) / 0.15;
+    } else if (reactionProgress >= 0.2 && reactionProgress <= 0.833) {
       glowIntensity = 1;
     } else if (reactionProgress > 0.833 && reactionProgress < 1.0) {
       glowIntensity = 1 - (reactionProgress - 0.833) / (1 - 0.833);
     }
 
     if (materialRef.current) {
-      materialRef.current.emissive.set("#ff4400");
-      materialRef.current.emissiveIntensity = glowIntensity * 2.0;
+      materialRef.current.emissive.set("#ff1100");
+      materialRef.current.emissiveIntensity = glowIntensity * 1.5;
     }
 
     const fractionalProgress = Math.max(0, Math.min(1, (reactionProgress - 0.166) / (0.833 - 0.166)));
-    const wobbleActive = reactionProgress > 0.166 && reactionProgress < 0.833;
+    const wobbleActive = reactionProgress > 0.333 && reactionProgress < 0.833;
 
     const grains = grainRef.current!;
     const t = state.clock.getElapsedTime();
@@ -1100,14 +1104,19 @@ const StirredLayer = ({
       // Small swirling/vibrating effect around base position
       let dx = Math.sin(t * g.speed + g.phaseX) * g.radius * intensity;
       let dz = Math.cos(t * g.speed + g.phaseZ) * g.radius * intensity;
+      let dy = 0;
 
       if (wobbleActive) {
-        dx += Math.sin(t * 10 + i) * 0.0002;
-        dz += Math.cos(t * 12 + i) * 0.0002;
+        const speedMultiplier = 12 + (i % 5);
+        const tParam = t * speedMultiplier + (i * 0.1);
+
+        dx += Math.sin(tParam) * 0.0001;
+        dz += Math.cos(tParam * 1.3) * 0.0001;
+        dy += Math.sin(tParam * 2.0) * 0.00015;
       }
 
       // Update instance matrix
-      _dummyObj.position.set(g.basePos.x + dx, g.basePos.y, g.basePos.z + dz);
+      _dummyObj.position.set(g.basePos.x + dx, g.basePos.y + dy, g.basePos.z + dz);
 
       // Khởi tạo ngẫu nhiên scale chút xíu cho hạt có vẻ lấp lánh (sparkle) hoặc rung động nhẹ
       const scaleVariation = 1.0 + (Math.sin(t * 10 + g.phaseX) * 0.1 * intensity);
