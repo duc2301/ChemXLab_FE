@@ -12,6 +12,7 @@ export interface HeldSubstance {
 export interface TubeContent {
   substanceId: string;
   amount: number;
+  instant?: boolean;
 }
 
 
@@ -43,6 +44,9 @@ interface ExperimentStore extends ExperimentState {
   stirTestTube: (testTubeId: string, layersCount: number) => void;
   alcoholLampStatus: Map<string, boolean>; // instanceId -> isBurning
   toggleAlcoholLamp: (id: string) => void;
+  reactionProgress: Map<string, number>; // tubeId -> progress (0 to 1)
+  updateReactionProgress: (tubeId: string, progressDelta: number) => void;
+  finishReaction: (tubeId: string, resultingSubstanceId: string) => void;
   clearItems: () => void;
 }
 
@@ -55,6 +59,7 @@ export const useExperimentStore = create<ExperimentStore>((set) => ({
   heldSubstance: null,
   testTubeContents: new Map(),
   stirredTubes: {},
+  reactionProgress: new Map(),
 
   openModal: () =>
     set({
@@ -96,11 +101,14 @@ export const useExperimentStore = create<ExperimentStore>((set) => ({
       delete newStirred[itemId];
       const newLampStatus = new Map(state.alcoholLampStatus);
       newLampStatus.delete(itemId);
+      const newReactionProgress = new Map(state.reactionProgress);
+      newReactionProgress.delete(itemId);
       return {
         droppedItems: newItems,
         testTubeContents: newContents,
         alcoholLampStatus: newLampStatus,
-        stirredTubes: newStirred
+        stirredTubes: newStirred,
+        reactionProgress: newReactionProgress,
       };
     }),
 
@@ -156,11 +164,43 @@ export const useExperimentStore = create<ExperimentStore>((set) => ({
       return { stirredTubes: newStirred };
     }),
 
+  updateReactionProgress: (tubeId, progressDelta) =>
+    set((state) => {
+      const newProgress = new Map(state.reactionProgress);
+      const current = newProgress.get(tubeId) ?? 0;
+      const next = Math.min(1, current + progressDelta);
+      newProgress.set(tubeId, next);
+      return { reactionProgress: newProgress };
+    }),
+
+  finishReaction: (tubeId, resultingSubstanceId) =>
+    set((state) => {
+      const newContents = new Map(state.testTubeContents);
+      const currentContents = newContents.get(tubeId) ?? [];
+      const totalAmount = currentContents.reduce((acc, c) => acc + c.amount, 0);
+
+      // Replace with resulting substance
+      newContents.set(tubeId, [{ substanceId: resultingSubstanceId, amount: totalAmount, instant: true }]);
+
+      const newProgress = new Map(state.reactionProgress);
+      newProgress.set(tubeId, 0); // Reset
+
+      const newStirred = { ...state.stirredTubes };
+      delete newStirred[tubeId]; // Remove stir state
+
+      return {
+        testTubeContents: newContents,
+        reactionProgress: newProgress,
+        stirredTubes: newStirred
+      };
+    }),
+
   clearItems: () =>
     set({
       droppedItems: new Map(),
       alcoholLampStatus: new Map(),
       heldSubstance: null,
       contextMenu: null,
+      reactionProgress: new Map(),
     }),
 }));

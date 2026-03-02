@@ -151,6 +151,7 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     dimensions: { width: 0.1, height: 0.001, depth: 0.1 },
     description: 'Bột sắt',
     scale: 2.5,
+    isMagnetic: true,
   },
   {
     id: 'S-powder',
@@ -162,6 +163,18 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     dimensions: { width: 0.1, height: 0.001, depth: 0.1 },
     description: 'Bột lưu huỳnh',
     scale: 2.5,
+  },
+  {
+    id: 'FeS-powder',
+    name: 'FeS',
+    category: 'substances',
+    modelPath: '/models/bot_s.glb', // Use S powder model as placeholder or same logic
+    mass: 0.01,
+    isDraggable: true,
+    dimensions: { width: 0.1, height: 0.001, depth: 0.1 },
+    description: 'Sắt(II) sulfide',
+    scale: 2.5,
+    isMagnetic: false,
   },
 ];
 
@@ -180,6 +193,7 @@ export const EQUIPMENT_IDS = {
   FILTER_PAPER: "filter-paper",
   FE_POWDER: "FE-powder",
   S_POWDER: "S-powder",
+  FES_POWDER: "FeS-powder",
 };
 
 export const GUIDED_EXPERIMENTS = [
@@ -201,6 +215,7 @@ export const GUIDED_EXPERIMENTS = [
 export const SUBSTANCE_COLORS: Record<string, string> = {
   "FE-powder": "#9ca3af",  // xám bạc (bột sắt)
   "S-powder": "#facc15",  // vàng (lưu huỳnh)
+  "FeS-powder": "#2d2d2d", // đen/xám đậm (Sắt(II) sulfide)
 };
 
 /**

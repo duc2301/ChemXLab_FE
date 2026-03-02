@@ -22,6 +22,7 @@ export interface EquipmentItem {
   maxStackCount?: number; // Nếu có thể stack
   description?: string;
   scale?: number; // Scale multiplier for 3D model (default: 1)
+  isMagnetic?: boolean;
 }
 
 export interface DroppedItem {
