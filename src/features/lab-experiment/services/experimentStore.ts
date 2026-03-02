@@ -6,7 +6,14 @@ export interface HeldSubstance {
   substanceId: string;
   name: string;
   color: string;
+  amount: number;
 }
+
+export interface TubeContent {
+  substanceId: string;
+  amount: number;
+}
+
 
 export interface AlcoholLampData {
   id: string;
@@ -30,8 +37,10 @@ interface ExperimentStore extends ExperimentState {
   // ─── Powder pick-and-pour ────────────────────────────────────────────────────
   heldSubstance: HeldSubstance | null;
   setHeldSubstance: (sub: HeldSubstance | null) => void;
-  testTubeContents: Map<string, string[]>; // testTubeInstanceId -> substanceId[]
-  addSubstanceToTestTube: (testTubeId: string, substanceId: string) => void;
+  testTubeContents: Map<string, TubeContent[]>; // testTubeInstanceId -> TubeContent[]
+  addSubstanceToTestTube: (testTubeId: string, substanceId: string, amount?: number) => void;
+  stirredTubes: Record<string, number>; // test tube IDs -> number of layers stirred
+  stirTestTube: (testTubeId: string, layersCount: number) => void;
   alcoholLampStatus: Map<string, boolean>; // instanceId -> isBurning
   toggleAlcoholLamp: (id: string) => void;
   clearItems: () => void;
@@ -45,6 +54,7 @@ export const useExperimentStore = create<ExperimentStore>((set) => ({
   contextMenu: null,
   heldSubstance: null,
   testTubeContents: new Map(),
+  stirredTubes: {},
 
   openModal: () =>
     set({
@@ -82,13 +92,15 @@ export const useExperimentStore = create<ExperimentStore>((set) => ({
       newItems.delete(itemId);
       const newContents = new Map(state.testTubeContents);
       newContents.delete(itemId);
-      // Xóa trạng thái đèn khi xóa vật thể
+      const newStirred = { ...state.stirredTubes };
+      delete newStirred[itemId];
       const newLampStatus = new Map(state.alcoholLampStatus);
       newLampStatus.delete(itemId);
       return {
         droppedItems: newItems,
         testTubeContents: newContents,
         alcoholLampStatus: newLampStatus,
+        stirredTubes: newStirred
       };
     }),
 
@@ -128,12 +140,20 @@ export const useExperimentStore = create<ExperimentStore>((set) => ({
       return { alcoholLampStatus: newStatus };
     }),
 
-  addSubstanceToTestTube: (testTubeId, substanceId) =>
+  addSubstanceToTestTube: (testTubeId, substanceId, amount = 1) =>
     set((state) => {
       const newContents = new Map(state.testTubeContents);
       const existing = newContents.get(testTubeId) ?? [];
-      newContents.set(testTubeId, [...existing, substanceId]);
+      const addedItem: TubeContent = { substanceId, amount };
+      newContents.set(testTubeId, [...existing, addedItem]);
       return { testTubeContents: newContents };
+    }),
+
+  stirTestTube: (testTubeId, layersCount) =>
+    set((state) => {
+      const newStirred = { ...state.stirredTubes };
+      newStirred[testTubeId] = layersCount;
+      return { stirredTubes: newStirred };
     }),
 
   clearItems: () =>
