@@ -8,5 +8,6 @@ export interface Payment {
     createdAt?: string;
     paymentMethod: string;
     transactionCode: string;
+    paidAt?: string;
     qrUrl?: string;
 }
