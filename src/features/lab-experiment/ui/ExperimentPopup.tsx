@@ -209,7 +209,7 @@ export const ExperimentPopup = ({ onBackToMenu }: { onBackToMenu: () => void }) 
         </div>
 
         {/* Status bar */}
-        <div className="px-4 py-2 bg-gray-900 border-t border-gray-700 text-xs text-gray-500 flex justify-between">
+         <div className="px-4 py-2 bg-gray-900 border-t border-gray-700 text-xs text-gray-500">
           <span>Dụng cụ: {droppedItems.size} </span>
           <div className="flex gap-4">
             {Array.from(droppedItems.values()).map(item => (
