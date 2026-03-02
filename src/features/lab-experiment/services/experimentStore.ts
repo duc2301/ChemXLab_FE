@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { DroppedItem, ExperimentState } from "../types/equipment";
 import type { RigidBodyAutoCollider } from "@react-three/rapier";
+import { EQUIPMENT_IDS } from "./equipmentRegistry";
 
 export interface HeldSubstance {
   substanceId: string;
@@ -14,7 +15,6 @@ export interface TubeContent {
   amount: number;
   instant?: boolean;
 }
-
 
 export interface AlcoholLampData {
   id: string;
@@ -39,7 +39,11 @@ interface ExperimentStore extends ExperimentState {
   heldSubstance: HeldSubstance | null;
   setHeldSubstance: (sub: HeldSubstance | null) => void;
   testTubeContents: Map<string, TubeContent[]>; // testTubeInstanceId -> TubeContent[]
-  addSubstanceToTestTube: (testTubeId: string, substanceId: string, amount?: number) => void;
+  addSubstanceToTestTube: (
+    testTubeId: string,
+    substanceId: string,
+    amount?: number,
+  ) => void;
   stirredTubes: Record<string, number>; // test tube IDs -> number of layers stirred
   stirTestTube: (testTubeId: string, layersCount: number) => void;
   alcoholLampStatus: Map<string, boolean>; // instanceId -> isBurning
@@ -50,7 +54,7 @@ interface ExperimentStore extends ExperimentState {
   clearItems: () => void;
 }
 
-export const useExperimentStore = create<ExperimentStore>((set) => ({
+export const useExperimentStore = create<ExperimentStore>((set, get) => ({
   isModalOpen: false,
   isCursorVisible: false,
   droppedItems: new Map(),
@@ -89,7 +93,6 @@ export const useExperimentStore = create<ExperimentStore>((set) => ({
       newItems.set(item.id, item);
       return { droppedItems: newItems };
     }),
-
 
   removeDroppedItem: (itemId: string) =>
     set((state) => {
@@ -177,23 +180,51 @@ export const useExperimentStore = create<ExperimentStore>((set) => ({
     set((state) => {
       const newContents = new Map(state.testTubeContents);
       const currentContents = newContents.get(tubeId) ?? [];
-      const totalAmount = currentContents.reduce((acc, c) => acc + c.amount, 0);
+      
+      const fe = currentContents.find(c => c.substanceId === EQUIPMENT_IDS.FE_POWDER)?.amount || 0;
+      const s = currentContents.find(c => c.substanceId === EQUIPMENT_IDS.S_POWDER)?.amount || 0;
 
-      // Replace with resulting substance
-      newContents.set(tubeId, [{ substanceId: resultingSubstanceId, amount: totalAmount, instant: true }]);
+      // Tỉ lệ Fe:S là 7:4 (56:32)
+      const reactedS = Math.min(s, fe / 1.75);
+      const reactedFe = reactedS * 1.75;
+      const producedFeS = reactedFe + reactedS;
 
+      const finalContents: TubeContent[] = [
+        { substanceId: resultingSubstanceId, amount: producedFeS, instant: true }
+      ];
+
+      // Nếu sắt dư, giữ lại sắt trong ống
+      if (fe > reactedFe + 0.05) {
+        finalContents.push({ substanceId: EQUIPMENT_IDS.FE_POWDER, amount: fe - reactedFe });
+      }
+      
+      // Nếu lưu huỳnh dư
+      if (s > reactedS + 0.05) {
+        finalContents.push({ substanceId: EQUIPMENT_IDS.S_POWDER, amount: s - reactedS });
+      }
+
+      newContents.set(tubeId, finalContents);
+      
       const newProgress = new Map(state.reactionProgress);
-      newProgress.set(tubeId, 0); // Reset
-
-      const newStirred = { ...state.stirredTubes };
-      delete newStirred[tubeId]; // Remove stir state
+      newProgress.set(tubeId, 0);
 
       return {
         testTubeContents: newContents,
         reactionProgress: newProgress,
-        stirredTubes: newStirred
       };
     }),
+
+  getFreeIronAmount: (tubeId: string) => {
+    const contents = get().testTubeContents.get(tubeId) || [];
+    const progress = get().reactionProgress.get(tubeId) ?? 0;
+
+    const feItem = contents.find((c) => c.substanceId === EQUIPMENT_IDS.FE_POWDER);
+    if (!feItem) return 0;
+
+    // Lượng sắt chưa phản ứng = Tổng sắt hiện có * (1 - tiến trình phản ứng)
+    // Lưu ý: Nếu đã finishReaction và còn sắt dư, progress lúc đó = 0, hàm sẽ trả về toàn bộ sắt dư.
+    return feItem.amount * (1 - progress);
+  },
 
   clearItems: () =>
     set({

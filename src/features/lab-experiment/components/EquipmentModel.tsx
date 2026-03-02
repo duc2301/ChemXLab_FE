@@ -20,6 +20,7 @@ import type { DroppedItem } from "../types/equipment";
 const SNAP_OFFSET_Y = 0.5;
 const SNAP_RADIUS = 0.4;
 const LAMP_SNAP_OFFSET_Y = 0;
+const MAGNET_SNAP_OFFSET_Y = 0.48;
 
 const CG_TEST_TUBE = 0x00010004;
 const CG_EQUIPMENT = 0x00030002;
@@ -34,6 +35,7 @@ interface EquipmentModelProps {
 const thermometerRegistry = new Map<string, RapierRigidBody>();
 const occupiedThermometers = new Map<string, string>();
 const occupiedThermometersByLamp = new Map<string, string>();
+const occupiedByMagnet = new Map<string, string>();
 
 export const EquipmentModel = ({
   droppedItem,
@@ -83,6 +85,7 @@ export const EquipmentModel = ({
   const isTestTube = droppedItem.equipmentId === EQUIPMENT_IDS.TEST_TUBE;
   const isThermometer = droppedItem.equipmentId === EQUIPMENT_IDS.THERMOMETER;
   const isAlcoholLamp = droppedItem.equipmentId === EQUIPMENT_IDS.ALCOHOL_LAMP;
+  const isMagnet = droppedItem.equipmentId === EQUIPMENT_IDS.MAGNET;
   const isBurning = alcoholLampStatus.get(droppedItem.id) ?? false;
 
   const raycaster = useMemo(() => new THREE.Raycaster(), []);
@@ -106,12 +109,14 @@ export const EquipmentModel = ({
 
   useEffect(() => {
     return () => {
-      if (isSnappedRef.current && snappedToThermoIdRef.current) {
+      // Giải phóng các vị trí đã chiếm
+      if (snappedToThermoIdRef.current) {
         if (isTestTube) occupiedThermometers.delete(snappedToThermoIdRef.current);
         else if (isAlcoholLamp) occupiedThermometersByLamp.delete(snappedToThermoIdRef.current);
+        else if (isMagnet) occupiedByMagnet.delete(snappedToThermoIdRef.current);
       }
     };
-  }, [isTestTube, isAlcoholLamp]);
+  }, [isTestTube, isAlcoholLamp, isMagnet]);
 
   // ─── Chemical Reaction Logic (Fe + S) ───────────────────────────────────────
   useEffect(() => {
@@ -142,15 +147,27 @@ export const EquipmentModel = ({
     return () => clearInterval(interval);
   }, [isTestTube, droppedItem.id]);
 
+  function getOffsetY() {
+    if (isTestTube) {
+      return SNAP_OFFSET_Y
+    } else if (isAlcoholLamp) {
+      return LAMP_SNAP_OFFSET_Y
+    } else if (isMagnet) {
+      return MAGNET_SNAP_OFFSET_Y
+    } else {
+      return 0;
+    }
+  }
+
   useFrame((state) => {
     if (!rigidBodyRef.current) return;
 
     // 1. Follow / Animate snap
-    if ((isTestTube || isAlcoholLamp) && isSnappedRef.current && snappedToBodyRef.current) {
+    if ((isTestTube || isAlcoholLamp || isMagnet) && isSnappedRef.current && snappedToBodyRef.current) {
       try {
         const tp = snappedToBodyRef.current.translation();
-        const offset_Y = isTestTube ? SNAP_OFFSET_Y : LAMP_SNAP_OFFSET_Y;
-        const finalX = tp.x - 0.0263;
+        const offset_Y = getOffsetY();
+        const finalX = tp.x - 0.0263 - (isMagnet ? 0.25 : 0);
         const finalY = tp.y + offset_Y;
         const finalZ = tp.z + 0.385;
 
@@ -170,6 +187,7 @@ export const EquipmentModel = ({
         if (snappedToThermoIdRef.current) {
           if (isTestTube) occupiedThermometers.delete(snappedToThermoIdRef.current);
           if (isAlcoholLamp) occupiedThermometersByLamp.delete(snappedToThermoIdRef.current);
+          if (isMagnet) occupiedThermometersByLamp.delete(snappedToThermoIdRef.current);
         }
         isSnappedRef.current = false;
         setIsSnapped(false);
@@ -188,8 +206,8 @@ export const EquipmentModel = ({
         intersectionPoint.add(dragOffset.current);
 
         // Tránh va chạm với các vật đã snap khác
-        if ((isTestTube || isAlcoholLamp) && thermometerRegistry.size > 0) {
-          const occupationMap = isTestTube ? occupiedThermometers : occupiedThermometersByLamp;
+        if ((isTestTube || isAlcoholLamp || isMagnet) && thermometerRegistry.size > 0) {
+          const occupationMap = isTestTube ? occupiedThermometers : isAlcoholLamp ? occupiedThermometersByLamp : occupiedByMagnet;
           for (const [thermoId, thermoBody] of thermometerRegistry) {
             if (occupationMap.has(thermoId) && occupationMap.get(thermoId) !== droppedItem.id) {
               const tp = thermoBody.translation();
@@ -210,9 +228,9 @@ export const EquipmentModel = ({
       }
 
       // 3. Proximity snap check
-      if ((isTestTube || isAlcoholLamp) && !isSnappedRef.current && thermometerRegistry.size > 0) {
+      if ((isTestTube || isAlcoholLamp || isMagnet) && !isSnappedRef.current && thermometerRegistry.size > 0) {
         const myPos = rigidBodyRef.current.translation();
-        const occupationMap = isTestTube ? occupiedThermometers : occupiedThermometersByLamp;
+        const occupationMap = isTestTube ? occupiedThermometers : isAlcoholLamp ? occupiedThermometersByLamp: occupiedByMagnet;
 
         for (const [thermoId, thermoBody] of thermometerRegistry) {
           if (occupationMap.has(thermoId) && occupationMap.get(thermoId) !== droppedItem.id) continue;
@@ -275,10 +293,11 @@ export const EquipmentModel = ({
     if (e.nativeEvent.button === 2) return;
 
     // DETACH snap: Chỉ detach khi KHÔNG đang cầm chất
-    if ((isTestTube || isAlcoholLamp) && isSnappedRef.current && !heldSubstance) {
+    if ((isTestTube || isAlcoholLamp || isMagnet) && isSnappedRef.current && !heldSubstance) {
       if (snappedToThermoIdRef.current) {
         if (isTestTube) occupiedThermometers.delete(snappedToThermoIdRef.current);
         if (isAlcoholLamp) occupiedThermometersByLamp.delete(snappedToThermoIdRef.current);
+        if (isMagnet) occupiedByMagnet.delete(snappedToThermoIdRef.current);
 
         lastUnsnappedThermoIdRef.current = snappedToThermoIdRef.current;
       }
@@ -304,7 +323,7 @@ export const EquipmentModel = ({
     onDragChange?.(true);
     gl.domElement.style.cursor = "grabbing";
   },
-    [gl.domElement, onDragChange, dragPlane, isTestTube, isAlcoholLamp, heldSubstance]
+    [gl.domElement, onDragChange, dragPlane, isTestTube, isAlcoholLamp, heldSubstance, isMagnet]
   );
 
   const handlePointerUp = useCallback((e: ThreeEvent<PointerEvent>) => {
