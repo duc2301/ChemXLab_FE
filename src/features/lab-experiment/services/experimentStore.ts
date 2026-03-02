@@ -51,6 +51,7 @@ interface ExperimentStore extends ExperimentState {
   reactionProgress: Map<string, number>; // tubeId -> progress (0 to 1)
   updateReactionProgress: (tubeId: string, progressDelta: number) => void;
   finishReaction: (tubeId: string, resultingSubstanceId: string) => void;
+  getFreeIronAmount: (tubeId: string, resultingSubstanceId: string) => number;
   clearItems: () => void;
 }
 
