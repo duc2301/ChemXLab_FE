@@ -20,6 +20,7 @@ import type { DroppedItem } from "../types/equipment";
 const SNAP_OFFSET_Y = 0.5;
 const SNAP_RADIUS = 0.4;
 const LAMP_SNAP_OFFSET_Y = 0;
+const MAGNET_SNAP_OFFSET_Y = 0.52;
 
 const CG_TEST_TUBE = 0x00010004;
 const CG_EQUIPMENT = 0x00030002;
@@ -34,6 +35,7 @@ interface EquipmentModelProps {
 const thermometerRegistry = new Map<string, RapierRigidBody>();
 const occupiedThermometers = new Map<string, string>();
 const occupiedThermometersByLamp = new Map<string, string>();
+const occupiedByMagnet = new Map<string, string>();
 
 export const EquipmentModel = ({
   droppedItem,
@@ -60,7 +62,13 @@ export const EquipmentModel = ({
   const snappedToThermoIdRef = useRef<string | null>(null);
   const reactionProgressStore = useExperimentStore((s) => s.reactionProgress);
   const currentProgress = reactionProgressStore.get(droppedItem.id) ?? 0;
-
+  // Lấy lượng sắt tự do (chưa phản ứng thành FeS)
+  const freeFeAmount = useExperimentStore((state) =>
+    state.getFreeIronAmount(droppedItem.id, EQUIPMENT_IDS.FES_POWDER),
+  );
+  const isAttracted =
+    occupiedByMagnet.get(snappedToThermoIdRef?.current ?? "") &&
+    freeFeAmount > 0;
   // Tránh snap lại ngay lập tức
   const lastUnsnappedThermoIdRef = useRef<string | null>(null);
 
@@ -83,6 +91,7 @@ export const EquipmentModel = ({
   const isTestTube = droppedItem.equipmentId === EQUIPMENT_IDS.TEST_TUBE;
   const isThermometer = droppedItem.equipmentId === EQUIPMENT_IDS.THERMOMETER;
   const isAlcoholLamp = droppedItem.equipmentId === EQUIPMENT_IDS.ALCOHOL_LAMP;
+  const isMagnet = droppedItem.equipmentId === EQUIPMENT_IDS.MAGNET;
   const isBurning = alcoholLampStatus.get(droppedItem.id) ?? false;
 
   const raycaster = useMemo(() => new THREE.Raycaster(), []);
@@ -106,12 +115,14 @@ export const EquipmentModel = ({
 
   useEffect(() => {
     return () => {
-      if (isSnappedRef.current && snappedToThermoIdRef.current) {
+      // Giải phóng các vị trí đã chiếm
+      if (snappedToThermoIdRef.current) {
         if (isTestTube) occupiedThermometers.delete(snappedToThermoIdRef.current);
         else if (isAlcoholLamp) occupiedThermometersByLamp.delete(snappedToThermoIdRef.current);
+        else if (isMagnet) occupiedByMagnet.delete(snappedToThermoIdRef.current);
       }
     };
-  }, [isTestTube, isAlcoholLamp]);
+  }, [isTestTube, isAlcoholLamp, isMagnet]);
 
   // ─── Chemical Reaction Logic (Fe + S) ───────────────────────────────────────
   useEffect(() => {
@@ -142,15 +153,27 @@ export const EquipmentModel = ({
     return () => clearInterval(interval);
   }, [isTestTube, droppedItem.id]);
 
+  function getOffsetY() {
+    if (isTestTube) {
+      return SNAP_OFFSET_Y
+    } else if (isAlcoholLamp) {
+      return LAMP_SNAP_OFFSET_Y
+    } else if (isMagnet) {
+      return MAGNET_SNAP_OFFSET_Y
+    } else {
+      return 0;
+    }
+  }
+
   useFrame((state) => {
     if (!rigidBodyRef.current) return;
 
     // 1. Follow / Animate snap
-    if ((isTestTube || isAlcoholLamp) && isSnappedRef.current && snappedToBodyRef.current) {
+    if ((isTestTube || isAlcoholLamp || isMagnet) && isSnappedRef.current && snappedToBodyRef.current) {
       try {
         const tp = snappedToBodyRef.current.translation();
-        const offset_Y = isTestTube ? SNAP_OFFSET_Y : LAMP_SNAP_OFFSET_Y;
-        const finalX = tp.x - 0.0263;
+        const offset_Y = getOffsetY();
+        const finalX = tp.x - 0.0263 - (isMagnet ? 0.25 : 0);
         const finalY = tp.y + offset_Y;
         const finalZ = tp.z + 0.385;
 
@@ -170,6 +193,7 @@ export const EquipmentModel = ({
         if (snappedToThermoIdRef.current) {
           if (isTestTube) occupiedThermometers.delete(snappedToThermoIdRef.current);
           if (isAlcoholLamp) occupiedThermometersByLamp.delete(snappedToThermoIdRef.current);
+          if (isMagnet) occupiedThermometersByLamp.delete(snappedToThermoIdRef.current);
         }
         isSnappedRef.current = false;
         setIsSnapped(false);
@@ -188,8 +212,8 @@ export const EquipmentModel = ({
         intersectionPoint.add(dragOffset.current);
 
         // Tránh va chạm với các vật đã snap khác
-        if ((isTestTube || isAlcoholLamp) && thermometerRegistry.size > 0) {
-          const occupationMap = isTestTube ? occupiedThermometers : occupiedThermometersByLamp;
+        if ((isTestTube || isAlcoholLamp || isMagnet) && thermometerRegistry.size > 0) {
+          const occupationMap = isTestTube ? occupiedThermometers : isAlcoholLamp ? occupiedThermometersByLamp : occupiedByMagnet;
           for (const [thermoId, thermoBody] of thermometerRegistry) {
             if (occupationMap.has(thermoId) && occupationMap.get(thermoId) !== droppedItem.id) {
               const tp = thermoBody.translation();
@@ -210,9 +234,9 @@ export const EquipmentModel = ({
       }
 
       // 3. Proximity snap check
-      if ((isTestTube || isAlcoholLamp) && !isSnappedRef.current && thermometerRegistry.size > 0) {
+      if ((isTestTube || isAlcoholLamp || isMagnet) && !isSnappedRef.current && thermometerRegistry.size > 0) {
         const myPos = rigidBodyRef.current.translation();
-        const occupationMap = isTestTube ? occupiedThermometers : occupiedThermometersByLamp;
+        const occupationMap = isTestTube ? occupiedThermometers : isAlcoholLamp ? occupiedThermometersByLamp: occupiedByMagnet;
 
         for (const [thermoId, thermoBody] of thermometerRegistry) {
           if (occupationMap.has(thermoId) && occupationMap.get(thermoId) !== droppedItem.id) continue;
@@ -275,10 +299,11 @@ export const EquipmentModel = ({
     if (e.nativeEvent.button === 2) return;
 
     // DETACH snap: Chỉ detach khi KHÔNG đang cầm chất
-    if ((isTestTube || isAlcoholLamp) && isSnappedRef.current && !heldSubstance) {
+    if ((isTestTube || isAlcoholLamp || isMagnet) && isSnappedRef.current && !heldSubstance) {
       if (snappedToThermoIdRef.current) {
         if (isTestTube) occupiedThermometers.delete(snappedToThermoIdRef.current);
         if (isAlcoholLamp) occupiedThermometersByLamp.delete(snappedToThermoIdRef.current);
+        if (isMagnet) occupiedByMagnet.delete(snappedToThermoIdRef.current);
 
         lastUnsnappedThermoIdRef.current = snappedToThermoIdRef.current;
       }
@@ -304,7 +329,7 @@ export const EquipmentModel = ({
     onDragChange?.(true);
     gl.domElement.style.cursor = "grabbing";
   },
-    [gl.domElement, onDragChange, dragPlane, isTestTube, isAlcoholLamp, heldSubstance]
+    [gl.domElement, onDragChange, dragPlane, isTestTube, isAlcoholLamp, heldSubstance, isMagnet]
   );
 
   const handlePointerUp = useCallback((e: ThreeEvent<PointerEvent>) => {
@@ -409,6 +434,9 @@ export const EquipmentModel = ({
 
   const mixedContents = contents.slice(0, stirredCount);
   const unmixedContents = contents.slice(stirredCount);
+  if (isAttracted) {
+    unmixedContents.sort((a,b) => b.substanceId.localeCompare(a.substanceId, undefined, { sensitivity: "base" }))
+  }
 
   // Blend all unique powder colors into a single mixed color (chỉ phần đã khuấy)
   const blendedColor = (() => {
@@ -481,6 +509,8 @@ export const EquipmentModel = ({
               totalGrams={totalGrams}
               reactionProgress={currentProgress}
               spawnInstant={item.instant}
+              isIron={item.substanceId === EQUIPMENT_IDS.FE_POWDER}
+              isAttracted={isAttracted}
             />
           );
         })}
@@ -809,167 +839,168 @@ interface SDropLayerGrain {
 const _reactedColor = new THREE.Color("#2d2d2d");
 
 const PowderLayer = ({
-  color, startGrams, amountGrams, totalGrams, reactionProgress = 0, spawnInstant = false
+  color,
+  startGrams,
+  amountGrams,
+  totalGrams,
+  reactionProgress = 0,
+  spawnInstant = false,
+  isIron = false,
+  isAttracted = false,
 }: {
-  color: string; startGrams: number; amountGrams: number; totalGrams: number; reactionProgress?: number; spawnInstant?: boolean;
+  color: string;
+  startGrams: number;
+  amountGrams: number;
+  totalGrams: number;
+  reactionProgress?: number;
+  spawnInstant?: boolean;
+  isIron?: boolean;
+  isAttracted?: boolean | undefined | "";
 }) => {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const materialRef = useRef<THREE.MeshStandardMaterial>(null);
-  const grainRef = useRef<SDropLayerGrain[] | null>(null);
   const elapsed = useRef(0);
   const doneRef = useRef(false);
 
-  // ── Lazy-init: compute once on mount ──────────────────────────────────────
-  if (grainRef.current === null) {
+  // 1. Dùng useMemo để tính toán hạt, tránh tính toán trực tiếp trong body gây loop
+  // dependency array bao gồm isAttracted để tính toán lại vị trí khi nam châm thay đổi
+  const grains = useMemo(() => {
     const FLOOR_Y = 0.032 + STIR_GRAIN_R;
     const totalGrains = Math.round(totalGrams * GRAINS_PER_GRAM);
 
-    // Build entire test tube up to current ALL layers capacity!
-    // Since buildPackedPositions is deterministic, calling it with totalGrains yields the exact same array layout.
-    // So layer 0 gets positions 0-999, layer 1 gets 1000-1999 exactly above layer 0.
-    const targets = buildPackedPositions(TUBE_INNER_R, STIR_GRAIN_R, FLOOR_Y, Math.max(0, totalGrains));
+    // Lấy vị trí nén chuẩn
+    const targets = buildPackedPositions(
+      TUBE_INNER_R,
+      STIR_GRAIN_R,
+      FLOOR_Y,
+      Math.max(0, totalGrains),
+    );
 
-    // Slice only this layer's grains
     const startIndex = Math.round(startGrams * GRAINS_PER_GRAM);
     const endIndex = Math.round((startGrams + amountGrams) * GRAINS_PER_GRAM);
     const layerTargets = targets.slice(startIndex, endIndex);
 
-    // Compute bounds for delay mapping
-    let minY = Infinity, maxY = -Infinity;
-    layerTargets.forEach(t => {
-      if (t.y < minY) minY = t.y;
-      if (t.y > maxY) maxY = t.y;
-    });
-    const layerHeight = maxY - minY || 0.01;
+    let minY = Infinity;
+    layerTargets.forEach((t) => { if (t.y < minY) minY = t.y; });
 
-    grainRef.current = layerTargets.map((t) => {
-      // Tính toán delay rơi hạt: Hạt nằm dưới rơi trước, hạt nằm trên rơi sau
-      const heightFrac = Math.max(0, Math.min(1, (t.y - minY) / layerHeight));
+    return layerTargets.map((t) => {
+      let finalTargetX = t.x;
+      let finalTargetZ = t.z;
+      let finalTargetY = t.y;
+
+      // Logic nén 50% diện tích -> Tăng 200% độ cao
+      if (isIron && isAttracted) {
+        if (finalTargetX > 0) finalTargetX = -finalTargetX;
+        finalTargetX = finalTargetX * 0.8 - (TUBE_INNER_R * 0.2);
+        
+        const relativeY = t.y - minY;
+        finalTargetY = minY + (relativeY * 2); // Gấp đôi độ cao
+
+        finalTargetX += (Math.random() - 0.5) * 0.002;
+        finalTargetZ += (Math.random() - 0.5) * 0.002;
+      }
+
+      const targetPos = { x: finalTargetX, y: finalTargetY, z: finalTargetZ };
 
       return {
-        startY: spawnInstant ? t.y : TUBE_TOP_Y + 0.02 + Math.random() * 0.02,
-        targetPos: t,
+        startY: spawnInstant ? targetPos.y : TUBE_TOP_Y + 0.02 + Math.random() * 0.02,
+        targetPos: targetPos,
         color: color,
-        delay: spawnInstant ? 0 : heightFrac * 0.5 + Math.random() * 0.1, // sequential pour delay
-        currentY: spawnInstant ? t.y : TUBE_TOP_Y + 0.02 + Math.random() * 0.02,
+        delay: spawnInstant ? 0 : Math.random() * 0.5, // đơn giản hóa delay để tránh lỗi tính toán
+        currentY: spawnInstant ? targetPos.y : TUBE_TOP_Y + 0.02 + Math.random() * 0.02,
         velY: spawnInstant ? 0 : -(Math.random() * 0.1 + 0.05),
         settled: spawnInstant,
-        isReacted: spawnInstant ? true : false,
+        isReacted: false,
       };
     });
-  }
+  }, [isAttracted, startGrams, amountGrams, totalGrams, isIron, color, spawnInstant]);
 
-  // Set initial colors and matrices once on mount
+  // 2. Cập nhật màu sắc khi danh sách hạt thay đổi
   useEffect(() => {
-    if (!meshRef.current || !grainRef.current) return;
-    grainRef.current.forEach((g, i) => {
+    if (!meshRef.current || !grains) return;
+    grains.forEach((g, i) => {
       _dummyColor.set(g.color);
       meshRef.current!.setColorAt(i, _dummyColor);
-
-      // Hide grains initially by scaling to 0, until their delay ends
-      _dummyObj.position.set(g.targetPos.x, g.startY, g.targetPos.z);
-      _dummyObj.scale.set(0, 0, 0);
-      _dummyObj.updateMatrix();
-      meshRef.current!.setMatrixAt(i, _dummyObj.matrix);
     });
     if (meshRef.current.instanceColor) meshRef.current.instanceColor.needsUpdate = true;
-    meshRef.current.instanceMatrix.needsUpdate = true;
-  }, []);
+    doneRef.current = false; // Reset trạng thái done để chạy lại animation nếu cần
+  }, [grains]);
 
   useFrame((_, delta) => {
     if (doneRef.current || !meshRef.current) return;
     elapsed.current += delta;
-    const grains = grainRef.current!;
     let allDone = true;
     let needsUpdate = false;
-
-    // Use a capped delta in case of huge frame drops
     const dt = Math.min(delta, 0.03);
 
-    // Glow logic
+    // Logic Glow (giữ nguyên)
     let glowIntensity = 0;
-    if (reactionProgress > 0.05 && reactionProgress < 0.2) {
-      glowIntensity = (reactionProgress - 0.05) / 0.15;
-    } else if (reactionProgress >= 0.2 && reactionProgress <= 0.833) {
-      glowIntensity = 1;
-    } else if (reactionProgress > 0.833 && reactionProgress < 1.0) {
-      glowIntensity = 1 - (reactionProgress - 0.833) / (1 - 0.833);
-    }
+    if (reactionProgress > 0.05 && reactionProgress < 0.2) glowIntensity = (reactionProgress - 0.05) / 0.15;
+    else if (reactionProgress >= 0.2 && reactionProgress <= 0.833) glowIntensity = 1;
+    else if (reactionProgress > 0.833 && reactionProgress < 1.0) glowIntensity = 1 - (reactionProgress - 0.833) / 0.167;
 
     if (materialRef.current) {
-      // Use a slightly deeper red/orange to avoid pinkish tint on grey
       materialRef.current.emissive.set("#ff1100");
       materialRef.current.emissiveIntensity = glowIntensity * 1.5;
     }
 
     const wobbleActive = reactionProgress > 0.333 && reactionProgress < 0.833;
-    const fractionalProgress = Math.max(0, Math.min(1, (reactionProgress - 0.166) / (0.833 - 0.166)));
-    const totalGrains = Math.round(totalGrams * GRAINS_PER_GRAM);
+    const fractionalProgress = Math.max(0, Math.min(1, (reactionProgress - 0.166) / 0.667));
+    const totalGrainsCount = Math.round(totalGrams * GRAINS_PER_GRAM);
 
     for (let i = 0; i < grains.length; i++) {
       const g = grains[i];
       if (elapsed.current < g.delay) { allDone = false; continue; }
-      if (!g.settled) allDone = false;
 
-      // Gravity
       if (!g.settled) {
+        allDone = false;
         needsUpdate = true;
-        g.velY -= 3.5 * dt; // stronger gravity in model-space
+        g.velY -= 3.5 * dt;
         g.currentY += g.velY * dt;
 
-        // Floor collision at target Y
-        const targetY = g.targetPos.y;
-        if (g.currentY <= targetY) {
-          g.currentY = targetY;
-          g.velY = Math.abs(g.velY) * 0.2; // very small bounce
-          if (g.velY < 0.005) {
-            g.currentY = targetY;
-            g.velY = 0;
-            g.settled = true;
-          }
+        if (g.currentY <= g.targetPos.y) {
+          g.currentY = g.targetPos.y;
+          g.velY = Math.abs(g.velY) * 0.2;
+          if (g.velY < 0.005) { g.currentY = g.targetPos.y; g.velY = 0; g.settled = true; }
         }
       }
 
-      // Wobble effect: lighter, more random localized bubbling
-      let wobbleX = 0, wobbleY = 0, wobbleZ = 0;
+      let wX = 0, wY = 0, wZ = 0;
       if (g.settled && wobbleActive) {
-        const speedMultiplier = 12 + (i % 5); // randomize speed per particle
-        const tParam = elapsed.current * speedMultiplier + (i * 0.1); // randomize phase
-
-        wobbleX = Math.sin(tParam) * 0.0001;
-        wobbleZ = Math.cos(tParam * 1.3) * 0.0001;
-        wobbleY = Math.sin(tParam * 2.0) * 0.00015; // mostly vertical bubbling
+        const tParam = elapsed.current * (12 + (i % 5)) + i * 0.1;
+        wX = Math.sin(tParam) * 0.0001;
+        wZ = Math.cos(tParam * 1.3) * 0.0001;
+        wY = Math.sin(tParam * 2.0) * 0.00015;
         needsUpdate = true;
       }
 
-      // Update instance matrix
-      _dummyObj.position.set(g.targetPos.x + wobbleX, g.currentY + wobbleY, g.targetPos.z + wobbleZ);
-      // Phóng to hạt 3.5 lần khi đang rơi để dễ nhìn hơn, thu về kích thước chuẩn khi đã chạm vị trí
-      const s = g.settled ? 1 : 2;
-      _dummyObj.scale.set(s, s, s);
+      _dummyObj.position.set(g.targetPos.x + wX, g.currentY + wY, g.targetPos.z + wZ);
+      _dummyObj.scale.setScalar(g.settled ? 1 : 2);
       _dummyObj.updateMatrix();
       meshRef.current.setMatrixAt(i, _dummyObj.matrix);
 
-      // Update color based on reaction progress
+      // Cập nhật màu phản ứng
       const globalIndex = Math.round(startGrams * GRAINS_PER_GRAM) + i;
-      const isReacted = (globalIndex / totalGrains) <= fractionalProgress;
-
+      const isReacted = globalIndex / totalGrainsCount <= fractionalProgress;
       if (g.isReacted !== isReacted) {
         g.isReacted = isReacted;
-        const targetColor = isReacted ? _reactedColor : new THREE.Color(color);
-        meshRef.current.setColorAt(i, targetColor);
+        meshRef.current.setColorAt(i, isReacted ? _reactedColor : new THREE.Color(color));
         if (meshRef.current.instanceColor) meshRef.current.instanceColor.needsUpdate = true;
       }
     }
 
-    if (needsUpdate || wobbleActive) {
+    if (needsUpdate || wobbleActive || !allDone) {
       meshRef.current.instanceMatrix.needsUpdate = true;
     }
     if (allDone && reactionProgress >= 1) doneRef.current = true;
   });
 
   return (
-    <instancedMesh ref={meshRef} args={[undefined, undefined, grainRef.current!.length]} frustumCulled={false}>
+    <instancedMesh 
+      ref={meshRef} 
+      args={[undefined, undefined, grains.length]} 
+      frustumCulled={false}
+    >
       <sphereGeometry args={[STIR_GRAIN_R, 6, 6]} />
       <meshStandardMaterial ref={materialRef} roughness={0.85} metalness={0.05} />
     </instancedMesh>

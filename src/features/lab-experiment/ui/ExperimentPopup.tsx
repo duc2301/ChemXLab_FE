@@ -126,7 +126,7 @@ export const ExperimentPopup = ({ onBackToMenu }: { onBackToMenu: () => void }) 
       id: generateUUID(),
       equipmentId: equipment.id,
       position: [tableX, 1.5, tableZ],
-      rotation: [0, 0, 0],
+      rotation: [equipment.rotation.z, equipment.rotation.y, equipment.rotation.z],
       timestamp: Date.now(),
       collider: "cuboid",
     };

@@ -18,6 +18,7 @@ export interface EquipmentItem {
     height: number;
     depth: number;
   };
+  rotation: { x:  number, y: number, z: number};
   isDraggable: boolean;
   maxStackCount?: number; // Nếu có thể stack
   description?: string;
