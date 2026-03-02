@@ -58,6 +58,8 @@ export const EquipmentModel = ({
   const [isSnapped, setIsSnapped] = useState(false);
   const snappedToBodyRef = useRef<RapierRigidBody | null>(null);
   const snappedToThermoIdRef = useRef<string | null>(null);
+  const reactionProgressStore = useExperimentStore((s) => s.reactionProgress);
+  const currentProgress = reactionProgressStore.get(droppedItem.id) ?? 0;
 
   // Tránh snap lại ngay lập tức
   const lastUnsnappedThermoIdRef = useRef<string | null>(null);
@@ -110,6 +112,35 @@ export const EquipmentModel = ({
       }
     };
   }, [isTestTube, isAlcoholLamp]);
+
+  // ─── Chemical Reaction Logic (Fe + S) ───────────────────────────────────────
+  useEffect(() => {
+    if (!isTestTube) return;
+    const interval = setInterval(() => {
+      if (!isSnappedRef.current || !snappedToThermoIdRef.current) return;
+      const thermoId = snappedToThermoIdRef.current;
+
+      const lampId = occupiedThermometersByLamp.get(thermoId);
+      if (!lampId) return;
+
+      const state = useExperimentStore.getState();
+      if (!state.alcoholLampStatus.get(lampId)) return;
+
+      const currentContents = state.testTubeContents.get(droppedItem.id) ?? [];
+      const hasFe = currentContents.some(c => c.substanceId === EQUIPMENT_IDS.FE_POWDER);
+      const hasS = currentContents.some(c => c.substanceId === EQUIPMENT_IDS.S_POWDER);
+
+      if (hasFe && hasS) {
+        const progress = state.reactionProgress.get(droppedItem.id) ?? 0;
+        if (progress < 1) {
+          state.updateReactionProgress(droppedItem.id, 0.5 / 30); // 30 seconds to complete
+        } else {
+          state.finishReaction(droppedItem.id, EQUIPMENT_IDS.FES_POWDER);
+        }
+      }
+    }, 500);
+    return () => clearInterval(interval);
+  }, [isTestTube, droppedItem.id]);
 
   useFrame((state) => {
     if (!rigidBodyRef.current) return;
@@ -367,6 +398,11 @@ export const EquipmentModel = ({
   const isHighlighted = isTestTube && isHoldingSubstance && !isFull;
   const isFullHighlight = isTestTube && isHoldingSubstance && isFull;
 
+  const activeLampId = isTestTube && isSnappedRef.current && snappedToThermoIdRef.current
+    ? occupiedThermometersByLamp.get(snappedToThermoIdRef.current)
+    : null;
+  const isHeating = !!activeLampId && !!alcoholLampStatus.get(activeLampId);
+
   // ─── Stir state ─────────────────────────────────────────────────────────────
   const stirredCount = isTestTube ? (stirredTubes[droppedItem.id] ?? 0) : 0;
   const isStirred = stirredCount > 0;
@@ -420,6 +456,7 @@ export const EquipmentModel = ({
           isGlass={isTestTube}
           playAnimations={isAlcoholLamp ? isBurning : false}
           isShowFire={isAlcoholLamp ? isBurning : false}
+          reactionProgress={isTestTube ? currentProgress : 0}
         />
 
         {/* Sau khi khuấy: hạt bột pha trộn của các layer đã khuấy */}
@@ -428,6 +465,7 @@ export const EquipmentModel = ({
             key={`stirred-${mixedContents.length}`}
             items={mixedContents}
             totalGrams={getGrams(mixedContents)}
+            reactionProgress={currentProgress}
           />
         )}
 
@@ -441,9 +479,19 @@ export const EquipmentModel = ({
               startGrams={getGrams(contents.slice(0, stirredCount + idx))}
               amountGrams={item.amount}
               totalGrams={totalGrams}
+              reactionProgress={currentProgress}
+              spawnInstant={item.instant}
             />
           );
         })}
+
+        {/* Lớp khói đen */}
+        {isTestTube && (
+          <SmokeEmitter
+            active={currentProgress >= 0.2 && isHeating}
+            totalGrams={totalGrams}
+          />
+        )}
       </group>
 
       {/* Nhãn thành phần — chỉ hiện khi hover vào, kích thước cố định */}
@@ -468,7 +516,7 @@ export const EquipmentModel = ({
             whiteSpace: "nowrap",
           }}>
             {isStirred && (
-              <div style={{ display: "flex", alignItems: "center", gap: "5px", color: "#a78bfa", borderBottom: "1px dashed #4b5563", paddingBottom: "2px", marginBottom: "1px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "5px", color: "#e5e7eb", borderBottom: "1px dashed #4b5563", paddingBottom: "2px", marginBottom: "1px", fontWeight: 500 }}>
                 <span style={{
                   width: 6, height: 6, borderRadius: "50%",
                   background: blendedColor, flexShrink: 0,
@@ -487,7 +535,7 @@ export const EquipmentModel = ({
                   display: "flex",
                   alignItems: "center",
                   gap: "5px",
-                  color: SUBSTANCE_COLORS[subId] ?? "#e5e7eb",
+                  color: "#d1d5db",
                   paddingLeft: isStirred ? "8px" : "0", // Thụt lề nhẹ nếu nằm dưới chữ "Hỗn hợp"
                 }}>
                   <span style={{
@@ -544,6 +592,7 @@ const Model = ({
   isFullHighlight = false,
   playAnimations = false,
   isShowFire = false,
+  reactionProgress = 0,
 }: {
   modelPath: string;
   isHovered: boolean;
@@ -554,6 +603,7 @@ const Model = ({
   isFullHighlight?: boolean;
   playAnimations?: boolean;
   isShowFire?: boolean;
+  reactionProgress?: number;
 }) => {
   const { scene, animations } = useGLTF(modelPath);
 
@@ -641,7 +691,7 @@ const Model = ({
       child.rotateZ(clonedScene.rotation.z);
       child.updateMatrixWorld();
     });
-  }, [clonedScene, isHovered, isDragging, isSnapped, isHighlighted, isGlass, isFullHighlight]);
+  }, [clonedScene, isHovered, isDragging, isSnapped, isHighlighted, isGlass, isFullHighlight, reactionProgress]);
 
   useEffect(() => {
     clonedScene.children.forEach((child) => {
@@ -753,14 +803,18 @@ interface SDropLayerGrain {
   currentY: number;
   velY: number;
   settled: boolean;
+  isReacted?: boolean;
 }
 
+const _reactedColor = new THREE.Color("#2d2d2d");
+
 const PowderLayer = ({
-  color, startGrams, amountGrams, totalGrams,
+  color, startGrams, amountGrams, totalGrams, reactionProgress = 0, spawnInstant = false
 }: {
-  color: string; startGrams: number; amountGrams: number; totalGrams: number;
+  color: string; startGrams: number; amountGrams: number; totalGrams: number; reactionProgress?: number; spawnInstant?: boolean;
 }) => {
   const meshRef = useRef<THREE.InstancedMesh>(null);
+  const materialRef = useRef<THREE.MeshStandardMaterial>(null);
   const grainRef = useRef<SDropLayerGrain[] | null>(null);
   const elapsed = useRef(0);
   const doneRef = useRef(false);
@@ -792,15 +846,15 @@ const PowderLayer = ({
       // Tính toán delay rơi hạt: Hạt nằm dưới rơi trước, hạt nằm trên rơi sau
       const heightFrac = Math.max(0, Math.min(1, (t.y - minY) / layerHeight));
 
-
       return {
-        startY: TUBE_TOP_Y + 0.02 + Math.random() * 0.02,
+        startY: spawnInstant ? t.y : TUBE_TOP_Y + 0.02 + Math.random() * 0.02,
         targetPos: t,
         color: color,
-        delay: heightFrac * 1.5 + Math.random() * 0.4, // sequential pour delay
-        currentY: TUBE_TOP_Y + 0.02 + Math.random() * 0.02,
-        velY: -(Math.random() * 0.1 + 0.05),
-        settled: false,
+        delay: spawnInstant ? 0 : heightFrac * 1.5 + Math.random() * 0.4, // sequential pour delay
+        currentY: spawnInstant ? t.y : TUBE_TOP_Y + 0.02 + Math.random() * 0.02,
+        velY: spawnInstant ? 0 : -(Math.random() * 0.1 + 0.05),
+        settled: spawnInstant,
+        isReacted: spawnInstant ? true : false,
       };
     });
   }
@@ -832,48 +886,88 @@ const PowderLayer = ({
     // Use a capped delta in case of huge frame drops
     const dt = Math.min(delta, 0.03);
 
+    // Glow logic
+    let glowIntensity = 0;
+    if (reactionProgress > 0 && reactionProgress < 0.166) {
+      glowIntensity = reactionProgress / 0.166;
+    } else if (reactionProgress >= 0.166 && reactionProgress <= 0.833) {
+      glowIntensity = 1;
+    } else if (reactionProgress > 0.833 && reactionProgress < 1.0) {
+      glowIntensity = 1 - (reactionProgress - 0.833) / (1 - 0.833);
+    }
+
+    if (materialRef.current) {
+      materialRef.current.emissive.set("#ff4400");
+      materialRef.current.emissiveIntensity = glowIntensity * 2.0;
+    }
+
+    const wobbleActive = reactionProgress > 0.166 && reactionProgress < 0.833;
+    const fractionalProgress = Math.max(0, Math.min(1, (reactionProgress - 0.166) / (0.833 - 0.166)));
+    const totalGrains = Math.round(totalGrams * GRAINS_PER_GRAM);
+
     for (let i = 0; i < grains.length; i++) {
       const g = grains[i];
-      if (g.settled) continue;
       if (elapsed.current < g.delay) { allDone = false; continue; }
-      allDone = false;
-      needsUpdate = true;
+      if (!g.settled) allDone = false;
 
       // Gravity
-      g.velY -= 1.8 * dt; // gravity in model-space
-      g.currentY += g.velY * dt;
+      if (!g.settled) {
+        needsUpdate = true;
+        g.velY -= 1.8 * dt; // gravity in model-space
+        g.currentY += g.velY * dt;
 
-      // Floor collision at target Y
-      const targetY = g.targetPos.y;
-      if (g.currentY <= targetY) {
-        g.currentY = targetY;
-        g.velY = Math.abs(g.velY) * 0.2; // very small bounce
-        if (g.velY < 0.005) {
+        // Floor collision at target Y
+        const targetY = g.targetPos.y;
+        if (g.currentY <= targetY) {
           g.currentY = targetY;
-          g.velY = 0;
-          g.settled = true;
+          g.velY = Math.abs(g.velY) * 0.2; // very small bounce
+          if (g.velY < 0.005) {
+            g.currentY = targetY;
+            g.velY = 0;
+            g.settled = true;
+          }
         }
       }
 
+      // Wobble effect
+      let wobbleX = 0, wobbleZ = 0;
+      if (g.settled && wobbleActive) {
+        const tParam = elapsed.current * 10 + i;
+        wobbleX = Math.sin(tParam) * 0.0002;
+        wobbleZ = Math.cos(tParam * 1.2) * 0.0002;
+        needsUpdate = true;
+      }
+
       // Update instance matrix
-      _dummyObj.position.set(g.targetPos.x, g.currentY, g.targetPos.z);
+      _dummyObj.position.set(g.targetPos.x + wobbleX, g.currentY, g.targetPos.z + wobbleZ);
       // Phóng to hạt 3.5 lần khi đang rơi để dễ nhìn hơn, thu về kích thước chuẩn khi đã chạm vị trí
       const s = g.settled ? 1 : 2;
       _dummyObj.scale.set(s, s, s);
       _dummyObj.updateMatrix();
       meshRef.current.setMatrixAt(i, _dummyObj.matrix);
+
+      // Update color based on reaction progress
+      const globalIndex = Math.round(startGrams * GRAINS_PER_GRAM) + i;
+      const isReacted = (globalIndex / totalGrains) <= fractionalProgress;
+
+      if (g.isReacted !== isReacted) {
+        g.isReacted = isReacted;
+        const targetColor = isReacted ? _reactedColor : new THREE.Color(color);
+        meshRef.current.setColorAt(i, targetColor);
+        if (meshRef.current.instanceColor) meshRef.current.instanceColor.needsUpdate = true;
+      }
     }
 
-    if (needsUpdate) {
+    if (needsUpdate || wobbleActive) {
       meshRef.current.instanceMatrix.needsUpdate = true;
     }
-    if (allDone) doneRef.current = true;
+    if (allDone && reactionProgress >= 1) doneRef.current = true;
   });
 
   return (
     <instancedMesh ref={meshRef} args={[undefined, undefined, grainRef.current!.length]} frustumCulled={false}>
       <sphereGeometry args={[STIR_GRAIN_R, 6, 6]} />
-      <meshStandardMaterial roughness={0.85} metalness={0.05} />
+      <meshStandardMaterial ref={materialRef} roughness={0.85} metalness={0.05} />
     </instancedMesh>
   );
 };
@@ -887,6 +981,7 @@ interface SGrain {
   phaseZ: number;
   speed: number;
   radius: number; // swirl orbit radius
+  isReacted?: boolean;
 }
 
 const _dummyObj = new THREE.Object3D();
@@ -895,11 +990,14 @@ const _dummyColor = new THREE.Color();
 const StirredLayer = ({
   items,
   totalGrams,
+  reactionProgress = 0,
 }: {
   items: TubeContent[];
   totalGrams: number;
+  reactionProgress?: number;
 }) => {
   const meshRef = useRef<THREE.InstancedMesh>(null);
+  const materialRef = useRef<THREE.MeshStandardMaterial>(null);
   const grainRef = useRef<SGrain[] | null>(null);
   const FLOOR_Y = 0.032 + STIR_GRAIN_R; // visual inner bottom of tube (+ particle radius)
 
@@ -959,7 +1057,7 @@ const StirredLayer = ({
   const STIR_DURATION = 1.8; // seconds to stir before settling
 
   useFrame((state, delta) => {
-    if (doneRef.current || !meshRef.current) return;
+    if ((doneRef.current && reactionProgress <= 0) || !meshRef.current) return;
     elapsed.current += delta;
 
     // Calculate how intense the stirring is (1.0 = max, 0.0 = stopped)
@@ -975,6 +1073,24 @@ const StirredLayer = ({
       }
     }
 
+    // Glow logic
+    let glowIntensity = 0;
+    if (reactionProgress > 0 && reactionProgress < 0.166) {
+      glowIntensity = reactionProgress / 0.166;
+    } else if (reactionProgress >= 0.166 && reactionProgress <= 0.833) {
+      glowIntensity = 1;
+    } else if (reactionProgress > 0.833 && reactionProgress < 1.0) {
+      glowIntensity = 1 - (reactionProgress - 0.833) / (1 - 0.833);
+    }
+
+    if (materialRef.current) {
+      materialRef.current.emissive.set("#ff4400");
+      materialRef.current.emissiveIntensity = glowIntensity * 2.0;
+    }
+
+    const fractionalProgress = Math.max(0, Math.min(1, (reactionProgress - 0.166) / (0.833 - 0.166)));
+    const wobbleActive = reactionProgress > 0.166 && reactionProgress < 0.833;
+
     const grains = grainRef.current!;
     const t = state.clock.getElapsedTime();
 
@@ -982,8 +1098,13 @@ const StirredLayer = ({
       const g = grains[i];
 
       // Small swirling/vibrating effect around base position
-      const dx = Math.sin(t * g.speed + g.phaseX) * g.radius * intensity;
-      const dz = Math.cos(t * g.speed + g.phaseZ) * g.radius * intensity;
+      let dx = Math.sin(t * g.speed + g.phaseX) * g.radius * intensity;
+      let dz = Math.cos(t * g.speed + g.phaseZ) * g.radius * intensity;
+
+      if (wobbleActive) {
+        dx += Math.sin(t * 10 + i) * 0.0002;
+        dz += Math.cos(t * 12 + i) * 0.0002;
+      }
 
       // Update instance matrix
       _dummyObj.position.set(g.basePos.x + dx, g.basePos.y, g.basePos.z + dz);
@@ -994,6 +1115,14 @@ const StirredLayer = ({
 
       _dummyObj.updateMatrix();
       meshRef.current.setMatrixAt(i, _dummyObj.matrix);
+
+      const isReacted = (i / grains.length) <= fractionalProgress;
+      if (g.isReacted !== isReacted) {
+        g.isReacted = isReacted;
+        const targetColor = isReacted ? _reactedColor : new THREE.Color(g.color);
+        meshRef.current.setColorAt(i, targetColor);
+        if (meshRef.current.instanceColor) meshRef.current.instanceColor.needsUpdate = true;
+      }
     }
 
     meshRef.current.instanceMatrix.needsUpdate = true;
@@ -1002,8 +1131,77 @@ const StirredLayer = ({
   return (
     <instancedMesh ref={meshRef} args={[undefined, undefined, grainRef.current!.length]} frustumCulled={false}>
       <sphereGeometry args={[STIR_GRAIN_R, 6, 6]} />
-      <meshStandardMaterial roughness={0.85} metalness={0.05} />
+      <meshStandardMaterial ref={materialRef} roughness={0.85} metalness={0.05} />
     </instancedMesh>
   );
 };
 
+// ─── SmokeEmitter: Hiệu ứng khói đen bốc lên ─────────────────────────────────────────
+
+const SmokeEmitter = ({ active, totalGrams }: { active: boolean; totalGrams: number }) => {
+  const groupRef = useRef<THREE.Group>(null);
+  const particles = useMemo(() => {
+    return Array.from({ length: 20 }).map(() => ({
+      pos: new THREE.Vector3((Math.random() - 0.5) * 0.008, Math.random() * 0.05, (Math.random() - 0.5) * 0.008),
+      vel: new THREE.Vector3((Math.random() - 0.5) * 0.004, Math.random() * 0.015 + 0.01, (Math.random() - 0.5) * 0.004),
+      life: Math.random(),
+    }));
+  }, []);
+
+  useFrame((_, delta) => {
+    if (!groupRef.current) return;
+    const dt = Math.min(delta, 0.03); // cap delta
+
+    particles.forEach((p, i) => {
+      if (active) {
+        p.life += dt * 0.5;
+        if (p.life > 1) {
+          p.life = 0;
+          p.pos.set((Math.random() - 0.5) * 0.008, 0, (Math.random() - 0.5) * 0.008);
+        }
+      } else {
+        if (p.life >= 0 && p.life < 1) {
+          p.life += dt * 0.25; // Slower fade out (~4s)
+        } else {
+          p.life = 2; // dead
+        }
+      }
+
+      const child = groupRef.current!.children[i] as THREE.Mesh;
+      if (child) {
+        if (p.life >= 0 && p.life <= 1) {
+          child.visible = true;
+          p.pos.addScaledVector(p.vel, dt);
+          child.position.copy(p.pos);
+          // random spread
+          p.vel.x += (Math.random() - 0.5) * dt * 0.01;
+          p.vel.z += (Math.random() - 0.5) * dt * 0.01;
+
+          const mat = child.material as THREE.MeshBasicMaterial;
+          mat.opacity = (1 - p.life) * 0.1; // fade out, max opacity 0.1
+
+          const scale = 1 + p.life * 1.5;
+          child.scale.set(scale, scale, scale);
+        } else {
+          child.visible = false;
+        }
+      }
+    });
+  });
+
+  // Calculate approximate top Y of the powder layer
+  // The base bottom is around 0.035, and layers scale based on totalGrams
+  // We reduce the offset to ensure it sits exactly ON the powder, not hovering above.
+  const startY = 0.035 + (totalGrams * 0.0028);
+
+  return (
+    <group ref={groupRef} position={[0, startY, 0]}>
+      {particles.map((_, i) => (
+        <mesh key={i} visible={false}>
+          <sphereGeometry args={[0.0012, 5, 5]} />
+          <meshBasicMaterial color="#f3f4f6" transparent opacity={0.15} depthWrite={false} />
+        </mesh>
+      ))}
+    </group>
+  );
+};
