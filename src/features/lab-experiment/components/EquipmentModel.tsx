@@ -12,8 +12,8 @@ import {
   SUBSTANCE_COLORS,
   getEquipmentById,
 } from "../services/equipmentRegistry";
-import { useExperimentStore } from "../services/experimentStore";
 import type { TubeContent } from "../services/experimentStore";
+import { useExperimentStore } from "../services/experimentStore";
 import type { DroppedItem } from "../types/equipment";
 
 // ─── Hằng số snap ────────────────────────────────────────────────────────────
@@ -236,7 +236,7 @@ export const EquipmentModel = ({
       // 3. Proximity snap check
       if ((isTestTube || isAlcoholLamp || isMagnet) && !isSnappedRef.current && thermometerRegistry.size > 0) {
         const myPos = rigidBodyRef.current.translation();
-        const occupationMap = isTestTube ? occupiedThermometers : isAlcoholLamp ? occupiedThermometersByLamp: occupiedByMagnet;
+        const occupationMap = isTestTube ? occupiedThermometers : isAlcoholLamp ? occupiedThermometersByLamp : occupiedByMagnet;
 
         for (const [thermoId, thermoBody] of thermometerRegistry) {
           if (occupationMap.has(thermoId) && occupationMap.get(thermoId) !== droppedItem.id) continue;
@@ -435,7 +435,7 @@ export const EquipmentModel = ({
   const mixedContents = contents.slice(0, stirredCount);
   const unmixedContents = contents.slice(stirredCount);
   if (isAttracted) {
-    unmixedContents.sort((a,b) => b.substanceId.localeCompare(a.substanceId, undefined, { sensitivity: "base" }))
+    unmixedContents.sort((a, b) => b.substanceId.localeCompare(a.substanceId, undefined, { sensitivity: "base" }))
   }
 
   // Blend all unique powder colors into a single mixed color (chỉ phần đã khuấy)
@@ -748,15 +748,15 @@ const TUBE_MARGIN = 0.02;  // khoảng cách tới mép trên (model space)
 const LAYER_H_CONST = 0.003; // = layerH trong render
 const MAX_TUBE_LAYERS = Math.floor((TUBE_TOP_Y - TUBE_BOTTOM_Y - TUBE_MARGIN) / LAYER_H_CONST);
 
-interface SDropLayerGrain {
-  startY: number;
-  targetPos: THREE.Vector3;
-  color: string;
-  delay: number;
-  currentY: number;
-  velY: number;
-  settled: boolean;
-}
+// interface SDropLayerGrain {
+//   startY: number;
+//   targetPos: THREE.Vector3;
+//   color: string;
+//   delay: number;
+//   currentY: number;
+//   velY: number;
+//   settled: boolean;
+// }
 
 // ─── Shared Particle Generation Logic ─────────────────────────────────────────
 const STIR_GRAIN_R = 0.00015;
@@ -825,16 +825,16 @@ function buildPackedPositions(
 
 // ─── PowderLayer: Real falling particles for individual layers ─────────
 
-interface SDropLayerGrain {
-  startY: number;
-  targetPos: THREE.Vector3;
-  color: string;
-  delay: number;
-  currentY: number;
-  velY: number;
-  settled: boolean;
-  isReacted?: boolean;
-}
+// interface SDropLayerGrain {
+//   startY: number;
+//   targetPos: THREE.Vector3;
+//   color: string;
+//   delay: number;
+//   currentY: number;
+//   velY: number;
+//   settled: boolean;
+//   isReacted?: boolean;
+// }
 
 const _reactedColor = new THREE.Color("#2d2d2d");
 
@@ -892,7 +892,7 @@ const PowderLayer = ({
       if (isIron && isAttracted) {
         if (finalTargetX > 0) finalTargetX = -finalTargetX;
         finalTargetX = finalTargetX * 0.8 - (TUBE_INNER_R * 0.2);
-        
+
         const relativeY = t.y - minY;
         finalTargetY = minY + (relativeY * 2); // Gấp đôi độ cao
 
@@ -996,9 +996,9 @@ const PowderLayer = ({
   });
 
   return (
-    <instancedMesh 
-      ref={meshRef} 
-      args={[undefined, undefined, grains.length]} 
+    <instancedMesh
+      ref={meshRef}
+      args={[undefined, undefined, grains.length]}
       frustumCulled={false}
     >
       <sphereGeometry args={[STIR_GRAIN_R, 6, 6]} />
