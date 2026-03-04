@@ -39,8 +39,8 @@ const ProfilePage = () => {
     confirmPassword: ''
   });
 
-  const [subscription, setSubscription] = useState<ISubscription | null>(null);
-  const [packageName, setPackageName] = useState<string>('');
+  const [subscriptions, setSubscriptions] = useState<ISubscription[]>([]);
+  const [packageNames, setPackageNames] = useState<Record<string, string>>({});
   const [transactions, setTransactions] = useState<IPaymentTransaction[]>([]);
   const [billingLoading, setBillingLoading] = useState(false);
 
@@ -81,28 +81,30 @@ const ProfilePage = () => {
         GetMyTransactions()
       ]);
 
-      if (subData) {
-        setSubscription(subData);
-        if (subData.packageId) {
-          fetchPackageName(subData.packageId);
-        }
+      if (subData && subData.length > 0) {
+        setSubscriptions(subData);
+        // Fetch package names for all unique packageIds
+        const uniquePackageIds = [...new Set(subData.filter(s => s.packageId).map(s => s.packageId!))];
+        const names: Record<string, string> = {};
+        await Promise.all(
+          uniquePackageIds.map(async (pkgId) => {
+            try {
+              const response = await api.get(`packages/${pkgId}`);
+              if (response.data && response.data.result) {
+                names[pkgId] = response.data.result.packageName || response.data.result.name || 'Gói dịch vụ';
+              }
+            } catch {
+              names[pkgId] = 'Gói dịch vụ';
+            }
+          })
+        );
+        setPackageNames(names);
       }
       if (transData) setTransactions(transData);
     } catch (error) {
       console.error("Error fetching billing data", error);
     } finally {
       setBillingLoading(false);
-    }
-  };
-
-  const fetchPackageName = async (packageId: string) => {
-    try {
-      const response = await api.get(`packages/${packageId}`);
-      if (response.data && response.data.result) {
-        setPackageName(response.data.result.packageName || response.data.result.name || 'Gói cao cấp');
-      }
-    } catch (error) {
-      setPackageName('Gói dịch vụ');
     }
   };
 
@@ -156,18 +158,18 @@ const ProfilePage = () => {
     setLoading(false);
   };
 
-  const calculateDaysLeft = () => {
-    if (!subscription?.endDate) return 0;
-    const end = new Date(subscription.endDate).getTime();
+  const calculateDaysLeft = (sub: ISubscription) => {
+    if (!sub?.endDate) return 0;
+    const end = new Date(sub.endDate).getTime();
     const now = new Date().getTime();
     const diff = end - now;
-    return Math.ceil(diff / (1000 * 3600 * 24));
+    return Math.max(0, Math.ceil(diff / (1000 * 3600 * 24)));
   };
 
-  const calculateProgress = () => {
-    if (!subscription?.startDate || !subscription?.endDate) return 0;
-    const start = new Date(subscription.startDate).getTime();
-    const end = new Date(subscription.endDate).getTime();
+  const calculateProgress = (sub: ISubscription) => {
+    if (!sub?.startDate || !sub?.endDate) return 0;
+    const start = new Date(sub.startDate).getTime();
+    const end = new Date(sub.endDate).getTime();
     const now = new Date().getTime();
     const total = end - start;
     const elapsed = now - start;
@@ -176,40 +178,69 @@ const ProfilePage = () => {
     return Math.min(100, Math.max(0, (elapsed / total) * 100));
   };
 
+  const activeSubscriptions = subscriptions.filter(s => s.isActive);
+
   const transactionColumns: ColumnsType<IPaymentTransaction> = [
     {
       title: 'Mã GD',
       dataIndex: 'transactionCode',
       key: 'transactionCode',
-      render: (text) => <span className="font-mono text-xs text-gray-500">{text || 'N/A'}</span>
+      render: (text: string, record: IPaymentTransaction) => (
+        <span className="font-mono text-xs text-gray-500">
+          {text || record.id?.slice(0, 8)?.toUpperCase() || 'N/A'}
+        </span>
+      )
     },
     {
       title: 'Số tiền',
       dataIndex: 'amount',
       key: 'amount',
-      render: (val) => <span className="font-bold text-gray-900">{val?.toLocaleString('vi-VN')} đ</span>,
+      render: (val: number) => <span className="font-bold text-gray-900">{val?.toLocaleString('vi-VN')} đ</span>,
+    },
+    {
+      title: 'Phương thức',
+      dataIndex: 'paymentMethod',
+      key: 'paymentMethod',
+      responsive: ['md'] as any,
+      render: (method: string) => <span className="text-gray-600 text-sm">{method || 'N/A'}</span>
     },
     {
       title: 'Trạng thái',
       dataIndex: 'status',
       key: 'status',
-      render: (status) => {
-        const isSuccess = ['PAID', 'Completed', 'Success'].includes(status);
+      render: (status: string) => {
+        const s = (status || '').toUpperCase();
+        const isSuccess = ['PAID', 'COMPLETED', 'SUCCESS'].includes(s);
+        const isPending = ['PENDING', 'PROCESSING'].includes(s);
+        const isCancelled = ['CANCELLED', 'CANCELED', 'FAILED', 'REJECTED'].includes(s);
         return (
-          <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${isSuccess ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+          <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${isSuccess ? 'bg-green-100 text-green-800' :
+            isPending ? 'bg-yellow-100 text-yellow-800' :
+              isCancelled ? 'bg-red-100 text-red-800' :
+                'bg-gray-100 text-gray-800'
             }`}>
-            {isSuccess ? <CheckCircle2 size={12} className="mr-1" /> : <AlertCircle size={12} className="mr-1" />}
-            {status?.toUpperCase()}
+            {isSuccess ? <CheckCircle2 size={12} className="mr-1" /> :
+              isPending ? <Clock size={12} className="mr-1" /> :
+                isCancelled ? <AlertCircle size={12} className="mr-1" /> :
+                  <AlertCircle size={12} className="mr-1" />}
+            {s}
           </div>
         );
       }
     },
     {
-      title: 'Ngày tạo',
-      dataIndex: 'paymentMethod',
-      key: 'date',
-      responsive: ['md'],
-      render: () => <span className="text-gray-500 text-sm">Vừa xong</span>
+      title: 'Ngày thanh toán',
+      dataIndex: 'paidAt',
+      key: 'paidAt',
+      responsive: ['md'] as any,
+      render: (paidAt: string) => (
+        <span className="text-gray-500 text-sm">
+          {paidAt ? new Date(paidAt).toLocaleDateString('vi-VN', {
+            day: '2-digit', month: '2-digit', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+          }) : 'Chưa thanh toán'}
+        </span>
+      )
     }
   ];
 
@@ -409,62 +440,66 @@ const ProfilePage = () => {
                           Gói đăng ký của bạn
                         </h3>
 
-                        {subscription && subscription.isActive ? (
-                          /* Active Subscription Card */
-                          <div className="relative overflow-hidden rounded-3xl bg-gray-900 text-white shadow-2xl p-8 transition-all hover:scale-[1.01]">
-                            <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full blur-3xl opacity-50 pointer-events-none" />
-                            <div className="absolute bottom-0 left-0 -ml-16 -mb-16 w-64 h-64 bg-gradient-to-tr from-blue-500 to-cyan-500 rounded-full blur-3xl opacity-30 pointer-events-none" />
+                        {activeSubscriptions.length > 0 ? (
+                          /* Active Subscription Cards */
+                          <div className="grid gap-6">
+                            {activeSubscriptions.map((sub, index) => (
+                              <div key={sub.id || index} className="relative overflow-hidden rounded-3xl bg-gray-900 text-white shadow-2xl p-8 transition-all hover:scale-[1.01]">
+                                <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full blur-3xl opacity-50 pointer-events-none" />
+                                <div className="absolute bottom-0 left-0 -ml-16 -mb-16 w-64 h-64 bg-gradient-to-tr from-blue-500 to-cyan-500 rounded-full blur-3xl opacity-30 pointer-events-none" />
 
-                            <div className="relative z-10 grid md:grid-cols-2 gap-8 items-center">
-                              <div>
-                                <div className="flex items-center gap-3 mb-2">
-                                  <div className="p-2 bg-white/10 backdrop-blur-md rounded-lg">
-                                    <Zap size={20} className="text-yellow-400" />
+                                <div className="relative z-10 grid md:grid-cols-2 gap-8 items-center">
+                                  <div>
+                                    <div className="flex items-center gap-3 mb-2">
+                                      <div className="p-2 bg-white/10 backdrop-blur-md rounded-lg">
+                                        <Zap size={20} className="text-yellow-400" />
+                                      </div>
+                                      <span className="text-indigo-200 font-medium tracking-wide uppercase text-sm">Gói hiện tại</span>
+                                    </div>
+                                    <h2 className="text-4xl font-extrabold tracking-tight mb-4">
+                                      {(sub.packageId && packageNames[sub.packageId]) || 'Premium Plan'}
+                                    </h2>
+                                    <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-green-500/20 text-green-300 border border-green-500/30 rounded-full text-sm font-bold">
+                                      <span className="relative flex h-2 w-2">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                                      </span>
+                                      {calculateDaysLeft(sub) > 0 ? 'ĐANG HOẠT ĐỘNG' : 'ĐÃ HẾT HẠN'}
+                                    </div>
                                   </div>
-                                  <span className="text-indigo-200 font-medium tracking-wide uppercase text-sm">Gói hiện tại</span>
-                                </div>
-                                <h2 className="text-4xl font-extrabold tracking-tight mb-4">
-                                  {packageName || 'Premium Plan'}
-                                </h2>
-                                <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-green-500/20 text-green-300 border border-green-500/30 rounded-full text-sm font-bold">
-                                  <span className="relative flex h-2 w-2">
-                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                                  </span>
-                                  ĐANG HOẠT ĐỘNG
+
+                                  <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/10">
+                                    <div className="flex justify-between text-sm mb-2 text-gray-300">
+                                      <span>Thời hạn sử dụng</span>
+                                      <span className="text-white font-bold">{calculateDaysLeft(sub)} ngày còn lại</span>
+                                    </div>
+                                    <Progress
+                                      percent={calculateProgress(sub)}
+                                      showInfo={false}
+                                      strokeColor={{ '0%': '#6366f1', '100%': '#a855f7' }}
+                                      trailColor="rgba(255,255,255,0.1)"
+                                      className="mb-4"
+                                    />
+                                    <div className="grid grid-cols-2 gap-4 pt-2">
+                                      <div>
+                                        <p className="text-xs text-gray-400 mb-1">Ngày bắt đầu</p>
+                                        <p className="font-semibold flex items-center gap-1.5">
+                                          <CalendarDays size={14} className="text-indigo-400" />
+                                          {sub.startDate ? new Date(sub.startDate).toLocaleDateString('vi-VN') : 'N/A'}
+                                        </p>
+                                      </div>
+                                      <div>
+                                        <p className="text-xs text-gray-400 mb-1">Ngày hết hạn</p>
+                                        <p className="font-semibold flex items-center gap-1.5">
+                                          <CalendarDays size={14} className="text-pink-400" />
+                                          {sub.endDate ? new Date(sub.endDate).toLocaleDateString('vi-VN') : 'N/A'}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </div>
                                 </div>
                               </div>
-
-                              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/10">
-                                <div className="flex justify-between text-sm mb-2 text-gray-300">
-                                  <span>Thời hạn sử dụng</span>
-                                  <span className="text-white font-bold">{calculateDaysLeft()} ngày còn lại</span>
-                                </div>
-                                <Progress
-                                  percent={calculateProgress()}
-                                  showInfo={false}
-                                  strokeColor={{ '0%': '#6366f1', '100%': '#a855f7' }}
-                                  trailColor="rgba(255,255,255,0.1)"
-                                  className="mb-4"
-                                />
-                                <div className="grid grid-cols-2 gap-4 pt-2">
-                                  <div>
-                                    <p className="text-xs text-gray-400 mb-1">Ngày bắt đầu</p>
-                                    <p className="font-semibold flex items-center gap-1.5">
-                                      <CalendarDays size={14} className="text-indigo-400" />
-                                      {subscription.startDate ? new Date(subscription.startDate).toLocaleDateString('vi-VN') : 'N/A'}
-                                    </p>
-                                  </div>
-                                  <div>
-                                    <p className="text-xs text-gray-400 mb-1">Ngày hết hạn</p>
-                                    <p className="font-semibold flex items-center gap-1.5">
-                                      <CalendarDays size={14} className="text-pink-400" />
-                                      {subscription.endDate ? new Date(subscription.endDate).toLocaleDateString('vi-VN') : 'N/A'}
-                                    </p>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
+                            ))}
                           </div>
                         ) : (
                           /* No Subscription / Free Tier Card */
@@ -482,7 +517,7 @@ const ProfilePage = () => {
                               type="primary"
                               size="large"
                               className="bg-indigo-600 hover:bg-indigo-700 h-12 px-8 rounded-xl shadow-lg shadow-indigo-200"
-                              onClick={() => navigate('/products')}
+                              onClick={() => navigate('/experience')}
                             >
                               Nâng cấp ngay
                             </Button>

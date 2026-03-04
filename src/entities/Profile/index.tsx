@@ -28,4 +28,5 @@ export interface IPaymentTransaction {
   status: string | null;
   qrUrl: string | null;
   transactionCode: string | null;
+  paidAt: string | null;
 }
