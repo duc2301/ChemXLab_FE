@@ -701,7 +701,7 @@ export const EquipmentModel = ({
       {/* Khung thông tin phản ứng (Ý tưởng từ ab.html) */}
       {isTestTube && (isHeating || (coolingTime !== null && coolingTime < 8)) && (currentProgress > 0 || hasFinishedReaction) && (
         <Html
-          position={[-0.2, 0.25, 0]}
+          position={[-1, 0.25, 0]}
           center
           pointerEvents="none"
           style={{ userSelect: "none", zIndex: 100 }}
@@ -892,9 +892,9 @@ useGLTF.preload("/models/500ml-binhtamgiac.glb");
 // }
 
 // ─── Shared Particle Generation Logic ─────────────────────────────────────────
-const STIR_GRAIN_R = 0.0001;
+const STIR_GRAIN_R = 0.00025;
 
-const GRAINS_PER_GRAM = 35000;
+const GRAINS_PER_GRAM = 3500;
 
 function getWeightHeight(grams: number, tubeR: number, grainR: number): number {
   const count = Math.round(grams * GRAINS_PER_GRAM);
@@ -903,43 +903,62 @@ function getWeightHeight(grams: number, tubeR: number, grainR: number): number {
   return (volume / packingFraction) / (Math.PI * tubeR * tubeR);
 }
 
+interface SimplePos {
+  x: number;
+  y: number;
+  z: number;
+}
+
 function buildPackedPositions(
   tubeR: number,
   grainR: number,
   baseY: number,
   totalCount: number,
-): THREE.Vector3[] {
-  const positions: THREE.Vector3[] = [];
+): SimplePos[] {
+  const positions: SimplePos[] = new Array(totalCount);
   const tubeBaseY = 0.032 + grainR;
 
-  // Tính thể tích để xác định cột nguyên liệu cho đợt này
-  const volumeGrains = totalCount * ((4 / 3) * Math.PI * Math.pow(grainR, 3));
+  // 1. Tối ưu hằng số: Tính toán cylinderHeight một lần duy nhất
+  const grainVolume = (4 / 3) * Math.PI * (grainR ** 3);
   const packingFraction = 0.5;
-  const cylinderHeight = (volumeGrains / packingFraction) / (Math.PI * tubeR * tubeR);
+  const tubeArea = Math.PI * (tubeR ** 2);
+  const cylinderHeight = (totalCount * grainVolume / packingFraction) / tubeArea;
+
+  // 2. Cache các giá trị bình phương để tránh Math.pow/Math.sqrt không cần thiết
+  const tubeR2 = tubeR * tubeR;
+  const usableTubeR = tubeR - grainR;
 
   for (let i = 0; i < totalCount; i++) {
-    const rx = Math.sqrt(Math.random()) * (tubeR - grainR);
+    // Phân bổ hạt theo diện tích hình tròn (sqrt để phân bổ đều từ tâm ra rìa)
+    const rx = Math.sqrt(Math.random()) * usableTubeR;
     const theta = Math.random() * Math.PI * 2;
+    
     let x = rx * Math.cos(theta);
     let z = rx * Math.sin(theta);
-    let y = Math.random() * cylinderHeight;
-    const absY = baseY + y;
+    const yOffset = Math.random() * cylinderHeight;
+    const absY = baseY + yOffset;
 
-    // Giới hạn bán kính nếu nằm trong phần đáy ống nghiệm bán cầu
+    // 3. Logic xử lý đáy ống nghiệm bán cầu
     const relativeYToBottom = absY - tubeBaseY;
+    
     if (relativeYToBottom < tubeR) {
+      // dy là khoảng cách từ tâm bán cầu đáy (theo trục Y)
       const dy = relativeYToBottom - tubeR;
-      const r_max = Math.sqrt(Math.max(0, tubeR * tubeR - dy * dy)) - grainR;
-      const r_current = Math.sqrt(x * x + z * z);
-      if (r_current > r_max && r_current > 0) {
-        const scale = r_max / r_current;
+      // Tính bán kính tối đa cho phép tại độ cao này (Pythagoras)
+      const rMax = Math.sqrt(Math.max(0, tubeR2 - dy * dy)) - grainR;
+      
+      const rCurrent2 = x * x + z * z;
+      if (rCurrent2 > rMax * rMax && rCurrent2 > 0) {
+        const scale = rMax / Math.sqrt(rCurrent2);
         x *= scale;
         z *= scale;
       }
     }
 
-    positions.push(new THREE.Vector3(x, absY, z));
+    // 4. Trả về object literal (Cực nhẹ so với THREE.Vector3)
+    positions[i] = { x, y: absY, z };
   }
+
   return positions;
 }
 
@@ -955,6 +974,7 @@ function buildPackedPositions(
 //   settled: boolean;
 //   isReacted?: boolean;
 // }
+const _dummy = new THREE.Object3D();
 
 const PowderLayer = ({
   color,
@@ -966,29 +986,17 @@ const PowderLayer = ({
   spawnInstant = false,
   isIron = false,
   isAttracted = false,
-}: {
-  color: string;
-  startGrams: number;
-  amountGrams: number;
-  reactionProgress?: number;
-  coolingTime?: number | null;
-  isHeating?: boolean;
-  spawnInstant?: boolean;
-  isIron?: boolean;
-  isAttracted?: boolean | undefined | "";
-}) => {
+}: any) => {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const elapsed = useRef(0);
-  const doneRef = useRef(false);
+  const isAllSettledRef = useRef(false);
 
-  // 1. Dùng useMemo để tính toán hạt, tránh tính toán trực tiếp trong body gây loop
-  // dependency array bao gồm isAttracted để tính toán lại vị trí khi nam châm thay đổi
+  // 1. Tính toán Grains (Chỉ khi dữ liệu đầu vào thay đổi)
   const grains = useMemo(() => {
     const floorY = 0.032 + STIR_GRAIN_R;
     const startHeight = getWeightHeight(startGrams, TUBE_INNER_R, STIR_GRAIN_R);
     const layerGrainsCount = Math.round(amountGrams * GRAINS_PER_GRAM);
 
-    // Chỉ sinh hạt trong dải độ cao của lớp này, không trộn lẫn với lớp khác khi đổ vào
     const layerTargets = buildPackedPositions(
       TUBE_INNER_R,
       STIR_GRAIN_R,
@@ -997,140 +1005,194 @@ const PowderLayer = ({
     );
 
     let minY = Infinity;
-    layerTargets.forEach((t) => { if (t.y < minY) minY = t.y; });
+    layerTargets.forEach((t) => {
+      if (t.y < minY) minY = t.y;
+    });
 
     return layerTargets.map((t) => {
-      let finalTargetX = t.x;
-      let finalTargetZ = t.z;
-      let finalTargetY = t.y;
+      let fX = t.x,
+        fZ = t.z,
+        fY = t.y;
 
-      // Logic nén 50% diện tích -> Tăng 200% độ cao
       if (isIron && isAttracted) {
-        if (finalTargetX > 0) finalTargetX = -finalTargetX;
-        finalTargetX = finalTargetX * 0.8 - (TUBE_INNER_R * 0.2);
-
+        if (fX > 0) fX = -fX;
+        fX = fX * 0.8 - TUBE_INNER_R * 0.2;
         const relativeY = t.y - minY;
-        finalTargetY = minY + (relativeY * 2); // Gấp đôi độ cao
-
-        finalTargetX += (Math.random() - 0.5) * 0.002;
-        finalTargetZ += (Math.random() - 0.5) * 0.002;
+        fY = minY + relativeY * 2;
+        fX += (Math.random() - 0.5) * 0.002;
+        fZ += (Math.random() - 0.5) * 0.002;
       }
 
-      const targetPos = { x: finalTargetX, y: finalTargetY, z: finalTargetZ };
+      // Pre-calculate Rotation thành Quaternion để tối ưu speed trong useFrame
+      const quat = new THREE.Quaternion().setFromEuler(
+        new THREE.Euler(Math.random() * Math.PI, Math.random() * Math.PI, 0),
+      );
 
       return {
-        startY: spawnInstant ? targetPos.y : TUBE_TOP_Y + 0.02 + Math.random() * 0.02,
-        targetPos: targetPos,
-        color: color,
-        delay: spawnInstant ? 0 : Math.random() * 0.5,
-        currentY: spawnInstant ? targetPos.y : TUBE_TOP_Y + 0.02 + Math.random() * 0.02,
+        targetX: fX,
+        targetY: fY,
+        targetZ: fZ,
+        currentY: spawnInstant ? fY : TUBE_TOP_Y + 0.02 + Math.random() * 0.02,
         velY: spawnInstant ? 0 : -(Math.random() * 0.1 + 0.05),
+        delay: spawnInstant ? 0 : Math.random() * 0.5,
         settled: spawnInstant,
         aRandom: Math.random(),
-        rotation: new THREE.Euler(Math.random() * Math.PI, Math.random() * Math.PI, 0)
+        quat: quat,
       };
     });
   }, [isAttracted, startGrams, amountGrams, isIron, color, spawnInstant]);
 
-  const aRandomData = useMemo(() => {
-    const data = new Float32Array(grains.length);
-    grains.forEach((g, i) => (data[i] = g.aRandom));
-    return data;
-  }, [grains]);
-
-  const aColorData = useMemo(() => {
-    const data = new Float32Array(grains.length * 3);
+  // Attribute Data (Chỉ tính lại khi grains đổi)
+  const { aRandomData, aColorData } = useMemo(() => {
+    const rData = new Float32Array(grains.length);
+    const cData = new Float32Array(grains.length * 3);
     const col = new THREE.Color(color);
-    for (let i = 0; i < grains.length; i++) {
-      data[i * 3] = col.r;
-      data[i * 3 + 1] = col.g;
-      data[i * 3 + 2] = col.b;
-    }
-    return data;
+    grains.forEach((g, i) => {
+      rData[i] = g.aRandom;
+      cData[i * 3] = col.r;
+      cData[i * 3 + 1] = col.g;
+      cData[i * 3 + 2] = col.b;
+    });
+    return { aRandomData: rData, aColorData: cData };
   }, [grains, color]);
 
-  // 2. Cập nhật matrix khi danh sách hạt thay đổi
+  // 2. Cập nhật matrix ban đầu
   useEffect(() => {
-    if (!meshRef.current || !grains) return;
-    const temp = new THREE.Object3D();
-    grains.forEach((g, i) => {
-      temp.position.set(g.targetPos.x, g.currentY, g.targetPos.z);
-      temp.rotation.copy(g.rotation);
-      temp.updateMatrix();
-      meshRef.current!.setMatrixAt(i, temp.matrix);
-    });
+    if (!meshRef.current) return;
+    for (let i = 0; i < grains.length; i++) {
+      const g = grains[i];
+      _dummy.position.set(g.targetX, g.currentY, g.targetZ);
+      _dummy.quaternion.copy(g.quat);
+      _dummy.updateMatrix();
+      meshRef.current.setMatrixAt(i, _dummy.matrix);
+    }
     meshRef.current.instanceMatrix.needsUpdate = true;
-    doneRef.current = false;
+    isAllSettledRef.current = false; // Reset trạng thái khi grains đổi
   }, [grains]);
 
+  // 3. Logic Frame (Optimized)
   useFrame((state, delta) => {
-    if (doneRef.current || !meshRef.current) return;
-    elapsed.current += delta;
-    let allDone = true;
-    let needsUpdate = false;
-    const dt = Math.min(delta, 0.03);
+    const mesh = meshRef.current;
+    if (!mesh) return;
 
-    const mat = meshRef.current.material as THREE.ShaderMaterial;
+    const time = state.clock.elapsedTime;
+    const mat = mesh.material as THREE.ShaderMaterial;
+
+    // Điều kiện để hạt "động":
+    // 1. Đang có phản ứng (rung)
+    // 2. Đang thắp lửa (để Shader cập nhật màu liên tục)
+    const wobbleActive = reactionProgress > 0.333 && reactionProgress < 0.833;
+    const isActivelyReacting =
+      isHeating ||
+      wobbleActive ||
+      (reactionProgress > 0 && reactionProgress < 1);
+
+    // 1. CẬP NHẬT UNIFORMS (Cần chạy khi đang thắp lửa để đổi màu)
     if (mat.uniforms) {
-      mat.uniforms.uTime.value = state.clock.getElapsedTime();
+      mat.uniforms.uTime.value = time;
       mat.uniforms.uIsBurning.value = isHeating && reactionProgress > 0;
       mat.uniforms.uReactionProgress.value = reactionProgress;
       mat.uniforms.uCoolingTime.value = coolingTime ?? 0;
     }
 
-    const wobbleActive = reactionProgress > 0.333 && reactionProgress < 0.833;
+    // 2. NGẮT LOOP TRIỆT ĐỂ:
+    // Chỉ ngủ khi: Đã chạm đáy (isAllSettledRef) VÀ không còn thắp lửa/phản ứng
+    if (isAllSettledRef.current && !isActivelyReacting) return;
+
+    elapsed.current += delta;
+    const dt = Math.min(delta, 0.03);
+
+    let needsGPUUpdate = false;
+    let anyoneStillFalling = false;
 
     for (let i = 0; i < grains.length; i++) {
       const g = grains[i];
-      if (elapsed.current < g.delay) { allDone = false; continue; }
 
+      // Nếu chưa đến lúc rơi
+      if (elapsed.current < g.delay) {
+        anyoneStillFalling = true;
+        continue;
+      }
+
+      let pX = g.targetX;
+      let pY = g.currentY;
+      let pZ = g.targetZ;
+      let hasMoved = false;
+
+      // A. Xử lý rơi (Vật lý)
       if (!g.settled) {
-        allDone = false;
-        needsUpdate = true;
+        hasMoved = true;
+        anyoneStillFalling = true;
+
         g.velY -= 3.5 * dt;
         g.currentY += g.velY * dt;
 
-        if (g.currentY <= g.targetPos.y) {
-          g.currentY = g.targetPos.y;
-          g.velY = Math.abs(g.velY) * 0.2;
-          if (g.velY < 0.005) { g.currentY = g.targetPos.y; g.velY = 0; g.settled = true; }
+        if (g.currentY <= g.targetY) {
+          g.currentY = g.targetY;
+          g.velY *= -0.15;
+          if (Math.abs(g.velY) < 0.02) {
+            g.currentY = g.targetY;
+            g.velY = 0;
+            g.settled = true;
+          }
         }
+        pY = g.currentY;
       }
 
-      let wX = 0, wY = 0, wZ = 0;
+      // B. Xử lý rung (Wobble)
       if (g.settled && wobbleActive) {
-        // Tần số rung nhẹ nhàng hơn (từ 12-16 giảm xuống 6-10)
-        const tParam = elapsed.current * (6 + (i % 5)) + i * 0.1;
-        wX = Math.sin(tParam) * 0.0001;
-        wZ = Math.cos(tParam * 1.3) * 0.0001;
-        wY = Math.sin(tParam * 2.0) * 0.00015;
-        needsUpdate = true;
+        hasMoved = true;
+        const t = time * (6 + (i % 5)) + i * 0.1;
+        pX += Math.sin(t) * 0.0001;
+        pZ += Math.cos(t * 1.3) * 0.0001;
+        pY += Math.sin(t * 2.0) * 0.00015;
       }
 
-      _dummyObj.position.set(g.targetPos.x + wX, g.currentY + wY, g.targetPos.z + wZ);
-      _dummyObj.rotation.copy(g.rotation);
-      _dummyObj.scale.setScalar(g.settled ? 1 : 2);
-      _dummyObj.updateMatrix();
-      meshRef.current.setMatrixAt(i, _dummyObj.matrix);
+      // C. Cập nhật Matrix (Chỉ khi vị trí thay đổi)
+      if (hasMoved) {
+        _dummy.position.set(pX, pY, pZ);
+        _dummy.quaternion.copy(g.quat);
+        _dummy.scale.setScalar(g.settled ? 1 : 1.3);
+        _dummy.updateMatrix();
+        mesh.setMatrixAt(i, _dummy.matrix);
+        needsGPUUpdate = true;
+      }
     }
 
-    if (needsUpdate || wobbleActive || !allDone) {
-      meshRef.current.instanceMatrix.needsUpdate = true;
+    // Luôn cập nhật instanceMatrix khi đang đổi màu/phản ứng
+    // để GPU vẽ lại các hạt với màu sắc mới từ Shader
+    if (needsGPUUpdate || isActivelyReacting) {
+      mesh.instanceMatrix.needsUpdate = true;
     }
-    if (allDone && reactionProgress >= 1) doneRef.current = true;
+
+    // QUYẾT ĐỊNH TRẠNG THÁI NGHỈ CHO FRAME TIẾP THEO
+    // Nếu không còn hạt nào đang rơi và không có lửa/phản ứng -> Ngủ
+    if (!anyoneStillFalling && !isActivelyReacting) {
+      isAllSettledRef.current = true;
+    } else {
+      // Nếu có lửa hoặc hạt đang rơi -> Luôn thức
+      isAllSettledRef.current = false;
+    }
   });
-
   return (
     <instancedMesh
       ref={meshRef}
       args={[undefined, undefined, grains.length]}
-      frustumCulled={false}
+      frustumCulled={true} // Bật lại để tối ưu GPU
     >
-      <sphereGeometry args={[STIR_GRAIN_R, 4, 4]}>
-        <instancedBufferAttribute attach="attributes-aRandom" args={[aRandomData, 1]} />
-        <instancedBufferAttribute attach="attributes-aColor" args={[aColorData, 3]} />
+      <sphereGeometry args={[STIR_GRAIN_R, 3, 3]}>
+        {" "}
+        {/* Giảm segment từ 4x4 xuống 3x3 để bớt poly */}
+        <instancedBufferAttribute
+          attach="attributes-aRandom"
+          args={[aRandomData, 1]}
+        />
+        <instancedBufferAttribute
+          attach="attributes-aColor"
+          args={[aColorData, 3]}
+        />
       </sphereGeometry>
-      <shaderMaterial args={[ChemicalShader]} />
+      <shaderMaterial args={[ChemicalShader]} transparent={true} />
     </instancedMesh>
   );
 };
@@ -1148,7 +1210,6 @@ interface SGrain {
   radius: number;
 }
 
-const _dummyObj = new THREE.Object3D();
 
 const StirredLayer = ({
   items,
@@ -1156,194 +1217,174 @@ const StirredLayer = ({
   reactionProgress = 0,
   coolingTime = null,
   isHeating = false,
-}: {
-  items: TubeContent[];
-  totalGrams: number;
-  reactionProgress?: number;
-  coolingTime?: number | null;
-  isHeating?: boolean;
-}) => {
+}: any) => {
   const meshRef = useRef<THREE.InstancedMesh>(null);
-  const grainRef = useRef<SGrain[] | null>(null);
+  const grainRef = useRef<any[] | null>(null);
+  const elapsed = useRef(0);
+  const isLogicDeadRef = useRef(false); // Flag ngắt render
 
-  // Khóa nhận diện sự thay đổi của các chất trong ống (để update màu sắc)
   const itemsKey = JSON.stringify(items);
-  const prevItemsKey = useRef(itemsKey);
 
-  const FLOOR_Y = 0.032 + STIR_GRAIN_R; // visual inner bottom of tube (+ particle radius)
-
-  // ── Lazy-init: compute once on mount ──────────────────────────────────────
-  if (grainRef.current === null || prevItemsKey.current !== itemsKey) {
-    prevItemsKey.current = itemsKey;
-    const totalGrains = Math.round(totalGrams * GRAINS_PER_GRAM);
-
-    const targets = buildPackedPositions(TUBE_INNER_R, STIR_GRAIN_R, FLOOR_Y, Math.max(0, totalGrains));
+  // 1. Lazy-init & Pre-calculate
+  useMemo(() => {
+    const totalGrainsCount = Math.round(totalGrams * GRAINS_PER_GRAM);
+    const targets = buildPackedPositions(TUBE_INNER_R, STIR_GRAIN_R, 0.032 + STIR_GRAIN_R, Math.max(0, totalGrainsCount));
 
     const colorsArray: string[] = [];
-    items.forEach(c => {
+    items.forEach((c: any) => {
       const g = Math.round(c.amount * GRAINS_PER_GRAM);
       const col = SUBSTANCE_COLORS[c.substanceId] ?? "#e5e7eb";
       for (let i = 0; i < g; i++) colorsArray.push(col);
     });
-    // Fallback if rounding causes colorsArray to be slightly shorter than targets
-    while (colorsArray.length < targets.length && items.length > 0) {
-      colorsArray.push(SUBSTANCE_COLORS[items[items.length - 1].substanceId] ?? "#e5e7eb");
-    }
-    // Shuffle the array perfectly using Fisher-Yates
-    for (let i = colorsArray.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [colorsArray[i], colorsArray[j]] = [colorsArray[j], colorsArray[i]];
-    }
 
+    // Shuffle & Map
     grainRef.current = targets.map((t, i) => {
+      // Pre-convert sang Quaternion để useFrame chạy nhanh hơn
+      const quat = new THREE.Quaternion().setFromEuler(
+        new THREE.Euler(Math.random() * Math.PI, Math.random() * Math.PI, 0)
+      );
       return {
-        basePos: t,
+        baseX: t.x, baseY: t.y, baseZ: t.z,
         color: colorsArray[i] || "#e5e7eb",
-        rotation: new THREE.Euler(Math.random() * Math.PI, Math.random() * Math.PI, 0),
+        quat: quat,
         aRandom: Math.random(),
         phaseX: Math.random() * Math.PI * 2,
         phaseZ: Math.random() * Math.PI * 2,
-        speed: 8 + Math.random() * 12, // Tăng tốc độ xoáy (gốc 1.5-3.5)
-        radius: 0.001 + Math.random() * 0.004, // Tăng bán kính xoáy (gốc 0.0003)
+        speed: 8 + Math.random() * 12,
+        radius: 0.001 + Math.random() * 0.004,
       };
     });
-  }
+    
+    // Đánh thức logic khi có dữ liệu mới
+    isLogicDeadRef.current = false;
+    elapsed.current = 0;
+  }, [itemsKey, totalGrams]);
 
-  const aRandomData = useMemo(() => {
-    if (!grainRef.current) return new Float32Array(0);
-    const data = new Float32Array(grainRef.current.length);
-    grainRef.current.forEach((g, i) => (data[i] = g.aRandom));
-    return data;
-  }, [itemsKey]);
-
-  const aColorData = useMemo(() => {
-    if (!grainRef.current) return new Float32Array(0);
-    const data = new Float32Array(grainRef.current.length * 3);
+  // Attribute Data
+  const { aRandomData, aColorData } = useMemo(() => {
+    const grains = grainRef.current || [];
+    const rData = new Float32Array(grains.length);
+    const cData = new Float32Array(grains.length * 3);
     const col = new THREE.Color();
-    grainRef.current.forEach((g, i) => {
+    grains.forEach((g, i) => {
+      rData[i] = g.aRandom;
       col.set(g.color);
-      data[i * 3] = col.r;
-      data[i * 3 + 1] = col.g;
-      data[i * 3 + 2] = col.b;
+      cData[i * 3] = col.r;
+      cData[i * 3 + 1] = col.g;
+      cData[i * 3 + 2] = col.b;
     });
-    return data;
+    return { aRandomData: rData, aColorData: cData };
   }, [itemsKey]);
 
-  // Set initial colors and matrices on mount OR when contents change
-  useEffect(() => {
-    if (!meshRef.current || !grainRef.current) return;
-    grainRef.current.forEach((g, i) => {
-      // Place grains at their target directly
-      _dummyObj.position.copy(g.basePos);
-      _dummyObj.rotation.copy(g.rotation);
-      _dummyObj.scale.set(1, 1, 1);
-      _dummyObj.updateMatrix();
-      meshRef.current!.setMatrixAt(i, _dummyObj.matrix);
-    });
-    meshRef.current.instanceMatrix.needsUpdate = true;
-  }, [itemsKey]);
-
-  const elapsed = useRef(0);
-  const doneRef = useRef(false);
-  const STIR_DURATION = 1.0; // Giảm thời gian khuấy xuống 1s cho nhanh (gốc 1.8)
-
+  // 2. Logic Frame (Optimized)
   useFrame((state, delta) => {
-    if ((doneRef.current && reactionProgress <= 0) || !meshRef.current) return;
-    elapsed.current += delta;
+    const mesh = meshRef.current;
+    if (!mesh || !grainRef.current) return;
 
-    // Calculate how intense the stirring is (1.0 = max, 0.0 = stopped)
-    // Fade out smoothly using a simple polynomial decay
-    let intensity = 1.0;
-    if (elapsed.current > STIR_DURATION) {
-      if (elapsed.current > STIR_DURATION + 0.5) {
-        intensity = 0;
-        doneRef.current = true;
-      } else {
-        const t = (elapsed.current - STIR_DURATION) / 0.5; // 0 to 1
-        intensity = 1.0 - (t * t * (3 - 2 * t)); // smoothstep
-      }
-    }
+    const time = state.clock.elapsedTime;
+    const STIR_DURATION = 1.0;
+    const wobbleActive = reactionProgress > 0.333 && reactionProgress < 0.833;
+    
+    // Trạng thái "thức": đang khuấy, đang thắp lửa (để đổi màu), hoặc đang rung
+    const isActivelyAnimating = (elapsed.current < STIR_DURATION + 0.5) || isHeating || wobbleActive || (reactionProgress > 0 && reactionProgress < 1);
 
-    // Unified shader uniforms update
-    const mat = meshRef.current.material as THREE.ShaderMaterial;
+    // Cập nhật Shader Uniforms
+    const mat = mesh.material as THREE.ShaderMaterial;
     if (mat.uniforms) {
-      mat.uniforms.uTime.value = state.clock.getElapsedTime();
+      mat.uniforms.uTime.value = time;
       mat.uniforms.uIsBurning.value = isHeating && reactionProgress > 0;
       mat.uniforms.uReactionProgress.value = reactionProgress;
       mat.uniforms.uCoolingTime.value = coolingTime ?? 0;
     }
 
-    const wobbleActive = reactionProgress > 0.333 && reactionProgress < 0.833;
+    // NGẮT RENDER: Nếu không có gì tác động thì dừng CPU ngay
+    if (isLogicDeadRef.current && !isActivelyAnimating) return;
 
-    const grains = grainRef.current!;
-    const t = state.clock.getElapsedTime();
+    elapsed.current += delta;
+    let intensity = 0;
+
+    // Tính intensity khuấy
+    if (elapsed.current < STIR_DURATION) {
+      intensity = 1.0;
+    } else if (elapsed.current < STIR_DURATION + 0.5) {
+      const tSmooth = (elapsed.current - STIR_DURATION) / 0.5;
+      intensity = 1.0 - (tSmooth * tSmooth * (3 - 2 * tSmooth));
+    }
+
+    const grains = grainRef.current;
+    const yCenter = 0.04; // Tâm bán cầu đáy
+    const baseMaxR = TUBE_INNER_R - STIR_GRAIN_R * 2;
 
     for (let i = 0; i < grains.length; i++) {
       const g = grains[i];
+      let pX = g.baseX;
+      let pY = g.baseY;
+      let pZ = g.baseZ;
+      let needsMatrixUpdate = false;
 
-      // Hiệu ứng "Văng" (Splash): Các hạt bắn lên trên và rớt lại
-      // dySplash giới hạn trong tầm 0.015 (1.5cm) để không văng quá cao
-      const splashFreq = g.speed * 0.8;
-      const dySplash = Math.max(0, Math.sin(state.clock.elapsedTime * splashFreq + g.phaseX)) * intensity * 0.015 * g.aRandom;
+      // A. Hiệu ứng Khuấy (Splash + Swirl)
+      if (intensity > 0) {
+        needsMatrixUpdate = true;
+        const splashFreq = g.speed * 0.8;
+        const dySplash = Math.max(0, Math.sin(time * splashFreq + g.phaseX)) * intensity * 0.015 * g.aRandom;
+        
+        pX += Math.sin(time * g.speed + g.phaseX) * g.radius * intensity;
+        pZ += Math.cos(time * g.speed + g.phaseZ) * g.radius * intensity;
+        pY += dySplash;
 
-      // Small swirling/vibrating effect around base position
-      let dx = Math.sin(t * g.speed + g.phaseX) * g.radius * intensity;
-      let dz = Math.cos(t * g.speed + g.phaseZ) * g.radius * intensity;
-      let dyWobble = 0;
+        // Xử lý va chạm thành ống (Chỉ tính khi đang khuấy để tiết kiệm CPU)
+        let currentMaxR = baseMaxR;
+        if (pY < yCenter) {
+          const dyFromCenter = pY - yCenter;
+          currentMaxR = Math.sqrt(Math.max(0, baseMaxR * baseMaxR - dyFromCenter * dyFromCenter));
+        }
+        const rCurrent = Math.sqrt(pX * pX + pZ * pZ);
+        if (rCurrent > currentMaxR && rCurrent > 0) {
+          const ratio = currentMaxR / rCurrent;
+          pX *= ratio;
+          pZ *= ratio;
+        }
+      }
 
+      // B. Hiệu ứng Rung (Wobble)
       if (wobbleActive) {
-        const speedMultiplier = 12 + (i % 5);
-        const tParam = t * speedMultiplier + (i * 0.1);
-        dx += Math.sin(tParam) * 0.0001;
-        dz += Math.cos(tParam * 1.3) * 0.0001;
-        dyWobble = Math.sin(tParam * 2.0) * 0.00015;
+        needsMatrixUpdate = true;
+        const tParam = time * (12 + (i % 5)) + (i * 0.1);
+        pX += Math.sin(tParam) * 0.0001;
+        pZ += Math.cos(tParam * 1.3) * 0.0001;
+        pY += Math.sin(tParam * 2.0) * 0.00015;
       }
 
-      const finalY = g.basePos.y + dySplash + dyWobble;
-
-      // Đảm bảo hạt không văng ra ngoài thành ống (Xử lý cả phần đáy hình cầu)
-      // Tâm của mặt cầu đáy nằm ở y = 0.04 (0.032 + 0.008)
-      const yCenter = 0.04;
-      let maxR = TUBE_INNER_R - STIR_GRAIN_R * 2;
-
-      if (finalY < yCenter) {
-        // Phần đáy bán cầu: Bán kính tối đa phụ thuộc vào độ cao y
-        const dyFromCenter = finalY - yCenter;
-        maxR = Math.sqrt(Math.max(0, maxR * maxR - dyFromCenter * dyFromCenter));
+      // C. Cập nhật Matrix (Chỉ khi cần)
+      if (needsMatrixUpdate || isActivelyAnimating) {
+        _dummy.position.set(pX, pY, pZ);
+        _dummy.quaternion.copy(g.quat);
+        
+        const scaleVar = 1.0 + (intensity > 0 ? Math.sin(time * 10 + g.phaseX) * 0.1 * intensity : 0);
+        _dummy.scale.setScalar(scaleVar);
+        
+        _dummy.updateMatrix();
+        mesh.setMatrixAt(i, _dummy.matrix);
       }
-
-      let finalX = g.basePos.x + dx;
-      let finalZ = g.basePos.z + dz;
-      const currentR = Math.sqrt(finalX * finalX + finalZ * finalZ);
-
-      if (currentR > maxR && currentR > 0) {
-        const ratio = maxR / currentR;
-        finalX *= ratio;
-        finalZ *= ratio;
-      }
-
-      // Update instance matrix
-      _dummyObj.position.set(finalX, finalY, finalZ);
-      _dummyObj.rotation.copy(g.rotation);
-
-      // Khởi tạo ngẫu nhiên scale chút xíu cho hạt có vẻ lấp lánh (sparkle) hoặc rung động nhẹ
-      const scaleVariation = 1.0 + (Math.sin(t * 10 + g.phaseX) * 0.1 * intensity);
-      _dummyObj.scale.set(scaleVariation, scaleVariation, scaleVariation);
-
-      _dummyObj.updateMatrix();
-      meshRef.current.setMatrixAt(i, _dummyObj.matrix);
     }
 
-    meshRef.current.instanceMatrix.needsUpdate = true;
+    mesh.instanceMatrix.needsUpdate = true;
+
+    // Kiểm tra để "đi ngủ" ở frame tiếp theo
+    if (!isActivelyAnimating) {
+      isLogicDeadRef.current = true;
+    } else {
+      isLogicDeadRef.current = false;
+    }
   });
 
   return (
-    <instancedMesh ref={meshRef} args={[undefined, undefined, grainRef.current!.length]} frustumCulled={false}>
-      <sphereGeometry args={[STIR_GRAIN_R, 4, 4]}>
+    <instancedMesh ref={meshRef} args={[undefined, undefined, grainRef.current?.length || 0]} frustumCulled={true}>
+      <sphereGeometry args={[STIR_GRAIN_R, 3, 3]}>
         <instancedBufferAttribute attach="attributes-aRandom" args={[aRandomData, 1]} />
         <instancedBufferAttribute attach="attributes-aColor" args={[aColorData, 3]} />
       </sphereGeometry>
-      <shaderMaterial args={[ChemicalShader]} />
+      <shaderMaterial args={[ChemicalShader]} transparent={true} />
     </instancedMesh>
   );
 };
