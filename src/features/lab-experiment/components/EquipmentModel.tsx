@@ -25,6 +25,17 @@ const MAGNET_SNAP_OFFSET_Y = 0.52;
 const CG_TEST_TUBE = 0x00010004;
 const CG_EQUIPMENT = 0x00030002;
 
+// ─── Tube Constants ──────────────────────────────────────────────────────────
+const TUBE_TOP_Y = 0.15;
+const TUBE_INNER_R = 0.008;
+const TUBE_BOTTOM_Y = 0.032; // đáy trong lòng ống (model space)
+const TUBE_MARGIN = 0.02;  // khoảng cách tới mép trên (model space)
+const LAYER_H_CONST = 0.003; // = layerH trong render
+const MAX_TUBE_LAYERS = Math.floor((TUBE_TOP_Y - TUBE_BOTTOM_Y - TUBE_MARGIN) / LAYER_H_CONST);
+
+// ─── Utility ────────────────────────────────────────────────────────────────
+const getGrams = (arr: TubeContent[]) => arr.reduce((acc, c) => acc + c.amount, 0);
+
 interface EquipmentModelProps {
   droppedItem: DroppedItem;
   tableHeight?: number;
@@ -36,6 +47,61 @@ const thermometerRegistry = new Map<string, RapierRigidBody>();
 const occupiedThermometers = new Map<string, string>();
 const occupiedThermometersByLamp = new Map<string, string>();
 const occupiedByMagnet = new Map<string, string>();
+
+const ChemicalShader = {
+  uniforms: {
+    uTime: { value: 0 },
+    uIsBurning: { value: false },
+    uReactionProgress: { value: 0 },
+    uCoolingTime: { value: 0 },
+  },
+  vertexShader: `
+    varying float vRandom;
+    varying vec3 vColor;
+    attribute float aRandom;
+    attribute vec3 aColor;
+    void main() {
+      vRandom = aRandom;
+      vColor = aColor;
+      vec4 mvPosition = modelViewMatrix * instanceMatrix * vec4(position, 1.0);
+      gl_Position = projectionMatrix * mvPosition;
+    }
+  `,
+  fragmentShader: `
+    uniform float uTime;
+    uniform bool uIsBurning;
+    uniform float uReactionProgress;
+    uniform float uCoolingTime;
+    varying float vRandom;
+    varying vec3 vColor;
+    void main() {
+      vec3 colorFeS = vec3(0.05, 0.05, 0.05);
+      
+      // Tiến trình phản ứng: chuyển từ màu gốc sang màu FeS (đen)
+      float colorProgress = smoothstep(0.166, 0.8, uReactionProgress);
+      vec3 baseColor = mix(vColor, colorFeS, colorProgress);
+      
+      // Hiệu ứng nhiệt: đỏ rực khi nung mạnh
+      float heat = 0.0;
+      if (uIsBurning) {
+        if (uReactionProgress > 0.05 && uReactionProgress <= 0.2) {
+          heat = smoothstep(0.05, 0.2, uReactionProgress) * 0.6;
+        } else if (uReactionProgress > 0.2 && uReactionProgress <= 0.833) {
+          float pulse = sin(uTime * 10.0 + vRandom * 10.0) * 0.3;
+          pulse += sin(uTime * 4.0 + vRandom * 5.0) * 0.2;
+          heat = 1.1 + pulse;
+        } else if (uReactionProgress > 0.833 && uReactionProgress < 1.0) {
+          heat = mix(1.1, 1.0, smoothstep(0.833, 1.0, uReactionProgress));
+        }
+      } else if (uCoolingTime > 0.0 && uCoolingTime < 5.0) {
+        // Hết đỏ dần khi đang nguội (trong 5s đầu của giai đoạn cooling)
+        heat = 1.0 * (1.0 - smoothstep(0.0, 5.0, uCoolingTime));
+      }
+      
+      gl_FragColor = vec4(baseColor + vec3(1.0, 0.2, 0.0) * heat, 1.0);
+    }
+  `
+};
 
 export const EquipmentModel = ({
   droppedItem,
@@ -71,6 +137,8 @@ export const EquipmentModel = ({
     freeFeAmount > 0;
   // Tránh snap lại ngay lập tức
   const lastUnsnappedThermoIdRef = useRef<string | null>(null);
+  const coolingStartTimeRef = useRef<number | null>(null);
+  const [coolingTime, setCoolingTime] = useState<number | null>(null);
 
   // Animation snap
   const snapAnimRef = useRef<{
@@ -87,6 +155,9 @@ export const EquipmentModel = ({
 
   const { gl } = useThree();
   const equipment = getEquipmentById(droppedItem.equipmentId);
+
+  const contents = testTubeContents.get(droppedItem.id) ?? [];
+  const hasFinishedReaction = contents.some(c => c.substanceId === EQUIPMENT_IDS.FES_POWDER);
 
   const isTestTube = droppedItem.equipmentId === EQUIPMENT_IDS.TEST_TUBE;
   const isThermometer = droppedItem.equipmentId === EQUIPMENT_IDS.THERMOMETER;
@@ -167,6 +238,23 @@ export const EquipmentModel = ({
 
   useFrame((state) => {
     if (!rigidBodyRef.current) return;
+
+    // 0. Cooling Logic
+    if (isTestTube && (currentProgress > 0 || hasFinishedReaction)) {
+      const shouldCool = (!isHeating || currentProgress >= 1.0 || hasFinishedReaction);
+      if (shouldCool) {
+        if (coolingStartTimeRef.current === null) coolingStartTimeRef.current = state.clock.elapsedTime;
+        const elapsed = state.clock.elapsedTime - coolingStartTimeRef.current;
+        if (elapsed < 8.0) {
+          if (Math.abs((coolingTime || 0) - elapsed) > 0.1) setCoolingTime(elapsed);
+        } else {
+          if (coolingTime !== 8.0) setCoolingTime(8.0);
+        }
+      } else {
+        coolingStartTimeRef.current = null;
+        if (coolingTime !== null) setCoolingTime(null);
+      }
+    }
 
     // 1. Follow / Animate snap
     if ((isTestTube || isAlcoholLamp || isMagnet) && isSnappedRef.current && snappedToBodyRef.current) {
@@ -312,11 +400,8 @@ export const EquipmentModel = ({
       snappedToBodyRef.current = null;
     }
 
-    const target = e.target as HTMLElement;
-    if (target.setPointerCapture) {
-      target.setPointerCapture(e.pointerId);
-      activePointerRef.current = { target, pointerId: e.pointerId };
-    }
+    gl.domElement.setPointerCapture(e.pointerId);
+    activePointerRef.current = { target: gl.domElement, pointerId: e.pointerId };
 
     dragPlane.constant = -e.point.y;
     if (rigidBodyRef.current) {
@@ -334,8 +419,9 @@ export const EquipmentModel = ({
 
   const handlePointerUp = useCallback((e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation();
-    const target = e.target as HTMLElement;
-    if (target.releasePointerCapture) target.releasePointerCapture(e.pointerId);
+    try {
+      gl.domElement.releasePointerCapture(e.pointerId);
+    } catch { }
     activePointerRef.current = null;
 
     setIsDragging(false);
@@ -384,7 +470,6 @@ export const EquipmentModel = ({
       e.stopPropagation();
 
       const currentContents = testTubeContents.get(droppedItem.id) ?? [];
-      const getGrams = (arr: TubeContent[]) => arr.reduce((acc, c) => acc + c.amount, 0);
       const remainingCapacity = MAX_TUBE_LAYERS - getGrams(currentContents);
 
       // Kiểm tra sức chứa: giới hạn định nghĩa bởi MAX_LAYERS
@@ -414,8 +499,6 @@ export const EquipmentModel = ({
   }
 
   const modelScale = equipment.scale || 3;
-  const contents = testTubeContents.get(droppedItem.id) ?? [];
-  const getGrams = (arr: TubeContent[]) => arr.reduce((acc, c) => acc + c.amount, 0);
   const totalGrams = getGrams(contents);
   const isFull = totalGrams >= MAX_TUBE_LAYERS;
 
@@ -474,52 +557,59 @@ export const EquipmentModel = ({
         onContextMenu={handleContextMenu}
         onClick={handleClick}
       >
-        <Model
-          modelPath={equipment.modelPath}
-          isHovered={isHovered}
-          isDragging={isDragging}
-          isSnapped={isSnapped}
-          isHighlighted={isHighlighted}
-          isFullHighlight={isFullHighlight}
-          isGlass={isTestTube}
-          playAnimations={isAlcoholLamp ? isBurning : false}
-          isShowFire={isAlcoholLamp ? isBurning : false}
-          reactionProgress={isTestTube ? currentProgress : 0}
-        />
-
-        {/* Sau khi khuấy: hạt bột pha trộn của các layer đã khuấy */}
-        {isTestTube && isStirred && mixedContents.length > 0 && (
-          <StirredLayer
-            key={`stirred-${mixedContents.length}`}
-            items={mixedContents}
-            totalGrams={getGrams(mixedContents)}
-            reactionProgress={currentProgress}
+        <group position={[0, 0, 0]}>
+          <Model
+            modelPath={equipment.modelPath}
+            isHovered={isHovered}
+            isDragging={isDragging}
+            isSnapped={isSnapped}
+            isHighlighted={isHighlighted}
+            isFullHighlight={isFullHighlight}
+            isGlass={isTestTube}
+            playAnimations={isAlcoholLamp ? isBurning : false}
+            isShowFire={isAlcoholLamp ? isBurning : false}
+            reactionProgress={isTestTube ? currentProgress : 0}
           />
-        )}
 
-        {/* Lớp bột mới thêm vào (chưa khuấy) nằm đè lên trên */}
-        {isTestTube && unmixedContents.map((item, idx) => {
-          const color = SUBSTANCE_COLORS[item.substanceId] ?? "#e5e7eb";
-          return (
-            <PowderLayer
-              key={`${stirredCount + idx}-${item.substanceId}`}
-              color={color}
-              startGrams={getGrams(contents.slice(0, stirredCount + idx))}
-              amountGrams={item.amount}
-              totalGrams={totalGrams}
+          {/* Sau khi khuấy: hạt bột pha trộn của các layer đã khuấy */}
+          {isTestTube && isStirred && mixedContents.length > 0 && (
+            <StirredLayer
+              key={`stirred-${mixedContents.length}`}
+              items={mixedContents}
+              totalGrams={getGrams(mixedContents)}
               reactionProgress={currentProgress}
-              spawnInstant={item.instant}
-              isIron={item.substanceId === EQUIPMENT_IDS.FE_POWDER}
-              isAttracted={isAttracted}
+              coolingTime={coolingTime}
+              isHeating={isHeating}
             />
-          );
-        })}
+          )}
+
+          {/* Lớp bột mới thêm vào (chưa khuấy) nằm đè lên trên */}
+          {isTestTube && unmixedContents.map((item, idx) => {
+            const color = SUBSTANCE_COLORS[item.substanceId] ?? "#e5e7eb";
+            return (
+              <PowderLayer
+                key={`${stirredCount + idx}-${item.substanceId}`}
+                color={color}
+                startGrams={getGrams(contents.slice(0, stirredCount + idx))}
+                amountGrams={item.amount}
+                reactionProgress={currentProgress}
+                coolingTime={coolingTime}
+                isHeating={isHeating}
+                spawnInstant={item.instant}
+                isIron={item.substanceId === EQUIPMENT_IDS.FE_POWDER}
+                isAttracted={isAttracted}
+              />
+            );
+          })}
+        </group>
 
         {/* Lớp khói đen */}
-        {isTestTube && (
+        {isTestTube && (currentProgress > 0.33 || hasFinishedReaction) && (
           <SmokeEmitter
-            active={currentProgress >= 0.2 && isHeating}
+            active={isHeating}
+            isFinished={hasFinishedReaction || currentProgress >= 1.0}
             totalGrams={totalGrams}
+            tubeId={droppedItem.id}
           />
         )}
       </group>
@@ -529,7 +619,8 @@ export const EquipmentModel = ({
         <Html
           position={[0, 0.06, 0]}
           center
-          style={{ pointerEvents: "none", userSelect: "none" }}
+          pointerEvents="none"
+          style={{ userSelect: "none" }}
         >
           <div style={{
             background: "rgba(15,20,30,0.92)",
@@ -586,7 +677,8 @@ export const EquipmentModel = ({
         <Html
           position={[0, 0.1, 0]}
           center
-          style={{ pointerEvents: "none", userSelect: "none" }}
+          pointerEvents="none"
+          style={{ userSelect: "none" }}
         >
           <div
             style={{
@@ -602,6 +694,54 @@ export const EquipmentModel = ({
             }}
           >
             ⚠️ Không thể đổ thêm!
+          </div>
+        </Html>
+      )}
+
+      {/* Khung thông tin phản ứng (Ý tưởng từ ab.html) */}
+      {isTestTube && (isHeating || (coolingTime !== null && coolingTime < 8)) && (currentProgress > 0 || hasFinishedReaction) && (
+        <Html
+          position={[-0.2, 0.25, 0]}
+          center
+          pointerEvents="none"
+          style={{ userSelect: "none", zIndex: 100 }}
+        >
+          <div style={{
+            background: "rgba(10, 15, 25, 0.95)",
+            border: `1px solid ${coolingTime !== null ? "#00f5d4" : "#ff4e50"}`,
+            borderRadius: "6px",
+            padding: "8px 12px",
+            minWidth: "220px",
+            color: "white",
+            fontFamily: "sans-serif",
+            fontSize: "11px",
+            boxShadow: `0 0 10px ${coolingTime !== null ? "rgba(0, 245, 212, 0.3)" : "rgba(255, 78, 80, 0.3)"}`,
+            whiteSpace: "nowrap"
+          }}>
+            <h4 style={{ margin: "0 0 4px 0", color: "#ffb703", fontSize: "12px" }}>Phản ứng hóa học: Fe + S</h4>
+            <div style={{ marginBottom: "2px" }}>
+              <span>Trạng thái: </span>
+              <span style={{ color: "#00f5d4", fontWeight: "bold" }}>
+                {currentProgress < 0.166 && !hasFinishedReaction ? "0-5s: Đang truyền nhiệt." :
+                  currentProgress < 0.5 && !hasFinishedReaction ? "5-15s: S nóng chảy, sẫm màu & bốc khói." :
+                    currentProgress < 0.99 && !hasFinishedReaction ? "15-30s: ĐANG ĐUN - PHẢN ỨNG MẠNH!" :
+                      (coolingTime !== null && coolingTime < 5) ? `Đang nguội... (${(5 - coolingTime).toFixed(1)}s)` :
+                        "Hoàn tất: Khối FeS đặc xốp màu đen."}
+              </span>
+            </div>
+
+            {coolingTime !== null && coolingTime < 5 && (
+              <div style={{ color: "#ef4444", fontSize: "10px", marginTop: "4px", fontWeight: "bold", textAlign: "center", borderTop: "1px dashed rgba(239,68,68,0.3)", paddingTop: "4px" }}>
+                ⚠️ Tuyệt đối không chạm tay vào!
+              </div>
+            )}
+
+            {!((coolingTime !== null && coolingTime < 8)) && (
+              <div>
+                <span>Thời gian nung: </span>
+                <span style={{ color: "#ffb703", fontWeight: "bold" }}>{(currentProgress * 30).toFixed(1)}s / 30.0s</span>
+              </div>
+            )}
           </div>
         </Html>
       )}
@@ -739,14 +879,7 @@ useGLTF.preload("/models/250ml-beaker.glb");
 useGLTF.preload("/models/500ml-binhtamgiac.glb");
 
 // ─── PowderLayer: manual particle physics → fade-to-fill cylinder ────────────
-const TUBE_TOP_Y = 0.15;
-const TUBE_INNER_R = 0.008;
-
 /** Số lớp bột tối đa: giữ khoảng cách an toàn tới mép trên */
-const TUBE_BOTTOM_Y = 0.032; // đáy trong lòng ống (model space)
-const TUBE_MARGIN = 0.02;  // khoảng cách tới mép trên (model space)
-const LAYER_H_CONST = 0.003; // = layerH trong render
-const MAX_TUBE_LAYERS = Math.floor((TUBE_TOP_Y - TUBE_BOTTOM_Y - TUBE_MARGIN) / LAYER_H_CONST);
 
 // interface SDropLayerGrain {
 //   startY: number;
@@ -759,66 +892,53 @@ const MAX_TUBE_LAYERS = Math.floor((TUBE_TOP_Y - TUBE_BOTTOM_Y - TUBE_MARGIN) / 
 // }
 
 // ─── Shared Particle Generation Logic ─────────────────────────────────────────
-const STIR_GRAIN_R = 0.00015;
+const STIR_GRAIN_R = 0.0001;
 
-const GRAINS_PER_GRAM = 5000;
+const GRAINS_PER_GRAM = 35000;
 
-/** Build exactly `totalCount` packed positions filling the tube from the bottom up. */
+function getWeightHeight(grams: number, tubeR: number, grainR: number): number {
+  const count = Math.round(grams * GRAINS_PER_GRAM);
+  const volume = count * ((4 / 3) * Math.PI * Math.pow(grainR, 3));
+  const packingFraction = 0.5;
+  return (volume / packingFraction) / (Math.PI * tubeR * tubeR);
+}
+
 function buildPackedPositions(
   tubeR: number,
   grainR: number,
-  floorY: number,
+  baseY: number,
   totalCount: number,
 ): THREE.Vector3[] {
   const positions: THREE.Vector3[] = [];
-  const grainD = grainR * 2;
+  const tubeBaseY = 0.032 + grainR;
 
-  let y = 0;
-  while (positions.length < totalCount) {
-    let r_max = tubeR;
-    // Tự động thu hẹp bán kính nếu nằm ở phần đáy bán cầu
-    if (y < tubeR) {
-      const dy = y - tubeR;
-      const r2 = tubeR * tubeR - dy * dy;
-      r_max = r2 > 0 ? Math.sqrt(r2) : 0;
-    }
+  // Tính thể tích để xác định cột nguyên liệu cho đợt này
+  const volumeGrains = totalCount * ((4 / 3) * Math.PI * Math.pow(grainR, 3));
+  const packingFraction = 0.5;
+  const cylinderHeight = (volumeGrains / packingFraction) / (Math.PI * tubeR * tubeR);
 
-    // safe margin from wall
-    const usableR = r_max - grainR * 0.8;
+  for (let i = 0; i < totalCount; i++) {
+    const rx = Math.sqrt(Math.random()) * (tubeR - grainR);
+    const theta = Math.random() * Math.PI * 2;
+    let x = rx * Math.cos(theta);
+    let z = rx * Math.sin(theta);
+    let y = Math.random() * cylinderHeight;
+    const absY = baseY + y;
 
-    if (usableR >= 0) {
-      // Center grain
-      positions.push(new THREE.Vector3(
-        (Math.random() - 0.5) * grainR * 0.3,
-        floorY + y + (Math.random() - 0.5) * grainR * 0.1,
-        (Math.random() - 0.5) * grainR * 0.3,
-      ));
-      if (positions.length >= totalCount) break;
-
-      let ringR = grainD;
-      while (ringR <= usableR) {
-        const circumference = 2 * Math.PI * ringR;
-        const nGrains = Math.max(1, Math.floor(circumference / (grainD * 0.95)));
-        const angleStep = (2 * Math.PI) / nGrains;
-        const angleOffset = Math.random() * angleStep;
-
-        for (let j = 0; j < nGrains; j++) {
-          const a = angleOffset + j * angleStep + (Math.random() - 0.5) * angleStep * 0.2;
-          const rr = ringR + (Math.random() - 0.5) * grainR * 0.1;
-          const actualR = Math.min(rr, usableR);
-
-          positions.push(new THREE.Vector3(
-            Math.cos(a) * actualR,
-            floorY + y + (Math.random() - 0.5) * grainR * 0.2, // slight height variation
-            Math.sin(a) * actualR,
-          ));
-          if (positions.length >= totalCount) break;
-        }
-        if (positions.length >= totalCount) break;
-        ringR += grainD * 0.95;
+    // Giới hạn bán kính nếu nằm trong phần đáy ống nghiệm bán cầu
+    const relativeYToBottom = absY - tubeBaseY;
+    if (relativeYToBottom < tubeR) {
+      const dy = relativeYToBottom - tubeR;
+      const r_max = Math.sqrt(Math.max(0, tubeR * tubeR - dy * dy)) - grainR;
+      const r_current = Math.sqrt(x * x + z * z);
+      if (r_current > r_max && r_current > 0) {
+        const scale = r_max / r_current;
+        x *= scale;
+        z *= scale;
       }
     }
-    y += grainD * 0.85; // overlap vertically to pack tightly
+
+    positions.push(new THREE.Vector3(x, absY, z));
   }
   return positions;
 }
@@ -836,14 +956,13 @@ function buildPackedPositions(
 //   isReacted?: boolean;
 // }
 
-const _reactedColor = new THREE.Color("#2d2d2d");
-
 const PowderLayer = ({
   color,
   startGrams,
   amountGrams,
-  totalGrams,
   reactionProgress = 0,
+  coolingTime = null,
+  isHeating = false,
   spawnInstant = false,
   isIron = false,
   isAttracted = false,
@@ -851,34 +970,31 @@ const PowderLayer = ({
   color: string;
   startGrams: number;
   amountGrams: number;
-  totalGrams: number;
   reactionProgress?: number;
+  coolingTime?: number | null;
+  isHeating?: boolean;
   spawnInstant?: boolean;
   isIron?: boolean;
   isAttracted?: boolean | undefined | "";
 }) => {
   const meshRef = useRef<THREE.InstancedMesh>(null);
-  const materialRef = useRef<THREE.MeshStandardMaterial>(null);
   const elapsed = useRef(0);
   const doneRef = useRef(false);
 
   // 1. Dùng useMemo để tính toán hạt, tránh tính toán trực tiếp trong body gây loop
   // dependency array bao gồm isAttracted để tính toán lại vị trí khi nam châm thay đổi
   const grains = useMemo(() => {
-    const FLOOR_Y = 0.032 + STIR_GRAIN_R;
-    const totalGrains = Math.round(totalGrams * GRAINS_PER_GRAM);
+    const floorY = 0.032 + STIR_GRAIN_R;
+    const startHeight = getWeightHeight(startGrams, TUBE_INNER_R, STIR_GRAIN_R);
+    const layerGrainsCount = Math.round(amountGrams * GRAINS_PER_GRAM);
 
-    // Lấy vị trí nén chuẩn
-    const targets = buildPackedPositions(
+    // Chỉ sinh hạt trong dải độ cao của lớp này, không trộn lẫn với lớp khác khi đổ vào
+    const layerTargets = buildPackedPositions(
       TUBE_INNER_R,
       STIR_GRAIN_R,
-      FLOOR_Y,
-      Math.max(0, totalGrains),
+      floorY + startHeight,
+      layerGrainsCount,
     );
-
-    const startIndex = Math.round(startGrams * GRAINS_PER_GRAM);
-    const endIndex = Math.round((startGrams + amountGrams) * GRAINS_PER_GRAM);
-    const layerTargets = targets.slice(startIndex, endIndex);
 
     let minY = Infinity;
     layerTargets.forEach((t) => { if (t.y < minY) minY = t.y; });
@@ -906,47 +1022,63 @@ const PowderLayer = ({
         startY: spawnInstant ? targetPos.y : TUBE_TOP_Y + 0.02 + Math.random() * 0.02,
         targetPos: targetPos,
         color: color,
-        delay: spawnInstant ? 0 : Math.random() * 0.5, // đơn giản hóa delay để tránh lỗi tính toán
+        delay: spawnInstant ? 0 : Math.random() * 0.5,
         currentY: spawnInstant ? targetPos.y : TUBE_TOP_Y + 0.02 + Math.random() * 0.02,
         velY: spawnInstant ? 0 : -(Math.random() * 0.1 + 0.05),
         settled: spawnInstant,
-        isReacted: false,
+        aRandom: Math.random(),
+        rotation: new THREE.Euler(Math.random() * Math.PI, Math.random() * Math.PI, 0)
       };
     });
-  }, [isAttracted, startGrams, amountGrams, totalGrams, isIron, color, spawnInstant]);
+  }, [isAttracted, startGrams, amountGrams, isIron, color, spawnInstant]);
 
-  // 2. Cập nhật màu sắc khi danh sách hạt thay đổi
-  useEffect(() => {
-    if (!meshRef.current || !grains) return;
-    grains.forEach((g, i) => {
-      _dummyColor.set(g.color);
-      meshRef.current!.setColorAt(i, _dummyColor);
-    });
-    if (meshRef.current.instanceColor) meshRef.current.instanceColor.needsUpdate = true;
-    doneRef.current = false; // Reset trạng thái done để chạy lại animation nếu cần
+  const aRandomData = useMemo(() => {
+    const data = new Float32Array(grains.length);
+    grains.forEach((g, i) => (data[i] = g.aRandom));
+    return data;
   }, [grains]);
 
-  useFrame((_, delta) => {
+  const aColorData = useMemo(() => {
+    const data = new Float32Array(grains.length * 3);
+    const col = new THREE.Color(color);
+    for (let i = 0; i < grains.length; i++) {
+      data[i * 3] = col.r;
+      data[i * 3 + 1] = col.g;
+      data[i * 3 + 2] = col.b;
+    }
+    return data;
+  }, [grains, color]);
+
+  // 2. Cập nhật matrix khi danh sách hạt thay đổi
+  useEffect(() => {
+    if (!meshRef.current || !grains) return;
+    const temp = new THREE.Object3D();
+    grains.forEach((g, i) => {
+      temp.position.set(g.targetPos.x, g.currentY, g.targetPos.z);
+      temp.rotation.copy(g.rotation);
+      temp.updateMatrix();
+      meshRef.current!.setMatrixAt(i, temp.matrix);
+    });
+    meshRef.current.instanceMatrix.needsUpdate = true;
+    doneRef.current = false;
+  }, [grains]);
+
+  useFrame((state, delta) => {
     if (doneRef.current || !meshRef.current) return;
     elapsed.current += delta;
     let allDone = true;
     let needsUpdate = false;
     const dt = Math.min(delta, 0.03);
 
-    // Logic Glow (giữ nguyên)
-    let glowIntensity = 0;
-    if (reactionProgress > 0.05 && reactionProgress < 0.2) glowIntensity = (reactionProgress - 0.05) / 0.15;
-    else if (reactionProgress >= 0.2 && reactionProgress <= 0.833) glowIntensity = 1;
-    else if (reactionProgress > 0.833 && reactionProgress < 1.0) glowIntensity = 1 - (reactionProgress - 0.833) / 0.167;
-
-    if (materialRef.current) {
-      materialRef.current.emissive.set("#ff1100");
-      materialRef.current.emissiveIntensity = glowIntensity * 1.5;
+    const mat = meshRef.current.material as THREE.ShaderMaterial;
+    if (mat.uniforms) {
+      mat.uniforms.uTime.value = state.clock.getElapsedTime();
+      mat.uniforms.uIsBurning.value = isHeating && reactionProgress > 0;
+      mat.uniforms.uReactionProgress.value = reactionProgress;
+      mat.uniforms.uCoolingTime.value = coolingTime ?? 0;
     }
 
     const wobbleActive = reactionProgress > 0.333 && reactionProgress < 0.833;
-    const fractionalProgress = Math.max(0, Math.min(1, (reactionProgress - 0.166) / 0.667));
-    const totalGrainsCount = Math.round(totalGrams * GRAINS_PER_GRAM);
 
     for (let i = 0; i < grains.length; i++) {
       const g = grains[i];
@@ -967,7 +1099,8 @@ const PowderLayer = ({
 
       let wX = 0, wY = 0, wZ = 0;
       if (g.settled && wobbleActive) {
-        const tParam = elapsed.current * (12 + (i % 5)) + i * 0.1;
+        // Tần số rung nhẹ nhàng hơn (từ 12-16 giảm xuống 6-10)
+        const tParam = elapsed.current * (6 + (i % 5)) + i * 0.1;
         wX = Math.sin(tParam) * 0.0001;
         wZ = Math.cos(tParam * 1.3) * 0.0001;
         wY = Math.sin(tParam * 2.0) * 0.00015;
@@ -975,18 +1108,10 @@ const PowderLayer = ({
       }
 
       _dummyObj.position.set(g.targetPos.x + wX, g.currentY + wY, g.targetPos.z + wZ);
+      _dummyObj.rotation.copy(g.rotation);
       _dummyObj.scale.setScalar(g.settled ? 1 : 2);
       _dummyObj.updateMatrix();
       meshRef.current.setMatrixAt(i, _dummyObj.matrix);
-
-      // Cập nhật màu phản ứng
-      const globalIndex = Math.round(startGrams * GRAINS_PER_GRAM) + i;
-      const isReacted = globalIndex / totalGrainsCount <= fractionalProgress;
-      if (g.isReacted !== isReacted) {
-        g.isReacted = isReacted;
-        meshRef.current.setColorAt(i, isReacted ? _reactedColor : new THREE.Color(color));
-        if (meshRef.current.instanceColor) meshRef.current.instanceColor.needsUpdate = true;
-      }
     }
 
     if (needsUpdate || wobbleActive || !allDone) {
@@ -1001,8 +1126,11 @@ const PowderLayer = ({
       args={[undefined, undefined, grains.length]}
       frustumCulled={false}
     >
-      <sphereGeometry args={[STIR_GRAIN_R, 6, 6]} />
-      <meshStandardMaterial ref={materialRef} roughness={0.85} metalness={0.05} />
+      <sphereGeometry args={[STIR_GRAIN_R, 4, 4]}>
+        <instancedBufferAttribute attach="attributes-aRandom" args={[aRandomData, 1]} />
+        <instancedBufferAttribute attach="attributes-aColor" args={[aColorData, 3]} />
+      </sphereGeometry>
+      <shaderMaterial args={[ChemicalShader]} />
     </instancedMesh>
   );
 };
@@ -1010,34 +1138,43 @@ const PowderLayer = ({
 // ─── StirredLayer: grains fall from tube mouth and pack at the bottom ─────────
 
 interface SGrain {
-  basePos: THREE.Vector3; // original settled position
+  basePos: THREE.Vector3;
   color: string;
+  rotation: THREE.Euler;
+  aRandom: number;
   phaseX: number;
   phaseZ: number;
   speed: number;
-  radius: number; // swirl orbit radius
-  isReacted?: boolean;
+  radius: number;
 }
 
 const _dummyObj = new THREE.Object3D();
-const _dummyColor = new THREE.Color();
 
 const StirredLayer = ({
   items,
   totalGrams,
   reactionProgress = 0,
+  coolingTime = null,
+  isHeating = false,
 }: {
   items: TubeContent[];
   totalGrams: number;
   reactionProgress?: number;
+  coolingTime?: number | null;
+  isHeating?: boolean;
 }) => {
   const meshRef = useRef<THREE.InstancedMesh>(null);
-  const materialRef = useRef<THREE.MeshStandardMaterial>(null);
   const grainRef = useRef<SGrain[] | null>(null);
+
+  // Khóa nhận diện sự thay đổi của các chất trong ống (để update màu sắc)
+  const itemsKey = JSON.stringify(items);
+  const prevItemsKey = useRef(itemsKey);
+
   const FLOOR_Y = 0.032 + STIR_GRAIN_R; // visual inner bottom of tube (+ particle radius)
 
   // ── Lazy-init: compute once on mount ──────────────────────────────────────
-  if (grainRef.current === null) {
+  if (grainRef.current === null || prevItemsKey.current !== itemsKey) {
+    prevItemsKey.current = itemsKey;
     const totalGrains = Math.round(totalGrams * GRAINS_PER_GRAM);
 
     const targets = buildPackedPositions(TUBE_INNER_R, STIR_GRAIN_R, FLOOR_Y, Math.max(0, totalGrains));
@@ -1062,34 +1199,53 @@ const StirredLayer = ({
       return {
         basePos: t,
         color: colorsArray[i] || "#e5e7eb",
+        rotation: new THREE.Euler(Math.random() * Math.PI, Math.random() * Math.PI, 0),
+        aRandom: Math.random(),
         phaseX: Math.random() * Math.PI * 2,
         phaseZ: Math.random() * Math.PI * 2,
-        speed: 1.5 + Math.random() * 2, // swirl speed mod
-        radius: Math.random() * 0.0003, // small swirling radius offset
+        speed: 8 + Math.random() * 12, // Tăng tốc độ xoáy (gốc 1.5-3.5)
+        radius: 0.001 + Math.random() * 0.004, // Tăng bán kính xoáy (gốc 0.0003)
       };
     });
   }
 
-  // Set initial colors and matrices once on mount
+  const aRandomData = useMemo(() => {
+    if (!grainRef.current) return new Float32Array(0);
+    const data = new Float32Array(grainRef.current.length);
+    grainRef.current.forEach((g, i) => (data[i] = g.aRandom));
+    return data;
+  }, [itemsKey]);
+
+  const aColorData = useMemo(() => {
+    if (!grainRef.current) return new Float32Array(0);
+    const data = new Float32Array(grainRef.current.length * 3);
+    const col = new THREE.Color();
+    grainRef.current.forEach((g, i) => {
+      col.set(g.color);
+      data[i * 3] = col.r;
+      data[i * 3 + 1] = col.g;
+      data[i * 3 + 2] = col.b;
+    });
+    return data;
+  }, [itemsKey]);
+
+  // Set initial colors and matrices on mount OR when contents change
   useEffect(() => {
     if (!meshRef.current || !grainRef.current) return;
     grainRef.current.forEach((g, i) => {
-      _dummyColor.set(g.color);
-      meshRef.current!.setColorAt(i, _dummyColor);
-
       // Place grains at their target directly
       _dummyObj.position.copy(g.basePos);
+      _dummyObj.rotation.copy(g.rotation);
       _dummyObj.scale.set(1, 1, 1);
       _dummyObj.updateMatrix();
       meshRef.current!.setMatrixAt(i, _dummyObj.matrix);
     });
-    if (meshRef.current.instanceColor) meshRef.current.instanceColor.needsUpdate = true;
     meshRef.current.instanceMatrix.needsUpdate = true;
-  }, []);
+  }, [itemsKey]);
 
   const elapsed = useRef(0);
   const doneRef = useRef(false);
-  const STIR_DURATION = 1.8; // seconds to stir before settling
+  const STIR_DURATION = 1.0; // Giảm thời gian khuấy xuống 1s cho nhanh (gốc 1.8)
 
   useFrame((state, delta) => {
     if ((doneRef.current && reactionProgress <= 0) || !meshRef.current) return;
@@ -1108,22 +1264,15 @@ const StirredLayer = ({
       }
     }
 
-    // Glow logic
-    let glowIntensity = 0;
-    if (reactionProgress > 0.05 && reactionProgress < 0.2) {
-      glowIntensity = (reactionProgress - 0.05) / 0.15;
-    } else if (reactionProgress >= 0.2 && reactionProgress <= 0.833) {
-      glowIntensity = 1;
-    } else if (reactionProgress > 0.833 && reactionProgress < 1.0) {
-      glowIntensity = 1 - (reactionProgress - 0.833) / (1 - 0.833);
+    // Unified shader uniforms update
+    const mat = meshRef.current.material as THREE.ShaderMaterial;
+    if (mat.uniforms) {
+      mat.uniforms.uTime.value = state.clock.getElapsedTime();
+      mat.uniforms.uIsBurning.value = isHeating && reactionProgress > 0;
+      mat.uniforms.uReactionProgress.value = reactionProgress;
+      mat.uniforms.uCoolingTime.value = coolingTime ?? 0;
     }
 
-    if (materialRef.current) {
-      materialRef.current.emissive.set("#ff1100");
-      materialRef.current.emissiveIntensity = glowIntensity * 1.5;
-    }
-
-    const fractionalProgress = Math.max(0, Math.min(1, (reactionProgress - 0.166) / (0.833 - 0.166)));
     const wobbleActive = reactionProgress > 0.333 && reactionProgress < 0.833;
 
     const grains = grainRef.current!;
@@ -1132,22 +1281,50 @@ const StirredLayer = ({
     for (let i = 0; i < grains.length; i++) {
       const g = grains[i];
 
+      // Hiệu ứng "Văng" (Splash): Các hạt bắn lên trên và rớt lại
+      // dySplash giới hạn trong tầm 0.015 (1.5cm) để không văng quá cao
+      const splashFreq = g.speed * 0.8;
+      const dySplash = Math.max(0, Math.sin(state.clock.elapsedTime * splashFreq + g.phaseX)) * intensity * 0.015 * g.aRandom;
+
       // Small swirling/vibrating effect around base position
       let dx = Math.sin(t * g.speed + g.phaseX) * g.radius * intensity;
       let dz = Math.cos(t * g.speed + g.phaseZ) * g.radius * intensity;
-      let dy = 0;
+      let dyWobble = 0;
 
       if (wobbleActive) {
         const speedMultiplier = 12 + (i % 5);
         const tParam = t * speedMultiplier + (i * 0.1);
-
         dx += Math.sin(tParam) * 0.0001;
         dz += Math.cos(tParam * 1.3) * 0.0001;
-        dy += Math.sin(tParam * 2.0) * 0.00015;
+        dyWobble = Math.sin(tParam * 2.0) * 0.00015;
+      }
+
+      const finalY = g.basePos.y + dySplash + dyWobble;
+
+      // Đảm bảo hạt không văng ra ngoài thành ống (Xử lý cả phần đáy hình cầu)
+      // Tâm của mặt cầu đáy nằm ở y = 0.04 (0.032 + 0.008)
+      const yCenter = 0.04;
+      let maxR = TUBE_INNER_R - STIR_GRAIN_R * 2;
+
+      if (finalY < yCenter) {
+        // Phần đáy bán cầu: Bán kính tối đa phụ thuộc vào độ cao y
+        const dyFromCenter = finalY - yCenter;
+        maxR = Math.sqrt(Math.max(0, maxR * maxR - dyFromCenter * dyFromCenter));
+      }
+
+      let finalX = g.basePos.x + dx;
+      let finalZ = g.basePos.z + dz;
+      const currentR = Math.sqrt(finalX * finalX + finalZ * finalZ);
+
+      if (currentR > maxR && currentR > 0) {
+        const ratio = maxR / currentR;
+        finalX *= ratio;
+        finalZ *= ratio;
       }
 
       // Update instance matrix
-      _dummyObj.position.set(g.basePos.x + dx, g.basePos.y + dy, g.basePos.z + dz);
+      _dummyObj.position.set(finalX, finalY, finalZ);
+      _dummyObj.rotation.copy(g.rotation);
 
       // Khởi tạo ngẫu nhiên scale chút xíu cho hạt có vẻ lấp lánh (sparkle) hoặc rung động nhẹ
       const scaleVariation = 1.0 + (Math.sin(t * 10 + g.phaseX) * 0.1 * intensity);
@@ -1155,14 +1332,6 @@ const StirredLayer = ({
 
       _dummyObj.updateMatrix();
       meshRef.current.setMatrixAt(i, _dummyObj.matrix);
-
-      const isReacted = (i / grains.length) <= fractionalProgress;
-      if (g.isReacted !== isReacted) {
-        g.isReacted = isReacted;
-        const targetColor = isReacted ? _reactedColor : new THREE.Color(g.color);
-        meshRef.current.setColorAt(i, targetColor);
-        if (meshRef.current.instanceColor) meshRef.current.instanceColor.needsUpdate = true;
-      }
     }
 
     meshRef.current.instanceMatrix.needsUpdate = true;
@@ -1170,78 +1339,218 @@ const StirredLayer = ({
 
   return (
     <instancedMesh ref={meshRef} args={[undefined, undefined, grainRef.current!.length]} frustumCulled={false}>
-      <sphereGeometry args={[STIR_GRAIN_R, 6, 6]} />
-      <meshStandardMaterial ref={materialRef} roughness={0.85} metalness={0.05} />
+      <sphereGeometry args={[STIR_GRAIN_R, 4, 4]}>
+        <instancedBufferAttribute attach="attributes-aRandom" args={[aRandomData, 1]} />
+        <instancedBufferAttribute attach="attributes-aColor" args={[aColorData, 3]} />
+      </sphereGeometry>
+      <shaderMaterial args={[ChemicalShader]} />
     </instancedMesh>
   );
 };
 
-// ─── SmokeEmitter: Hiệu ứng khói đen bốc lên ─────────────────────────────────────────
+// ─── SmokeEmitter: Mô phỏng khói phản ứng hóa nhiệt ─────────────────────────
+// Tối ưu hiệu năng tuyệt đối bằng InstancedMesh + mutation in-place, không allocation trong useFrame.
 
-const SmokeEmitter = ({ active, totalGrams }: { active: boolean; totalGrams: number }) => {
-  const groupRef = useRef<THREE.Group>(null);
-  const particles = useMemo(() => {
-    return Array.from({ length: 20 }).map(() => ({
-      pos: new THREE.Vector3((Math.random() - 0.5) * 0.008, Math.random() * 0.05, (Math.random() - 0.5) * 0.008),
-      vel: new THREE.Vector3((Math.random() - 0.5) * 0.004, Math.random() * 0.015 + 0.01, (Math.random() - 0.5) * 0.004),
-      life: Math.random(),
-    }));
+const SMOKE_COUNT = 300;
+const SMOKE_BASE_R = 0.005;      // Bán kính nguồn sinh khói (vòng nguồn nhỏ ở đáy)
+const SMOKE_MAX_SCALE = 0.0023;
+const SMOKE_UP_SPEED = 0.022;    // Bay chậm
+const SMOKE_MAX_AGE_BASE = 3.5;  // 
+
+// Pre-allocate a stable dummy object at module level (never re-created)
+const _smokeDummy = new THREE.Object3D();
+
+interface SmokeParticle {
+  x: number; y: number; z: number;   // world-space position (local to group)
+  phase: number;                       // initial phase offset for sin/cos drift (radians)
+  speedMult: number;                   // individual up-speed multiplier [0.7, 1.3]
+  age: number;                         // current age (seconds)
+  maxAge: number;                      // lifetime (seconds)
+  rotX: number; rotY: number; rotZ: number; // random orientation for dodecahedron
+  rotSpeedX: number; rotSpeedY: number;     // gentle tumble speed
+}
+
+const SmokeEmitter = ({ active, isFinished, totalGrams, tubeId }: { active: boolean; isFinished: boolean; totalGrams: number; tubeId: string }) => {
+  const meshRef = useRef<THREE.InstancedMesh>(null);
+  const matRef = useRef<THREE.MeshBasicMaterial>(null);
+
+  const reactionProgress = useExperimentStore((s) => s.reactionProgress.get(tubeId) || 0);
+  const stopTimeRef = useRef<number | null>(null);
+
+  // ── Stable particle array — allocated once ──────────────────────────────────
+  const particles = useMemo<SmokeParticle[]>(() => {
+    const arr: SmokeParticle[] = [];
+    for (let i = 0; i < SMOKE_COUNT; i++) {
+      const theta = Math.random() * Math.PI * 2;
+      const r = Math.random() * SMOKE_BASE_R;
+      const maxAge = SMOKE_MAX_AGE_BASE * (0.75 + Math.random() * 0.5);
+      arr.push({
+        x: Math.cos(theta) * r,
+        y: Math.random() * SMOKE_UP_SPEED * maxAge, // stagger initial heights
+        z: Math.sin(theta) * r,
+        phase: Math.random() * Math.PI * 2,
+        speedMult: 0.7 + Math.random() * 0.6,
+        age: Math.random() * maxAge,                // stagger ages so no "burst" on mount
+        maxAge,
+        rotX: Math.random() * Math.PI * 2,
+        rotY: Math.random() * Math.PI * 2,
+        rotZ: Math.random() * Math.PI * 2,
+        rotSpeedX: (Math.random() - 0.5) * 0.4,
+        rotSpeedY: (Math.random() - 0.5) * 0.4,
+      });
+    }
+    return arr;
   }, []);
 
-  useFrame((_, delta) => {
-    if (!groupRef.current) return;
-    const dt = Math.min(delta, 0.03); // cap delta
+  // ── Helper: reset a particle to origin ─────────────────────────────────────
+  const resetParticle = (p: SmokeParticle) => {
+    const theta = Math.random() * Math.PI * 2;
+    const r = Math.random() * SMOKE_BASE_R;
+    p.x = Math.cos(theta) * r;
+    p.y = 0;
+    p.z = Math.sin(theta) * r;
+    p.phase = Math.random() * Math.PI * 2;
+    p.speedMult = 0.7 + Math.random() * 0.6;
+    p.age = 0;
+    p.maxAge = SMOKE_MAX_AGE_BASE * (0.75 + Math.random() * 0.5);
+    p.rotSpeedX = (Math.random() - 0.5) * 0.4;
+    p.rotSpeedY = (Math.random() - 0.5) * 0.4;
+  };
 
-    particles.forEach((p, i) => {
-      if (active) {
-        p.life += dt * 0.5;
-        if (p.life > 1) {
-          p.life = 0;
-          p.pos.set((Math.random() - 0.5) * 0.008, 0, (Math.random() - 0.5) * 0.008);
+  useFrame((state, delta) => {
+    if (!meshRef.current || !matRef.current) return;
+
+    // ── 1. Opacity / Fade logic ──────────────────────────────────────────────
+    let baseOpacity = 0;
+    if (reactionProgress > 0.33 || isFinished) {
+      // Fade-in: 10s → 15s (progress 0.33 → 0.5)
+      const progressVal = isFinished ? 1.0 : reactionProgress;
+      const fadeIn = Math.min(1.0, (progressVal - 0.33) / 0.17);
+      baseOpacity = fadeIn * 0.22;
+    }
+
+    const shouldFade = !active || reactionProgress >= 1.0 || isFinished;
+    let fadeFactor = 1.0;
+    if (shouldFade) {
+      if (stopTimeRef.current === null) stopTimeRef.current = state.clock.elapsedTime;
+      const elapsed = state.clock.elapsedTime - stopTimeRef.current;
+      // 5-second linger with power-1.3 easing for gradual tail
+      fadeFactor = Math.max(0, 1 - Math.pow(elapsed / 5.0, 1.3));
+    } else {
+      stopTimeRef.current = null;
+    }
+
+    const finalOpacity = baseOpacity * fadeFactor;
+    matRef.current.opacity = finalOpacity;
+
+    if (finalOpacity <= 0.002) {
+      meshRef.current.visible = false;
+      return;
+    }
+    meshRef.current.visible = true;
+
+    // ── 2. Local-space tube bounds ───────────────────────────────────────────
+    const startY = 0.026 + totalGrams * 0.0028;
+    const mouthY = TUBE_TOP_Y - startY; // height of tube mouth in local space
+    const tubeR = TUBE_INNER_R - 0.001;
+
+    const dt = Math.min(delta, 0.05); // clamp delta to avoid physics explosion on tab switch
+    const t = state.clock.elapsedTime;
+
+    // ── 3. Update every particle — zero allocation ───────────────────────────
+    for (let i = 0; i < SMOKE_COUNT; i++) {
+      const p = particles[i];
+
+      p.age += dt;
+      if (p.age >= p.maxAge) {
+        // Dead → reset, but only respawn if smoke is still active/lingering
+        if (fadeFactor < 0.05) {
+          // Almost gone: freeze particle so it fades invisibly
+          _smokeDummy.scale.setScalar(0);
+          _smokeDummy.updateMatrix();
+          meshRef.current.setMatrixAt(i, _smokeDummy.matrix);
+          continue;
         }
+        resetParticle(p);
+      }
+
+      const lifePct = p.age / p.maxAge; // 0 → 1
+
+      // ── 3a. Vertical velocity: fast at birth (热气流), decelerates (giảm nhiệt)
+      //   v(y) = SPEED * speedMult * (1 - 0.6 * lifePct)  [decelerating]
+      const upV = SMOKE_UP_SPEED * p.speedMult * (1.0 - 0.6 * lifePct) * fadeFactor;
+      p.y += upV * dt;
+
+      // ── 3b. Horizontal convection (Phễu & Đối lưu):
+      //   Drift sử dụng sin/cos với pha offset theo từng hạt,
+      //   biên độ mở rộng theo chiều cao (khói thoát ra ngoài khi lên cao).
+      const heightAboveMouth = Math.max(0, p.y - mouthY);
+      // Giảm mạnh độ tỏa rộng (expansion) để khói "nằm trong ống" (luồng khói thẳng đứng)
+      const convectAmp = 0.0008 + heightAboveMouth * 0.005;
+      p.x += Math.sin(t * 1.1 + p.phase) * convectAmp * dt;
+      p.z += Math.cos(t * 0.9 + p.phase + 1.3) * convectAmp * dt;
+
+      // ── 3c. Tube constraint: clamp inside inner radius while below mouth ──
+      if (p.y < mouthY) {
+        const rr = p.x * p.x + p.z * p.z;
+        if (rr > tubeR * tubeR) {
+          const inv = tubeR / Math.sqrt(rr);
+          p.x *= inv;
+          p.z *= inv;
+        }
+      }
+
+      // ── 3d. Lifecycle scale curve ────────────────────────────────────────
+      //   Phase 1 (0%–20%): grow fast   → smoothstep 0→1
+      //   Phase 2 (20%–70%): hold full  → scale = 1
+      //   Phase 3 (70%–100%): taper out → smoothstep 1→0  (tránh cắt cụt)
+      let scalePct: number;
+      if (lifePct < 0.20) {
+        const tt = lifePct / 0.20;
+        scalePct = tt * tt * (3 - 2 * tt); // smoothstep up
+      } else if (lifePct < 0.70) {
+        scalePct = 1.0;
       } else {
-        if (p.life >= 0 && p.life < 1) {
-          p.life += dt * 0.25; // Slower fade out (~4s)
-        } else {
-          p.life = 2; // dead
-        }
+        const tt = (lifePct - 0.70) / 0.30;
+        scalePct = 1.0 - tt * tt * (3 - 2 * tt); // smoothstep down
       }
+      const s = SMOKE_MAX_SCALE * scalePct;
 
-      const child = groupRef.current!.children[i] as THREE.Mesh;
-      if (child) {
-        if (p.life >= 0 && p.life <= 1) {
-          child.visible = true;
-          p.pos.addScaledVector(p.vel, dt);
-          child.position.copy(p.pos);
-          // random spread
-          p.vel.x += (Math.random() - 0.5) * dt * 0.01;
-          p.vel.z += (Math.random() - 0.5) * dt * 0.01;
+      // ── 3e. Gentle tumble ──────────────────────────────────────────────────
+      p.rotX += p.rotSpeedX * dt;
+      p.rotY += p.rotSpeedY * dt;
 
-          const mat = child.material as THREE.MeshBasicMaterial;
-          mat.opacity = (1 - p.life) * 0.1; // fade out, max opacity 0.1
+      // ── 3f. Write instance matrix ──────────────────────────────────────────
+      _smokeDummy.position.set(p.x, p.y, p.z);
+      _smokeDummy.rotation.set(p.rotX, p.rotY, p.rotZ);
+      _smokeDummy.scale.setScalar(s);
+      _smokeDummy.updateMatrix();
+      meshRef.current.setMatrixAt(i, _smokeDummy.matrix);
+    }
 
-          const scale = 1 + p.life * 1.5;
-          child.scale.set(scale, scale, scale);
-        } else {
-          child.visible = false;
-        }
-      }
-    });
+    meshRef.current.instanceMatrix.needsUpdate = true;
   });
 
-  // Calculate approximate top Y of the powder layer
-  // The base bottom is around 0.035, and layers scale based on totalGrams
-  // We reduce the offset to ensure it sits exactly ON the powder, not hovering above.
-  const startY = 0.035 + (totalGrams * 0.0028);
+  const startY = 0.026 + totalGrams * 0.0028;
 
   return (
-    <group ref={groupRef} position={[0, startY, 0]}>
-      {particles.map((_, i) => (
-        <mesh key={i} visible={false}>
-          <sphereGeometry args={[0.0012, 5, 5]} />
-          <meshBasicMaterial color="#f3f4f6" transparent opacity={0.15} depthWrite={false} />
-        </mesh>
-      ))}
-    </group>
+    <instancedMesh
+      ref={meshRef}
+      args={[undefined, undefined, SMOKE_COUNT]}
+      position={[0, startY, 0]}
+      raycast={() => null}
+      frustumCulled={false}
+    >
+      {/* Dodecahedron: 12 mặt ngũ giác → cảm giác khối cuộn tròn khi xoay */}
+      <dodecahedronGeometry args={[1, 0]} />
+      <meshBasicMaterial
+        ref={matRef}
+        color="#fff9c4" // Màu trắng vàng (kem) theo yêu cầu
+        transparent
+        opacity={0}
+        depthWrite={false}
+      />
+    </instancedMesh>
   );
 };
+
