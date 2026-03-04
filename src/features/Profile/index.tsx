@@ -105,17 +105,17 @@ export const ChangePassword = async (_userId: string, data: ChangePasswordForm):
   }
 };
 
-export const GetMySubscription = async (): Promise<ISubscription | null> => {
+export const GetMySubscription = async (): Promise<ISubscription[]> => {
   try {
     const response = await api.get('Subscription/my-subscription');
-    const data: ResponseDTO<ISubscription> = response.data;
-    if (data.isSuccess) {
+    const data: ResponseDTO<ISubscription[]> = response.data;
+    if (data.isSuccess && data.result) {
       return data.result;
     }
-    return null;
+    return [];
   } catch (error) {
     console.error("Get Subscription Error:", error);
-    return null;
+    return [];
   }
 };
 

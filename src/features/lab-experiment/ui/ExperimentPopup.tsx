@@ -6,6 +6,7 @@ import { useExperimentStore } from '../services/experimentStore';
 import { generateUUID } from '../services/idGenerator';
 import type { DroppedItem } from '../types/equipment';
 import { ExperimentEnvironment } from './ExperimentEnvironment';
+import { ExperimentGuidePanel } from './ExperimentGuidePanel';
 
 const menuBtnStyle: React.CSSProperties = {
   display: "flex",
@@ -21,7 +22,7 @@ const menuBtnStyle: React.CSSProperties = {
   transition: "background 0.15s",
 };
 
-export const ExperimentPopup = ({ onBackToMenu }: { onBackToMenu: () => void }) => {
+export const ExperimentPopup = ({ onBackToMenu, isGuidedMode, experimentId }: { onBackToMenu: () => void; isGuidedMode?: boolean; experimentId?: string }) => {
   const {
     isModalOpen,
     closeModal,
@@ -185,7 +186,11 @@ export const ExperimentPopup = ({ onBackToMenu }: { onBackToMenu: () => void }) 
 
         {/* Main content */}
         <div className="flex-1 flex overflow-hidden">
-          <EquipmentPanel onSelectEquipment={() => { }} />
+          {isGuidedMode && experimentId ? (
+            <ExperimentGuidePanel experimentId={experimentId} />
+          ) : (
+            <EquipmentPanel onSelectEquipment={() => { }} />
+          )}
 
           <div className="flex-1 flex flex-col">
             {/* Info bar */}
@@ -194,6 +199,8 @@ export const ExperimentPopup = ({ onBackToMenu }: { onBackToMenu: () => void }) 
                 <p style={{ color: heldSubstance.color }}>
                   🧪 Đang cầm <strong>{heldSubstance.amount}g {heldSubstance.name}</strong> — Click vào ống nghiệm để đổ vào. ESC để huỷ.
                 </p>
+              ) : isGuidedMode ? (
+                <p>📖 Xem hướng dẫn bên trái. Chuột phải lên dụng cụ để xem tùy chọn. ESC để thoát.</p>
               ) : (
                 <p>Kéo dụng cụ từ bên trái xuống bàn. Chuột phải để xem tùy chọn. ESC để thoát.</p>
               )}

@@ -11,12 +11,12 @@ import { useLabSettings } from '../../../features/lab-environment/services/labSe
 import { LabEnvironment } from '../../../features/lab-environment/ui/LabEnvironment';
 import { InteractionPrompt } from '../../../features/lab-experiment/components/InteractionPrompt';
 import { ProximityDetector } from '../../../features/lab-experiment/components/ProximityDetector';
-import { useExperimentStore } from '../../../features/lab-experiment/services/experimentStore';
-import { ExperimentPopup } from '../../../features/lab-experiment/ui/ExperimentPopup';
-import { SceneWrapper } from '../../../shared/ui/canvas/SceneWrapper';
 import { GUIDED_EXPERIMENTS } from '../../../features/lab-experiment/services/equipmentRegistry';
+import { useExperimentStore } from '../../../features/lab-experiment/services/experimentStore';
 import { generateUUID } from '../../../features/lab-experiment/services/idGenerator';
 import { ExperimentModeMenu } from '../../../features/lab-experiment/ui/ExperimentModeMenu';
+import { ExperimentPopup } from '../../../features/lab-experiment/ui/ExperimentPopup';
+import { SceneWrapper } from '../../../shared/ui/canvas/SceneWrapper';
 
 const TABLE_POSITION: [number, number, number] = [-2, 0, 2];
 const DETECTION_RADIUS = 3;
@@ -168,6 +168,8 @@ export const LabScene = ({ isPaused = false, onPause }: LabSceneProps) => {
   const [showPrompt, setShowPrompt] = useState(false);
   const { openModal, isModalOpen, addDroppedItem, clearItems } = useExperimentStore();
   const [showModeMenu, setShowModeMenu] = useState(false);
+  const [isGuidedMode, setIsGuidedMode] = useState(false);
+  const [guidedExperimentId, setGuidedExperimentId] = useState<string | undefined>(undefined);
 
 
   const handleEnterProximity = () => setShowPrompt(true);
@@ -181,6 +183,8 @@ export const LabScene = ({ isPaused = false, onPause }: LabSceneProps) => {
 
   const startFreeExperiment = () => {
     setShowModeMenu(false);
+    setIsGuidedMode(false);
+    setGuidedExperimentId(undefined);
     openModal();
   };
 
@@ -189,7 +193,7 @@ export const LabScene = ({ isPaused = false, onPause }: LabSceneProps) => {
     if (!exp) return;
 
     // 1. Dọn bàn
-    clearItems(); 
+    clearItems();
 
     // 2. Thả dụng cụ ra bàn
     exp.equipment.forEach(config => {
@@ -203,6 +207,8 @@ export const LabScene = ({ isPaused = false, onPause }: LabSceneProps) => {
       });
     });
 
+    setIsGuidedMode(true);
+    setGuidedExperimentId(expId);
     setShowModeMenu(false);
     openModal();
   };
@@ -212,7 +218,7 @@ export const LabScene = ({ isPaused = false, onPause }: LabSceneProps) => {
     if (e.key === 'Escape' && onPause && !isModalOpen) {
       e.preventDefault();
       e.stopPropagation();
-      
+
       onPause();
     }
   }, [onPause, isModalOpen]);
@@ -249,7 +255,7 @@ export const LabScene = ({ isPaused = false, onPause }: LabSceneProps) => {
       </KeyboardControls>
 
       {showModeMenu && (
-        <ExperimentModeMenu 
+        <ExperimentModeMenu
           onSelectFree={startFreeExperiment}
           onSelectGuided={startGuidedExperiment}
           onClose={() => setShowModeMenu(false)}
@@ -257,7 +263,15 @@ export const LabScene = ({ isPaused = false, onPause }: LabSceneProps) => {
       )}
 
       <InteractionPrompt isVisible={showPrompt && !isPaused && !showModeMenu} />
-      <ExperimentPopup onBackToMenu={() => setShowModeMenu(true)}/>
+      <ExperimentPopup
+        onBackToMenu={() => {
+          setIsGuidedMode(false);
+          setGuidedExperimentId(undefined);
+          setShowModeMenu(true);
+        }}
+        isGuidedMode={isGuidedMode}
+        experimentId={guidedExperimentId}
+      />
     </>
   );
 };
