@@ -17,7 +17,7 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     dimensions: { width: 0.06, height: 0.08, depth: 0.06 },
     description: 'Cốc đo thể tích 150ml',
     scale: 4,
-    rotation: { x: 0, y: 0, z: 0}
+    rotation: { x: 0, y: 0, z: 0 }
   },
   {
     id: 'beaker-250ml',
@@ -29,7 +29,7 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     dimensions: { width: 0.07, height: 0.1, depth: 0.07 },
     description: 'Cốc đo thể tích 250ml',
     scale: 4,
-    rotation: { x: 0, y: 0, z: 0}
+    rotation: { x: 0, y: 0, z: 0 }
   },
   {
     id: 'beaker-500ml',
@@ -41,7 +41,7 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     dimensions: { width: 0.08, height: 0.12, depth: 0.08 },
     description: 'Bình tam giác 500ml',
     scale: 3,
-    rotation: { x: 0, y: 0, z: 0}
+    rotation: { x: 0, y: 0, z: 0 }
   },
   {
     id: 'flask-round',
@@ -53,7 +53,7 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     dimensions: { width: 0.08, height: 0.12, depth: 0.08 },
     description: 'Bình tròn đáy phẳng',
     scale: 3,
-    rotation: { x: 0, y: 0, z: 0}
+    rotation: { x: 0, y: 0, z: 0 }
   },
   {
     id: 'test-tube',
@@ -65,7 +65,7 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     dimensions: { width: 0.02, height: 0.15, depth: 0.02 },
     description: 'Ống nghiệm tiêu chuẩn',
     scale: 3,
-    rotation: { x: 0, y: 0, z: 0}
+    rotation: { x: 0, y: 0, z: 0 }
   },
 
   // Tools
@@ -79,7 +79,7 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     dimensions: { width: 0.005, height: 0.3, depth: 0.005 },
     description: 'Giá đỡ ống nghiệm',
     scale: 3,
-    rotation: { x: 0, y: 0, z: 0}
+    rotation: { x: 0, y: 0, z: 0 }
   },
   {
     id: 'dropper',
@@ -91,7 +91,7 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     dimensions: { width: 0.01, height: 0.12, depth: 0.01 },
     description: 'Nhỏ giọt chất lỏng',
     scale: 4,
-    rotation: { x: 0, y: 0, z: 0}
+    rotation: { x: 0, y: 0, z: 0 }
   },
   {
     id: 'funnel',
@@ -103,7 +103,7 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     dimensions: { width: 0.08, height: 0.1, depth: 0.08 },
     description: 'Phễu đổ chất lỏng',
     scale: 4,
-    rotation: { x: 0, y: 0, z: 0}
+    rotation: { x: 0, y: 0, z: 0 }
   },
   {
     id: 'magnet',
@@ -113,7 +113,7 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     mass: 0.03,
     isDraggable: true,
     dimensions: { width: 0.06, height: 0.5, depth: 0.06 },
-    rotation: {x: 0, y: Math.PI / 2, z: 0},
+    rotation: { x: 0, y: Math.PI / 2, z: 0 },
     description: 'Nam châm 2 cực',
     scale: 3,
   },
@@ -127,7 +127,7 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     dimensions: { width: 0.06, height: 0.1, depth: 0.06 },
     description: 'Đèn đốt bằng cồn',
     scale: 3,
-    rotation: { x: 0, y: 0, z: 0}
+    rotation: { x: 0, y: 0, z: 0 }
   },
   {
     id: 'iron-ring',
@@ -139,7 +139,7 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     dimensions: { width: 0.15, height: 0.15, depth: 0.15 },
     description: 'Vòng kẹp để đỡ thiết bị',
     scale: 3,
-    rotation: { x: 0, y: 0, z: 0}
+    rotation: { x: 0, y: 0, z: 0 }
   },
   {
     id: 'cap-connector',
@@ -151,7 +151,7 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     dimensions: { width: 0.03, height: 0.03, depth: 0.03 },
     description: 'Nắp hoặc kết nối ống',
     scale: 4,
-    rotation: { x: 0, y: 0, z: 0}
+    rotation: { x: 0, y: 0, z: 0 }
   },
   {
     id: 'filter-paper',
@@ -163,7 +163,7 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     dimensions: { width: 0.1, height: 0.001, depth: 0.1 },
     description: 'Giấy lọc dùng trong phòng thí nghiệm',
     scale: 4,
-    rotation: { x: 0, y: 0, z: 0}
+    rotation: { x: 0, y: 0, z: 0 }
   },
   {
     id: 'FE-powder',
@@ -176,7 +176,7 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     description: 'Bột sắt',
     scale: 2.5,
     isMagnetic: true,
-    rotation: { x: 0, y: 0, z: 0}
+    rotation: { x: 0, y: 0, z: 0 }
   },
   {
     id: 'S-powder',
@@ -188,7 +188,7 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     dimensions: { width: 0.1, height: 0.001, depth: 0.1 },
     description: 'Bột lưu huỳnh',
     scale: 2.5,
-    rotation: { x: 0, y: 0, z: 0}
+    rotation: { x: 0, y: 0, z: 0 }
   },
   {
     id: 'FeS-powder',
@@ -201,7 +201,7 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     description: 'Sắt(II) sulfide',
     scale: 2.5,
     isMagnetic: false,
-    rotation: { x: 0, y: 0, z: 0}
+    rotation: { x: 0, y: 0, z: 0 }
   },
 ];
 
@@ -243,7 +243,7 @@ export const GUIDED_EXPERIMENTS = [
 /** Màu hiển thị tương ứng với từng chất bột */
 export const SUBSTANCE_COLORS: Record<string, string> = {
   "FE-powder": "#9ca3af",  // xám bạc (bột sắt)
-  "S-powder": "#facc15",  // vàng (lưu huỳnh)
+  "S-powder": "#fef08a",  // vàng nhạt hơn (lưu huỳnh)
   "FeS-powder": "#2d2d2d", // đen/xám đậm (Sắt(II) sulfide)
 };
 
