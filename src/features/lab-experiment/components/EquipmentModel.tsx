@@ -2,6 +2,7 @@ import { Html, useAnimations, useGLTF } from "@react-three/drei";
 import type { ThreeEvent } from "@react-three/fiber";
 import { useFrame, useThree } from "@react-three/fiber";
 import {
+  CuboidCollider,
   RapierRigidBody,
   RigidBody,
 } from "@react-three/rapier";
@@ -535,13 +536,13 @@ export const EquipmentModel = ({
   return (
     <RigidBody
       ref={rigidBodyRef}
-      type={isSnapped ? "kinematicPosition" : "dynamic"}
+      type={isDragging || isSnapped ? "kinematicPosition" : "dynamic"}
       position={[droppedItem.position[0], tableHeight, droppedItem.position[2]]}
       rotation={droppedItem.rotation}
-      colliders={isSnapped ? false : "hull"}
+      colliders={isDragging || isSnapped ? false : "hull"}
       collisionGroups={isTestTube ? CG_TEST_TUBE : CG_EQUIPMENT}
       name={droppedItem.equipmentId}
-      gravityScale={isSnapped ? 0 : 1}
+      gravityScale={isDragging || isSnapped ? 0 : 1}
       lockRotations={true}
       // THÊM MA SÁT
       angularDamping={9.8} // Lực cản góc xoay
@@ -613,6 +614,13 @@ export const EquipmentModel = ({
           />
         )}
       </group>
+
+      {droppedItem.equipmentId === EQUIPMENT_IDS.MAGNET && (
+    <CuboidCollider 
+      args={[0, -0.000055, 0]} // Điều chỉnh kích thước cho vừa chân nam châm
+      position={[0, 0.000055, 0]} // Điều chỉnh để đáy collider bằng đúng đáy model
+    />
+  )}
 
       {/* Nhãn thành phần — chỉ hiện khi hover vào, kích thước cố định */}
       {isTestTube && isHovered && contents.length > 0 && (
