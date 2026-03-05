@@ -32,6 +32,7 @@ const NAV_DATA: NavItem[] = [
   { name: "Gói trải nghiệm", path: "/experience" },
   { name: "ChemXLab AI", path: "/chatbot" },
   { name: "Thí nghiệm", path: "/labtest" },
+  { name: "Kiến thức", path: "/library" },
 ];
 
 const Navbar = () => {
