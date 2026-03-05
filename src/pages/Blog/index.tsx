@@ -12,6 +12,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import type { NewsCategory } from "../../features/blog";
 import { NewsCard, NewsSkeleton, useChemistryNews } from "../../features/blog";
+import Mascot3 from "../../shared/assets/mascot/3.png";
 
 const BlogPage = () => {
   const {
@@ -55,20 +56,28 @@ const BlogPage = () => {
   return (
     <div className="min-h-screen bg-slate-50 pt-16">
       {/* Modern Minimal Header */}
-      <header className="bg-white border-b border-slate-100 py-8 mb-8">
-        <div className="container mx-auto px-4">
+      <header className="bg-white border-b border-slate-100 py-8 mb-8 overflow-hidden relative">
+        <div className="container mx-auto px-4 relative z-10">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="text-center md:text-left">
-              <div className="flex items-center justify-center md:justify-start gap-2 text-blue-600 font-semibold text-sm mb-3 uppercase tracking-wider">
-                <Sparkles className="w-4 h-4" />
-                <span>ChemXLab Blog</span>
+
+            <div className="flex flex-col md:flex-row items-center gap-8 text-center md:text-left">
+              {/* Mascot 3 */}
+              <div className="w-[180px] flex-shrink-0">
+                <img src={Mascot3} alt="Mascot" className="w-full h-auto drop-shadow-xl hover:scale-105 hover:-translate-y-2 transition-all duration-500" />
               </div>
-              <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 mb-4 tracking-tight">
-                Tin tức & Góc nhìn
-              </h1>
-              <p className="text-lg text-slate-500 max-w-lg">
-                Cập nhật tin tức hóa học, công nghệ mới và các nghiên cứu khoa học từ khắp nơi trên thế giới.
-              </p>
+
+              <div>
+                <div className="flex items-center justify-center md:justify-start gap-2 text-blue-600 font-semibold text-sm mb-3 uppercase tracking-wider">
+                  <Sparkles className="w-4 h-4" />
+                  <span>ChemXLab Blog</span>
+                </div>
+                <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 mb-4 tracking-tight">
+                  Tin tức & Góc nhìn
+                </h1>
+                <p className="text-lg text-slate-500 max-w-lg">
+                  Cập nhật tin tức hóa học, công nghệ mới và các nghiên cứu khoa học từ khắp nơi trên thế giới.
+                </p>
+              </div>
             </div>
 
             {/* Right side actions */}

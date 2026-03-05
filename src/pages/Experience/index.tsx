@@ -6,6 +6,7 @@ import type { Package } from "../../entities/Package";
 import type { Payment } from "../../entities/Payment";
 import { getAllPackages } from "../../features/Package";
 import { createPayment } from "../../features/Payment";
+import Mascot4 from "../../shared/assets/mascot/4.png";
 
 const ExperiencePage = () => {
   const [packages, setPackages] = useState<Package[]>([]);
@@ -68,13 +69,25 @@ const ExperiencePage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-blue-950 to-slate-900">
       {/* Hero Section */}
-      <section className="pt-24 pb-16 px-6">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 bg-blue-500/20 text-cyan-400 px-4 py-2 rounded-full text-sm font-medium mb-6 border border-cyan-500/30">
-            <Sparkles className="w-4 h-4" />
-            Bắt đầu miễn phí, nâng cấp bất cứ lúc nào
+      <section className="pt-24 pb-16 px-6 relative">
+        <div className="max-w-4xl mx-auto text-center relative z-10 flex flex-col items-center">
+
+          <div className="flex flex-col md:flex-row items-center justify-center gap-2 mb-8 relative group cursor-pointer hover:scale-110 transition-transform duration-500">
+            {/* Mascot 4 */}
+            <div className="w-[180px] z-20">
+              <img src={Mascot4} alt="Mascot Hóa học cầm loa" className="w-full h-auto drop-shadow-[0_0_30px_rgba(6,182,212,0.3)] transition-all duration-500" />
+            </div>
+
+            {/* Speech Bubble / CTA Banner */}
+            <div className="relative bg-[#0F172A] rounded-full px-6 py-3 border border-[#1E293B] text-cyan-400 font-medium text-sm flex items-center gap-2 shadow-[0_0_15px_rgba(6,182,212,0.2)] z-10 md:-ml-8 mt-4 md:mt-0 md:-mt-[95px] md:-translate-y-15">
+              {/* Pseudo-element for speech bubble tail */}
+              <div className="absolute w-4 h-4 bg-[#0F172A] border-l border-b border-[#1E293B] transform rotate-45 -left-[7px] top-1/2 -translate-y-1/2 hidden md:block"></div>
+              <Sparkles className="w-4 h-4 text-cyan-400" />
+              <span className="text-cyan-400">Bắt đầu miễn phí, nâng cấp bất cứ lúc nào</span>
+            </div>
           </div>
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
+
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight relative z-20">
             Chọn gói phù hợp với
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400"> nhu cầu của bạn</span>
           </h1>
