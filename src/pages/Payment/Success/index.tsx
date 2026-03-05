@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Mascot8 from '../../../shared/assets/mascot/8.png';
 
 const PaymentSuccessPage = () => {
   const [transactionCode, setTransactionCode] = useState("");
@@ -29,16 +30,10 @@ const PaymentSuccessPage = () => {
           </svg>
         </div>
 
-        {/* Success Icon với hiệu ứng Glow */}
-        <div className="mx-auto mt-6 mb-6 relative flex items-center justify-center">
-          {/* Vòng tròn mờ phía sau tạo hiệu ứng tỏa sáng */}
-          <div className="absolute w-24 h-24 bg-teal-100 rounded-full animate-pulse"></div>
-          {/* Icon chính */}
-          <div className="relative z-10 w-20 h-20 bg-[#00A86B] rounded-full flex items-center justify-center shadow-lg shadow-teal-200">
-            <svg className="h-10 w-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path>
-            </svg>
-          </div>
+        {/* Mascot 8 */}
+        <div className="mx-auto mt-2 mb-6 relative flex items-center justify-center">
+          <div className="absolute w-32 h-32 bg-teal-100 rounded-full animate-pulse z-0 blur-xl"></div>
+          <img src={Mascot8} alt="Success Mascot" className="w-[160px] h-auto drop-shadow-xl hover:scale-105 transition-transform duration-300 relative z-10" />
         </div>
 
         {/* Main Text */}

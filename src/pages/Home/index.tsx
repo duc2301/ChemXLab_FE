@@ -4,6 +4,8 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import MoleculeViewer from "../../components/ThreeD/MoleculeViewer";
+import Mascot5 from "../../shared/assets/mascot/5.png";
+import Mascot6 from "../../shared/assets/mascot/6.png";
 
 const HomePage = () => {
   return (
@@ -18,21 +20,32 @@ const HomePage = () => {
         </div>
 
         <div className="container mx-auto px-6 relative z-10">
-          <div className="flex flex-col lg:flex-row items-center gap-16">
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-8 xl:gap-12 relative">
 
-            {/* Left Content */}
-            <div className="w-full lg:w-1/2 space-y-8 text-center lg:text-left">
-              <h1 className="text-5xl lg:text-7xl font-extrabold text-white leading-tight tracking-tight uppercase">
-                KHÁM PHÁ <br />
-                {/* <span className="text-blue-400">CÙNG</span> <br /> */}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">
-                  CHEMXLAB
-                </span>
-              </h1>
+            {/* Left Content Area */}
+            <div className="w-full lg:w-[60%] xl:w-[60%] space-y-10 z-30 relative shrink-0">
 
-              <p className="text-lg text-slate-300 leading-relaxed max-w-xl mx-auto lg:mx-0 font-medium text-justify">
-                ChemXLab giúp bạn mô phỏng thí nghiệm Hóa học chỉ với vài cú nhấp chuột — trực quan, sáng tạo và đầy cảm hứng.
-              </p>
+              {/* Mascot & Text container */}
+              <div className="flex flex-col lg:flex-row items-center lg:items-center gap-6 xl:gap-8">
+                {/* Mascot 5 - Positioned on the left of the text */}
+                <div className="hidden lg:block w-[180px] xl:w-[260px] shrink-0 z-20 relative">
+                  <img src={Mascot5} alt="Mascot Hóa học" className="w-full h-auto drop-shadow-2xl hover:scale-105 transition-transform duration-500 object-contain" />
+                </div>
+
+                {/* Title and Description */}
+                <div className="space-y-6 text-center lg:text-left">
+                  <h1 className="text-5xl lg:text-6xl xl:text-7xl font-extrabold text-white leading-tight tracking-tight uppercase">
+                    KHÁM PHÁ <br />
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">
+                      CHEMXLAB
+                    </span>
+                  </h1>
+
+                  <p className="text-lg text-slate-300 max-w-xl mx-auto lg:mx-0 leading-relaxed font-medium">
+                    ChemXLab giúp bạn mô phỏng thí nghiệm Hóa học chỉ với vài cú nhấp chuột — trực quan, sáng tạo và đầy cảm hứng.
+                  </p>
+                </div>
+              </div>
 
               <div className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start">
                 <Link
@@ -62,8 +75,8 @@ const HomePage = () => {
             </div>
 
             {/* Right Visual - 3D Molecule Viewer */}
-            <div className="w-full lg:w-1/2 relative perspective-1000">
-              <div className="relative w-full aspect-square max-w-[550px] mx-auto">
+            <div className="w-full lg:w-[35%] xl:w-[35%] relative perspective-1000">
+              <div className="relative w-full aspect-square max-w-[450px] xl:max-w-[550px] mx-auto lg:ml-auto lg:mr-0 z-10">
                 {/* Main Glowing Circle */}
                 <div className="absolute inset-0 bg-gradient-to-tr from-blue-600/30 to-cyan-500/20 rounded-full blur-3xl"></div>
 
@@ -73,6 +86,7 @@ const HomePage = () => {
                 </div>
               </div>
             </div>
+
           </div>
         </div>
       </section>
@@ -171,16 +185,24 @@ const HomePage = () => {
       {/* --- 4. VISUAL LIBRARY / CAROUSEL --- */}
       <section className="py-24 bg-white border-t border-slate-100">
         <div className="container mx-auto px-6">
-          <div className="flex justify-between items-end mb-12">
-            <div className="max-w-2xl">
-              <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-4">Thư viện thí nghiệm phong phú</h2>
-              <p className="text-slate-600 text-lg">Hàng trăm mô hình và bài thí nghiệm được cập nhật liên tục theo chương trình giáo dục mới.</p>
+          <div className="flex flex-col md:flex-row items-center gap-8 mb-12 relative w-full justify-between">
+            <div className="flex items-center gap-6 z-20 relative">
+              {/* Mascot 6 - Đã bỏ absolute và -ml-24, thêm shrink-0 để không bị bóp méo */}
+              <div className="hidden lg:block w-[150px] xl:w-[180px] shrink-0">
+                <img src={Mascot6} alt="Mascot" className="w-full h-auto drop-shadow-2xl hover:scale-105 transition-transform duration-500" />
+              </div>
+
+              {/* Phần chữ - Đã bỏ lg:ml-28 vì không cần bù trừ khoảng trống cho absolute nữa */}
+              <div className="max-w-xl text-center md:text-left z-10">
+                <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-4">Thư viện thí nghiệm phong phú</h2>
+                <p className="text-slate-600 text-lg">Hàng trăm mô hình và bài thí nghiệm được cập nhật liên tục theo chương trình giáo dục mới.</p>
+              </div>
             </div>
-            <Link to="/library" className="hidden md:flex items-center gap-2 text-blue-600 font-bold hover:gap-4 transition-all uppercase text-sm tracking-wider">
+
+            <Link to="/library" className="hidden md:flex items-center gap-2 text-blue-600 font-bold hover:gap-4 transition-all uppercase text-sm tracking-wider z-20 shrink-0">
               Xem tất cả <ArrowRight size={20} />
             </Link>
           </div>
-
           {/* Gallery Grid - 2 Cards: Periodic Table & Chemistry Library */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
 
