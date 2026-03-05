@@ -616,11 +616,11 @@ export const EquipmentModel = ({
       </group>
 
       {droppedItem.equipmentId === EQUIPMENT_IDS.MAGNET && (
-    <CuboidCollider 
-      args={[0, -0.000055, 0]} // Điều chỉnh kích thước cho vừa chân nam châm
-      position={[0, 0.000055, 0]} // Điều chỉnh để đáy collider bằng đúng đáy model
-    />
-  )}
+        <CuboidCollider
+          args={[0, -0.000055, 0]} // Điều chỉnh kích thước cho vừa chân nam châm
+          position={[0, 0.000055, 0]} // Điều chỉnh để đáy collider bằng đúng đáy model
+        />
+      )}
 
       {/* Nhãn thành phần — chỉ hiện khi hover vào, kích thước cố định */}
       {isTestTube && isHovered && contents.length > 0 && (
@@ -940,7 +940,7 @@ function buildPackedPositions(
     // Phân bổ hạt theo diện tích hình tròn (sqrt để phân bổ đều từ tâm ra rìa)
     const rx = Math.sqrt(Math.random()) * usableTubeR;
     const theta = Math.random() * Math.PI * 2;
-    
+
     let x = rx * Math.cos(theta);
     let z = rx * Math.sin(theta);
     const yOffset = Math.random() * cylinderHeight;
@@ -948,13 +948,13 @@ function buildPackedPositions(
 
     // 3. Logic xử lý đáy ống nghiệm bán cầu
     const relativeYToBottom = absY - tubeBaseY;
-    
+
     if (relativeYToBottom < tubeR) {
       // dy là khoảng cách từ tâm bán cầu đáy (theo trục Y)
       const dy = relativeYToBottom - tubeR;
       // Tính bán kính tối đa cho phép tại độ cao này (Pythagoras)
       const rMax = Math.sqrt(Math.max(0, tubeR2 - dy * dy)) - grainR;
-      
+
       const rCurrent2 = x * x + z * z;
       if (rCurrent2 > rMax * rMax && rCurrent2 > 0) {
         const scale = rMax / Math.sqrt(rCurrent2);
@@ -1207,16 +1207,16 @@ const PowderLayer = ({
 
 // ─── StirredLayer: grains fall from tube mouth and pack at the bottom ─────────
 
-interface SGrain {
-  basePos: THREE.Vector3;
-  color: string;
-  rotation: THREE.Euler;
-  aRandom: number;
-  phaseX: number;
-  phaseZ: number;
-  speed: number;
-  radius: number;
-}
+// interface SGrain {
+//   basePos: THREE.Vector3;
+//   color: string;
+//   rotation: THREE.Euler;
+//   aRandom: number;
+//   phaseX: number;
+//   phaseZ: number;
+//   speed: number;
+//   radius: number;
+// }
 
 
 const StirredLayer = ({
@@ -1262,7 +1262,7 @@ const StirredLayer = ({
         radius: 0.001 + Math.random() * 0.004,
       };
     });
-    
+
     // Đánh thức logic khi có dữ liệu mới
     isLogicDeadRef.current = false;
     elapsed.current = 0;
@@ -1292,7 +1292,7 @@ const StirredLayer = ({
     const time = state.clock.elapsedTime;
     const STIR_DURATION = 1.0;
     const wobbleActive = reactionProgress > 0.333 && reactionProgress < 0.833;
-    
+
     // Trạng thái "thức": đang khuấy, đang thắp lửa (để đổi màu), hoặc đang rung
     const isActivelyAnimating = (elapsed.current < STIR_DURATION + 0.5) || isHeating || wobbleActive || (reactionProgress > 0 && reactionProgress < 1);
 
@@ -1335,7 +1335,7 @@ const StirredLayer = ({
         needsMatrixUpdate = true;
         const splashFreq = g.speed * 0.8;
         const dySplash = Math.max(0, Math.sin(time * splashFreq + g.phaseX)) * intensity * 0.015 * g.aRandom;
-        
+
         pX += Math.sin(time * g.speed + g.phaseX) * g.radius * intensity;
         pZ += Math.cos(time * g.speed + g.phaseZ) * g.radius * intensity;
         pY += dySplash;
@@ -1367,10 +1367,10 @@ const StirredLayer = ({
       if (needsMatrixUpdate || isActivelyAnimating) {
         _dummy.position.set(pX, pY, pZ);
         _dummy.quaternion.copy(g.quat);
-        
+
         const scaleVar = 1.0 + (intensity > 0 ? Math.sin(time * 10 + g.phaseX) * 0.1 * intensity : 0);
         _dummy.scale.setScalar(scaleVar);
-        
+
         _dummy.updateMatrix();
         mesh.setMatrixAt(i, _dummy.matrix);
       }
