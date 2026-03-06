@@ -52,6 +52,8 @@ interface ExperimentStore extends ExperimentState {
   updateReactionProgress: (tubeId: string, progressDelta: number) => void;
   finishReaction: (tubeId: string, resultingSubstanceId: string) => void;
   getFreeIronAmount: (tubeId: string, resultingSubstanceId: string) => number;
+  snapTargetId: string | null;
+  setSnapTargetId: (id: string | null) => void;
   clearItems: () => void;
 }
 
@@ -65,6 +67,7 @@ export const useExperimentStore = create<ExperimentStore>((set, get) => ({
   testTubeContents: new Map(),
   stirredTubes: {},
   reactionProgress: new Map(),
+  snapTargetId: null,
 
   openModal: () =>
     set({
@@ -152,11 +155,11 @@ export const useExperimentStore = create<ExperimentStore>((set, get) => ({
       return { alcoholLampStatus: newStatus };
     }),
 
-  addSubstanceToTestTube: (testTubeId, substanceId, amount = 1) =>
+  addSubstanceToTestTube: (testTubeId, substanceId, amount = 1, instant = false) =>
     set((state) => {
       const newContents = new Map(state.testTubeContents);
       const existing = newContents.get(testTubeId) ?? [];
-      const addedItem: TubeContent = { substanceId, amount };
+      const addedItem: TubeContent = { substanceId, amount, instant };
       newContents.set(testTubeId, [...existing, addedItem]);
       return { testTubeContents: newContents };
     }),
@@ -181,7 +184,7 @@ export const useExperimentStore = create<ExperimentStore>((set, get) => ({
     set((state) => {
       const newContents = new Map(state.testTubeContents);
       const currentContents = newContents.get(tubeId) ?? [];
-      
+
       const fe = currentContents.find(c => c.substanceId === EQUIPMENT_IDS.FE_POWDER)?.amount || 0;
       const s = currentContents.find(c => c.substanceId === EQUIPMENT_IDS.S_POWDER)?.amount || 0;
 
@@ -198,14 +201,14 @@ export const useExperimentStore = create<ExperimentStore>((set, get) => ({
       if (fe > reactedFe + 0.05) {
         finalContents.push({ substanceId: EQUIPMENT_IDS.FE_POWDER, amount: fe - reactedFe });
       }
-      
+
       // Nếu lưu huỳnh dư
       if (s > reactedS + 0.05) {
         finalContents.push({ substanceId: EQUIPMENT_IDS.S_POWDER, amount: s - reactedS });
       }
 
       newContents.set(tubeId, finalContents);
-      
+
       const newProgress = new Map(state.reactionProgress);
       newProgress.set(tubeId, 0);
 
@@ -226,6 +229,8 @@ export const useExperimentStore = create<ExperimentStore>((set, get) => ({
     // Lưu ý: Nếu đã finishReaction và còn sắt dư, progress lúc đó = 0, hàm sẽ trả về toàn bộ sắt dư.
     return feItem.amount * (1 - progress);
   },
+
+  setSnapTargetId: (id) => set({ snapTargetId: id }),
 
   clearItems: () =>
     set({

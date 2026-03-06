@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>R3F - Pure Crown Splash</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #050505;
+            font-family: sans-serif;
+        }
+
+        #root {
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #00e5ff;
+            font-weight: bold;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-size: 14px;
+        }
+
+        .info {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+            pointer-events: none;
+            line-height: 1.5;
+        }
+    </style>
+
+    <script async src="https://unpkg.com/es-module-shims@1.8.0/dist/es-module-shims.js"></script>
+    <script type="importmap">
+        {
+            "imports": {
+                "react": "https://esm.sh/react@18.2.0",
+                "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+                "three": "https://esm.sh/three@0.160.0",
+                "@react-three/fiber": "https://esm.sh/@react-three/fiber@8.15.12?external=react,react-dom,three",
+                "@react-three/drei": "https://esm.sh/@react-three/drei@9.96.1?external=react,react-dom,three,@react-three/fiber"
+            }
+        }
+    </script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+
+<body>
+    <div id="root">
+        <div class="loading">Generating Fluid Mesh...</div>
+    </div>
+    <div class="info">Dùng chuột xoay camera.<br />Hiệu ứng chỉ giữ lại vết lõm và vành vương miện (không có cột nước
+        nảy lên).</div>
+
+    <script type="text/babel" data-type="module">
+        import React, { useRef, useState, useEffect, useMemo } from 'react';
+        import { createRoot } from 'react-dom/client';
+        import * as THREE from 'three';
+        import { Canvas, useFrame } from '@react-three/fiber';
+        import { OrbitControls, Environment, ContactShadows } from '@react-three/drei';
+
+        const GlassMaterial = () => (
+            <meshPhysicalMaterial transparent={true} opacity={0.15} roughness={0.05} metalness={0.1} clearcoat={1.0} clearcoatRoughness={0.1} side={THREE.DoubleSide} depthWrite={false} />
+        );
+
+        const LiquidMaterial = () => (
+            <meshPhysicalMaterial transparent={true} transmission={0.4} opacity={0.9} roughness={0.05} ior={1.33} color="#0088ff" emissive="#001a4d" side={THREE.DoubleSide} />
+        );
+
+        const TestTube = () => (
+            <group>
+                <mesh position={[0, 0, 0]} renderOrder={2}>
+                    <cylinderGeometry args={[1, 1, 4, 32, 1, true]} />
+                    <GlassMaterial />
+                </mesh>
+                <mesh position={[0, -2, 0]} rotation={[-Math.PI / 2, 0, 0]} renderOrder={2}>
+                    <circleGeometry args={[1, 32]} />
+                    <GlassMaterial />
+                </mesh>
+            </group>
+        );
+
+        const LiquidSimulation = () => {
+            const liquidBodyRef = useRef();
+            const liquidSurfaceRef = useRef();
+            const surfaceGeoRef = useRef();
+            const dropsGroupRef = useRef();
+            const splashGroupRef = useRef();
+
+            const tubeBottomY = -1.98;
+            const radius = 0.95;
+            const maxLiquidHeight = 3.5;
+
+            const liquidHeight = useRef(0.5);
+            const targetLiquidHeight = useRef(0.5);
+
+            const dropCount = 10;
+            const dropsData = useMemo(() => Array.from({ length: dropCount }, () => ({
+                position: new THREE.Vector3(0, -100, 0), velocity: 0, active: false, scale: 1
+            })), []);
+
+            const splashCount = 60;
+            const splashData = useMemo(() => Array.from({ length: splashCount }, () => ({
+                position: new THREE.Vector3(0, -100, 0), velocity: new THREE.Vector3(0, 0, 0), active: false, scale: 0.05
+            })), []);
+
+            const maxRipples = 10;
+            const ripples = useMemo(() => Array.from({ length: maxRipples }, () => ({
+                x: 0, z: 0, age: 0, active: false
+            })), []);
+
+            const [originalPositions, setOriginalPositions] = useState(null);
+            const lastDropTime = useRef(0);
+
+            useEffect(() => {
+                if (surfaceGeoRef.current) {
+                    const posAttribute = surfaceGeoRef.current.attributes.position;
+                    setOriginalPositions(new Float32Array(posAttribute.array));
+                }
+            }, []);
+
+            useFrame(({ clock }, delta) => {
+                const time = clock.getElapsedTime();
+                const currentSurfaceY = tubeBottomY + liquidHeight.current;
+
+                // 1. Nhỏ giọt chậm (1.5s/giọt)
+                if (time - lastDropTime.current > 1.5 && targetLiquidHeight.current < maxLiquidHeight) {
+                    const dropIndex = dropsData.findIndex(d => !d.active);
+                    if (dropIndex !== -1) {
+                        const drop = dropsData[dropIndex];
+                        drop.active = true;
+                        const dropX = (Math.random() - 0.5) * 0.4;
+                        const dropZ = (Math.random() - 0.5) * 0.4;
+                        drop.position.set(dropX, 3.5, dropZ);
+                        drop.velocity = -2;
+                        drop.scale = 0.15;
+                        lastDropTime.current = time;
+                    }
+                }
+
+                // 2. Vật lý hạt rơi chính
+                const dropMeshes = dropsGroupRef.current.children;
+                dropsData.forEach((drop, i) => {
+                    const mesh = dropMeshes[i];
+                    if (drop.active) {
+                        drop.velocity -= 15 * delta;
+                        drop.position.y += drop.velocity * delta;
+                        const stretchY = 1 + Math.abs(drop.velocity) * 0.2;
+
+                        if (drop.position.y <= currentSurfaceY) {
+                            drop.active = false;
+                            targetLiquidHeight.current = Math.min(maxLiquidHeight, targetLiquidHeight.current + 0.15);
+
+                            // Khởi tạo sóng
+                            const ripple = ripples.find(r => !r.active);
+                            if (ripple) {
+                                ripple.active = true;
+                                ripple.age = 0;
+                                ripple.x = drop.position.x;
+                                ripple.z = drop.position.z;
+                            }
+
+                            // Tung tia nước nhỏ li ti văng ra viền
+                            let spawnedSplash = 0;
+                            for (let j = 0; j < splashCount; j++) {
+                                if (!splashData[j].active) {
+                                    splashData[j].active = true;
+                                    const angle = Math.random() * Math.PI * 2;
+                                    const spread = 2 + Math.random();
+                                    splashData[j].position.set(drop.position.x, currentSurfaceY + 0.05, drop.position.z);
+                                    splashData[j].velocity.set(Math.cos(angle) * spread, 1.5 + Math.random() * 1.5, Math.sin(angle) * spread);
+                                    splashData[j].scale = 0.02 + Math.random() * 0.03;
+                                    spawnedSplash++;
+                                    if (spawnedSplash >= 8) break;
+                                }
+                            }
+                        }
+                        mesh.visible = true;
+                        mesh.position.copy(drop.position);
+                        mesh.scale.set(drop.scale, drop.scale * stretchY, drop.scale);
+                    } else {
+                        mesh.visible = false;
+                    }
+                });
+
+                // 3. Vật lý tia nước li ti (Splash)
+                const splashMeshes = splashGroupRef.current.children;
+                splashData.forEach((splash, i) => {
+                    const mesh = splashMeshes[i];
+                    if (splash.active) {
+                        splash.velocity.y -= 15 * delta;
+                        splash.position.addScaledVector(splash.velocity, delta);
+                        if (splash.position.y <= currentSurfaceY) splash.active = false;
+
+                        mesh.visible = true;
+                        mesh.position.copy(splash.position);
+                        mesh.scale.setScalar(splash.scale);
+                    } else {
+                        mesh.visible = false;
+                    }
+                });
+
+                // Tăng mực nước
+                liquidHeight.current += (targetLiquidHeight.current - liquidHeight.current) * delta * 4;
+                if (liquidBodyRef.current) {
+                    liquidBodyRef.current.scale.y = Math.max(0.001, liquidHeight.current);
+                    liquidBodyRef.current.position.y = tubeBottomY + (liquidHeight.current / 2);
+                }
+
+                // 4. TOÁN HỌC MẶT NƯỚC (Chỉ có Vết lõm & Vành vương miện)
+                if (liquidSurfaceRef.current && surfaceGeoRef.current && originalPositions) {
+                    liquidSurfaceRef.current.position.y = tubeBottomY + liquidHeight.current;
+                    const positions = surfaceGeoRef.current.attributes.position.array;
+
+                    ripples.forEach(r => {
+                        if (r.active) {
+                            r.age += delta;
+                            if (r.age > 3.0) r.active = false;
+                        }
+                    });
+
+                    for (let i = 0; i < positions.length; i += 3) {
+                        const vx = originalPositions[i];
+                        const vy = originalPositions[i + 1];
+                        const distToCenter = Math.sqrt(vx * vx + vy * vy);
+
+                        let totalWaveZ = 0;
+                        const edgeDampen = Math.max(0, 1 - Math.pow(distToCenter / radius, 2));
+
+                        ripples.forEach(r => {
+                            if (r.active) {
+                                const dx = vx - r.x;
+                                const dy = vy - r.z;
+                                const distToRipple = Math.sqrt(dx * dx + dy * dy);
+
+                                // GIAI ĐOẠN ĐẶC BIỆT: Hình thành Vương miện (Crown) không có cột nảy
+                                if (r.age < 0.6) {
+                                    const t = r.age / 0.6;
+
+                                    // a. Vết lõm ở tâm (Crater)
+                                    const craterDepth = Math.max(0, 1 - t * 3) * -0.7;
+                                    const crater = craterDepth * Math.max(0, 1 - distToRipple / 0.3);
+
+                                    // b. Vành vương miện (Crown Rim) lồi lên và lan ra
+                                    const rimRadius = 0.1 + t * 0.4;
+                                    const rimWidth = 0.15;
+                                    const distToRim = Math.abs(distToRipple - rimRadius);
+                                    const rimHeight = 0.5 * Math.max(0, 1 - t * 1.5) * Math.max(0, 1 - distToRim / rimWidth);
+
+                                    totalWaveZ += crater + rimHeight; // Không cộng thêm biến rebound nữa
+                                }
+                                // GIAI ĐOẠN 2: Sóng lan tỏa bình thường
+                                else {
+                                    const wavePhase = distToRipple * 20 - (r.age - 0.6) * 15;
+                                    if (wavePhase < 0) {
+                                        const wave = Math.sin(wavePhase);
+                                        const dampening = Math.max(0, 1 - r.age / 2) * Math.max(0, 1 - distToRipple);
+                                        totalWaveZ += wave * 0.15 * dampening;
+                                    }
+                                }
+                            }
+                        });
+
+                        positions[i + 2] = totalWaveZ * edgeDampen;
+                    }
+
+                    surfaceGeoRef.current.attributes.position.needsUpdate = true;
+                    surfaceGeoRef.current.computeVertexNormals();
+                }
+            });
+
+            return (
+                <group>
+                    <group ref={dropsGroupRef} renderOrder={1}>
+                        {Array.from({ length: dropCount }).map((_, i) => (
+                            <mesh key={`drop-${i}`} visible={false}>
+                                <sphereGeometry args={[1, 16, 16]} />
+                                <meshStandardMaterial color="#ffffff" roughness={0.1} metalness={0.5} />
+                            </mesh>
+                        ))}
+                    </group>
+
+                    <group ref={splashGroupRef} renderOrder={1}>
+                        {Array.from({ length: splashCount }).map((_, i) => (
+                            <mesh key={`splash-${i}`} visible={false}>
+                                <sphereGeometry args={[1, 8, 8]} />
+                                <meshStandardMaterial color="#ffffff" roughness={0.0} metalness={0.2} transparent={true} opacity={0.8} />
+                            </mesh>
+                        ))}
+                    </group>
+
+                    <mesh ref={liquidBodyRef} position={[0, tubeBottomY, 0]} scale={[1, 0.001, 1]} renderOrder={1}>
+                        <cylinderGeometry args={[radius, radius, 1, 32, 1, true]} />
+                        <LiquidMaterial />
+                    </mesh>
+
+                    <mesh position={[0, tubeBottomY, 0]} rotation={[-Math.PI / 2, 0, 0]} renderOrder={1}>
+                        <circleGeometry args={[radius, 32]} />
+                        <LiquidMaterial />
+                    </mesh>
+
+                    <mesh ref={liquidSurfaceRef} position={[0, tubeBottomY, 0]} rotation={[-Math.PI / 2, 0, 0]} renderOrder={1}>
+                        <ringGeometry ref={surfaceGeoRef} args={[0.001, radius, 64, 32]} />
+                        <LiquidMaterial />
+                    </mesh>
+                </group>
+            );
+        };
+
+        const App = () => {
+            return (
+                <Canvas camera={{ position: [0, 2, 6.5], fov: 45 }}>
+                    <Environment preset="city" />
+                    <ambientLight intensity={1.5} />
+                    <directionalLight position={[5, 10, 5]} intensity={3} />
+                    <directionalLight position={[-5, 5, -5]} intensity={2} color="#00e5ff" />
+
+                    <group position={[0, -0.5, 0]}>
+                        <TestTube />
+                        <LiquidSimulation />
+                    </group>
+
+                    <ContactShadows position={[0, -2.5, 0]} opacity={0.6} scale={10} blur={2.5} far={4} />
+                    <OrbitControls enablePan={false} minPolarAngle={Math.PI / 6} maxPolarAngle={Math.PI / 1.5} />
+                </Canvas>
+            );
+        };
+
+        const root = createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+
+</html>

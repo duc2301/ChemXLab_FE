@@ -176,7 +176,8 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     description: 'Bột sắt',
     scale: 2.5,
     isMagnetic: true,
-    rotation: { x: 0, y: 0, z: 0 }
+    rotation: { x: 0, y: 0, z: 0 },
+    physicalState: 'powder',
   },
   {
     id: 'S-powder',
@@ -188,7 +189,8 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     dimensions: { width: 0.1, height: 0.001, depth: 0.1 },
     description: 'Bột lưu huỳnh',
     scale: 2.5,
-    rotation: { x: 0, y: 0, z: 0 }
+    rotation: { x: 0, y: 0, z: 0 },
+    physicalState: 'powder',
   },
   {
     id: 'FeS-powder',
@@ -201,7 +203,37 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     description: 'Sắt(II) sulfide',
     scale: 2.5,
     isMagnetic: false,
-    rotation: { x: 0, y: 0, z: 0 }
+    rotation: { x: 0, y: 0, z: 0 },
+    hideInMenu: true,
+    physicalState: 'powder',
+  },
+  {
+    id: 'Zn-powder',
+    name: 'Viên Zn',
+    category: 'substances',
+    modelPath: '/models/zn.glb',
+    mass: 0.01,
+    isDraggable: true,
+    dimensions: { width: 0.1, height: 0.001, depth: 0.1 },
+    description: 'Viên kẽm',
+    rotation: { x: 0, y: 0, z: 0 },
+    scale: 2.5,
+    physicalState: 'solid',
+    isExtractable: false,
+  },
+  {
+    id: 'HCL-solution',
+    name: 'Dung dịch HCL',
+    category: 'substances',
+    modelPath: '/models/HCl.glb',
+    mass: 0.01,
+    isDraggable: true,
+    dimensions: { width: 0.1, height: 0.001, depth: 0.1 },
+    description: 'Dung dịch HCl',
+    scale: 2.5,
+    rotation: { x: 0, y: 0, z: 0 },
+    isMagnetic: false,
+    physicalState: 'solution',
   },
 ];
 
@@ -222,13 +254,15 @@ export const EQUIPMENT_IDS = {
   FE_POWDER: "FE-powder",
   S_POWDER: "S-powder",
   FES_POWDER: "FeS-powder",
+  ZN_POWDER: "Zn-powder",
+  HCL_SOLUTION: "HCL-solution",
 };
 
 export const GUIDED_EXPERIMENTS = [
   {
-    id: 'test1',
-    name: 'Điều chế FeS trong phòng thí nghiệm',
-    description: 'Thí nghiệm về biến đổi hoá học - SGK KHTN 8 (Bài 2)',
+    id: 'Fe_S',
+    name: 'Điều chế Fe + S → FeS',
+    description: 'description',
     equipment: [
       { id: EQUIPMENT_IDS.MAGNET, position: [-1, 1.5, 0], rotation: [0, Math.PI / 2, 0] },
       { id: EQUIPMENT_IDS.ALCOHOL_LAMP, position: [-0.5, 1.5, 0], rotation: [0, 0, 0] },
@@ -236,66 +270,17 @@ export const GUIDED_EXPERIMENTS = [
       { id: EQUIPMENT_IDS.THERMOMETER, position: [0.5, 1.5, 0], rotation: [0, 0, 0] },
       { id: EQUIPMENT_IDS.FE_POWDER, position: [1, 1.5, 0], rotation: [0, 0, 0] },
       { id: EQUIPMENT_IDS.S_POWDER, position: [1.5, 1.5, 0], rotation: [0, 0, 0] },
-    ],
-    guide: {
-      title: 'Thí nghiệm về biến đổi hoá học',
-      subtitle: 'Điều chế Sắt(II) sunfua (FeS)',
-      reference: 'SGK Khoa học tự nhiên 8 – Kết nối tri thức – Bài 2',
-      equation: 'Fe (rắn) + S (rắn) → FeS (rắn)',
-      objective: 'Quan sát hiện tượng phản ứng hoá học giữa sắt và lưu huỳnh, nhận biết sự hình thành chất mới thông qua các dấu hiệu.',
-      materials: [
-        'Bột sắt (Fe) và bột lưu huỳnh (S) – tỉ lệ 7:4 về khối lượng',
-        'Ống nghiệm chịu nhiệt (2 ống)',
-        'Đèn cồn',
-        'Giá đỡ ống nghiệm (kẹp)',
-        'Nam châm',
-        'Thìa thuỷ tinh / đũa thuỷ tinh',
-      ],
-      steps: [
-        {
-          title: 'Bước 1: Chuẩn bị hỗn hợp',
-          content: 'Trộn đều bột sắt (Fe) và bột lưu huỳnh (S) theo tỉ lệ 7:4 về khối lượng. Khuấy đều cho đến khi hỗn hợp đồng nhất.',
-          tip: 'Click chuột phải vào lọ bột Fe → Lấy 7g. Click chuột phải lọ S → Lấy 4g. Đổ lần lượt vào ống nghiệm.',
-          icon: '🧪',
-        },
-        {
-          title: 'Bước 2: Chia vào 2 ống nghiệm',
-          content: 'Lần lượt cho hỗn hợp vào hai ống nghiệm (1) và (2), mỗi ống 3 thìa hỗn hợp.',
-          tip: 'Trong mô phỏng này, bạn chỉ cần đổ vào 1 ống nghiệm và khuấy trộn.',
-          icon: '🔬',
-        },
-        {
-          title: 'Bước 3: Kiểm tra bằng nam châm (trước phản ứng)',
-          content: 'Đưa nam châm lại gần ống nghiệm (1). Quan sát: bột sắt có tính nhiễm từ nên bị nam châm hút → chứng tỏ sắt chưa thay đổi tính chất.',
-          tip: 'Kéo nam châm lại gần ống nghiệm có bột Fe+S chưa đun → quan sát hiện tượng hút.',
-          icon: '🧲',
-        },
-        {
-          title: 'Bước 4: Đun nóng ống nghiệm (2)',
-          content: 'Dùng kẹp giữ ống nghiệm (2), đun nóng mạnh đáy ống trên ngọn lửa đèn cồn khoảng 30 giây rồi ngừng đun. Phản ứng Fe + S tỏa nhiệt mạnh, sẽ tự tiếp tục diễn ra.',
-          tip: 'Click chuột phải vào đèn cồn → Thắp lửa. Kéo ống nghiệm đã trộn bột lại gần đèn cồn.',
-          icon: '🔥',
-        },
-        {
-          title: 'Bước 5: Kiểm tra sản phẩm (sau phản ứng)',
-          content: 'Để ống nghiệm nguội hoàn toàn. Đưa nam châm lại gần chất rắn mới tạo thành. Quan sát: Sản phẩm FeS KHÔNG bị nam châm hút → đã có chất mới sinh ra!',
-          tip: 'Kéo nam châm lại gần ống nghiệm sau phản ứng → sản phẩm FeS không bị hút.',
-          icon: '✅',
-        },
-      ],
-      observations: [
-        { question: 'Sau khi trộn bột sắt và bột lưu huỳnh, hỗn hợp thu được có bị nam châm hút không?', answer: 'Có – bột sắt vẫn giữ tính nhiễm từ.' },
-        { question: 'Chất trong ống nghiệm (2) sau khi được đun nóng và để nguội có bị nam châm hút không?', answer: 'Không – sản phẩm FeS không có tính nhiễm từ.' },
-        { question: 'Sau khi trộn bột sắt và bột lưu huỳnh, có chất mới được tạo thành không?', answer: 'Chưa – chỉ là hỗn hợp vật lý, chưa xảy ra phản ứng hoá học.' },
-        { question: 'Sau khi đun nóng hỗn hợp bột sắt và bột lưu huỳnh, có chất mới được tạo thành không?', answer: 'Có – chất rắn màu đen xám (FeS) có tính chất khác hẳn Fe và S.' },
-      ],
-      safetyNotes: [
-        'Đeo kính bảo hộ và găng tay trong suốt quá trình.',
-        'Thực hiện ở nơi thông thoáng (có thể sinh khí SO₂ độc).',
-        'Không chạm trực tiếp vào ống nghiệm nóng.',
-        'Phản ứng tỏa nhiệt rất mạnh – cẩn thận tránh bỏng.',
-      ],
-    }
+    ]
+  },
+  {
+    id: 'HCl_Zn',
+    name: 'Điều chế Axit Clohidric (HCl) + Kẽm (Zn)',
+    description: 'description',
+    equipment: [
+      { id: EQUIPMENT_IDS.TEST_TUBE, position: [-0.5, 1.5, 0], rotation: [0, 0, 0] },
+      { id: EQUIPMENT_IDS.HCL_SOLUTION, position: [0, 1.5, 0], rotation: [0, 0, 0] },
+      { id: EQUIPMENT_IDS.ZN_POWDER, position: [0.5, 1.5, 0], rotation: [0, 0, 0] },
+    ]
   }
 ];
 
@@ -304,13 +289,15 @@ export const SUBSTANCE_COLORS: Record<string, string> = {
   "FE-powder": "#9ca3af",  // xám bạc (bột sắt)
   "S-powder": "#fef08a",  // vàng nhạt hơn (lưu huỳnh)
   "FeS-powder": "#2d2d2d", // đen/xám đậm (Sắt(II) sulfide)
+  "Zn-powder": "#818cf8", // xám xanh (Kẽm)
+  "HCL-solution": "#a5f3fc", // xanh cực nhạt (Axit Clohydric)
 };
 
 /**
  * Group equipment by category
  */
 export const getEquipmentByCategory = (category: EquipmentItem['category']): EquipmentItem[] => {
-  return EQUIPMENT_REGISTRY.filter((item) => item.category === category);
+  return EQUIPMENT_REGISTRY.filter((item) => item.category === category && !item.hideInMenu);
 };
 
 /**
@@ -324,6 +311,8 @@ export const getEquipmentById = (id: string): EquipmentItem | undefined => {
  * Get all unique categories
  */
 export const getAllCategories = (): EquipmentItem['category'][] => {
-  const categories = new Set(EQUIPMENT_REGISTRY.map((item) => item.category));
+  const categories = new Set(
+    EQUIPMENT_REGISTRY.filter((item) => !item.hideInMenu).map((item) => item.category),
+  );
   return Array.from(categories);
 };

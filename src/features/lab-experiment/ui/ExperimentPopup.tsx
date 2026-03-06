@@ -149,6 +149,8 @@ export const ExperimentPopup = ({ onBackToMenu, isGuidedMode, experimentId }: { 
   const alreadyStirred = isTestTubeItem && stirredCount >= tubeContents.length && tubeContents.length > 0;
   const isAlcoholLamp = contextEquipment?.id === EQUIPMENT_IDS.ALCOHOL_LAMP;
   const isBurning = contextMenu ? (alcoholLampStatus.get(contextMenu.itemId) ?? false) : false;
+  const isSolution = contextEquipment?.physicalState === 'solution';
+  const isSolid = contextEquipment?.physicalState === 'solid';
 
   if (!isModalOpen) return null;
 
@@ -197,7 +199,12 @@ export const ExperimentPopup = ({ onBackToMenu, isGuidedMode, experimentId }: { 
             <div className="px-4 py-2 bg-gray-800 border-b border-gray-700 text-sm text-gray-400">
               {heldSubstance ? (
                 <p style={{ color: heldSubstance.color }}>
-                  🧪 Đang cầm <strong>{heldSubstance.amount}g {heldSubstance.name}</strong> — Click vào ống nghiệm để đổ vào. ESC để huỷ.
+                  🧪 Đang cầm <strong>{heldSubstance.amount}{(() => {
+                    const state = getEquipmentById(heldSubstance.substanceId)?.physicalState;
+                    if (state === 'solution') return 'ml';
+                    if (state === 'solid') return ' viên';
+                    return 'g';
+                  })()} {heldSubstance.name}</strong> — Click vào ống nghiệm để đổ vào. ESC để huỷ.
                 </p>
               ) : isGuidedMode ? (
                 <p>📖 Xem hướng dẫn bên trái. Chuột phải lên dụng cụ để xem tùy chọn. ESC để thoát.</p>
@@ -318,7 +325,7 @@ export const ExperimentPopup = ({ onBackToMenu, isGuidedMode, experimentId }: { 
           )}
 
 
-          {isSubstance && contextEquipment && (
+          {isSubstance && contextEquipment && contextEquipment.isExtractable !== false && (
             <div style={{ display: "flex", gap: "4px", padding: "0 4px" }}>
               <input
                 id="powder-amount-input"
@@ -339,7 +346,7 @@ export const ExperimentPopup = ({ onBackToMenu, isGuidedMode, experimentId }: { 
                   fontSize: "12px",
                   outline: "none"
                 }}
-                title="Số gram bột cần lấy"
+                title={isSolution ? "Số ml dung dịch cần lấy" : (isSolid ? "Số viên cần lấy" : "Số gram bột cần lấy")}
               />
               <button
                 style={{ ...menuBtnStyle, flex: 1, color: SUBSTANCE_COLORS[contextEquipment.id] ?? "#a3e635" }}
@@ -363,7 +370,7 @@ export const ExperimentPopup = ({ onBackToMenu, isGuidedMode, experimentId }: { 
                   (e.currentTarget as HTMLButtonElement).style.background = "none";
                 }}
               >
-                🧪&nbsp; Lấy bột
+                🧪&nbsp; {isSolution ? "Lấy dung dịch" : (isSolid ? "Lấy viên" : "Lấy bột")}
               </button>
             </div>
           )}
