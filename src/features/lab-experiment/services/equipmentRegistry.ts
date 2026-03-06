@@ -235,6 +235,34 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     isMagnetic: false,
     physicalState: 'solution',
   },
+  {
+    id: 'Na2SO4-solution', 
+    name: 'Natri Sunfat (Na₂SO₄)',
+    category: 'substances',
+    modelPath: '/models/Na2SO4.glb',
+    mass: 0.01,
+    isDraggable: true,
+    dimensions: { width: 0.1, height: 0.001, depth: 0.1 },
+    description: 'Dung dịch Natri Sunfat',
+    scale: 2.5,
+    rotation: { x: 0, y: 0, z: 0 },
+    isMagnetic: false,
+    physicalState: 'solution',
+  },
+  {
+    id: 'BaCl2-solution', 
+    name: 'Bari Clorua (BaCl₂)',
+    category: 'substances',
+    modelPath: '/models/BaCl2.glb',
+    mass: 0.01,
+    isDraggable: true,
+    dimensions: { width: 0.1, height: 0.001, depth: 0.1 },
+    description: 'Dung dịch Bari Clorua',
+    scale: 2.5,
+    rotation: { x: 0, y: 0, z: 0 },
+    isMagnetic: false,
+    physicalState: 'solution',
+  },
 ];
 
 export const EQUIPMENT_IDS = {
@@ -256,6 +284,8 @@ export const EQUIPMENT_IDS = {
   FES_POWDER: "FeS-powder",
   ZN_POWDER: "Zn-powder",
   HCL_SOLUTION: "HCL-solution",
+  Na2SO4_SOLUTION: "Na2SO4-solution",
+  BaCl2_SOLUTION: "BaCl2-solution",
 };
 
 export const GUIDED_EXPERIMENTS = [
@@ -281,7 +311,18 @@ export const GUIDED_EXPERIMENTS = [
       { id: EQUIPMENT_IDS.HCL_SOLUTION, position: [0, 1.5, 0], rotation: [0, 0, 0] },
       { id: EQUIPMENT_IDS.ZN_POWDER, position: [0.5, 1.5, 0], rotation: [0, 0, 0] },
     ]
-  }
+  },
+  {
+    id: 'BaCl2_Na2SO4',
+    name: 'Định luật bảo toàn khối lượng (BaCl2 + Na2SO4)',
+    description: 'Thí nghiệm phản ứng giữa BaCl₂ và Na₂SO₄ để chứng minh tổng khối lượng không đổi.',
+    equipment: [
+      { id: EQUIPMENT_IDS.TEST_TUBE, position: [-0.5, 1.5, 0], rotation: [0, 0, 0] },
+      { id: EQUIPMENT_IDS.THERMOMETER, position: [0, 1.5, 0], rotation: [0, 0, 0] },
+      // { id: EQUIPMENT_IDS.BaCl2_SOLUTION, position: [0.5, 1.5, 0], rotation: [0, 0, 0] },
+      { id: EQUIPMENT_IDS.Na2SO4_SOLUTION, position: [1, 1.5, 0], rotation: [0, 0, 0] },
+    ]
+  },
 ];
 
 /** Màu hiển thị tương ứng với từng chất bột */

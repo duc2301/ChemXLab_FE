@@ -1015,7 +1015,7 @@ export const EquipmentModel = ({
 
         return (
           <Html
-            position={[0.18, 0.22, 0]}
+            position={[-1, 0.22, 0]}
             center
             pointerEvents="none"
             style={{ userSelect: "none", zIndex: 100 }}
