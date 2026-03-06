@@ -31,7 +31,7 @@ const TUBE_TOP_Y = 0.15;
 const TUBE_INNER_R = 0.008;
 const TUBE_BOTTOM_Y = 0.032; // đáy trong lòng ống (model space)
 const TUBE_MARGIN = 0.02;  // khoảng cách tới mép trên (model space)
-const LAYER_H_CONST = 0.003; // = layerH trong render
+const LAYER_H_CONST = 0.0015; // = layerH trong render
 const MAX_TUBE_LAYERS = Math.floor((TUBE_TOP_Y - TUBE_BOTTOM_Y - TUBE_MARGIN) / LAYER_H_CONST);
 
 // ─── Utility ────────────────────────────────────────────────────────────────
@@ -45,6 +45,7 @@ interface EquipmentModelProps {
 }
 
 const thermometerRegistry = new Map<string, RapierRigidBody>();
+const testTubeRegistry = new Map<string, RapierRigidBody>();
 const occupiedThermometers = new Map<string, string>();
 const occupiedThermometersByLamp = new Map<string, string>();
 const occupiedByMagnet = new Map<string, string>();
@@ -133,6 +134,8 @@ export const EquipmentModel = ({
   const freeFeAmount = useExperimentStore((state) =>
     state.getFreeIronAmount(droppedItem.id, EQUIPMENT_IDS.FES_POWDER),
   );
+  const snapTargetId = useExperimentStore((s) => s.snapTargetId);
+  const setSnapTargetId = useExperimentStore((s) => s.setSnapTargetId);
   const isAttracted =
     occupiedByMagnet.get(snappedToThermoIdRef?.current ?? "") &&
     freeFeAmount > 0;
@@ -153,6 +156,22 @@ export const EquipmentModel = ({
 
   const dragOffset = useRef(new THREE.Vector3());
   const activePointerRef = useRef<{ target: HTMLElement; pointerId: number } | null>(null);
+
+  // Drop-into-tube animation state (used by solid substances like Zn)
+  const dropAnimRef = useRef<{
+    tubeId: string;
+    targetX: number;
+    targetZ: number;
+    topWorldY: number;    // world Y of tube mouth
+    bottomWorldY: number; // world Y of tube floor
+    currentY: number;
+    velY: number;
+    phase: 'align' | 'fall' | 'done';
+    substanceId: string;
+    amount: number;
+  } | null>(null);
+
+
 
   const { gl } = useThree();
   const equipment = getEquipmentById(droppedItem.equipmentId);
@@ -184,6 +203,20 @@ export const EquipmentModel = ({
       occupiedThermometers.delete(droppedItem.id);
     };
   }, [isThermometer, droppedItem.id]);
+
+  useEffect(() => {
+    if (!isTestTube) return;
+    const interval = setInterval(() => {
+      if (rigidBodyRef.current) {
+        testTubeRegistry.set(droppedItem.id, rigidBodyRef.current);
+        clearInterval(interval);
+      }
+    }, 100);
+    return () => {
+      clearInterval(interval);
+      testTubeRegistry.delete(droppedItem.id);
+    };
+  }, [isTestTube, droppedItem.id]);
 
   useEffect(() => {
     return () => {
@@ -237,8 +270,44 @@ export const EquipmentModel = ({
     }
   }
 
-  useFrame((state) => {
+  useFrame((state, delta) => {
     if (!rigidBodyRef.current) return;
+
+    // ── Drop-into-tube animation for solid items (e.g. Zinc) ────────────────
+    const anim = dropAnimRef.current;
+    if (anim) {
+      const pos = rigidBodyRef.current.translation();
+      if (anim.phase === 'align') {
+        // Smoothly lerp above the tube mouth
+        const tx = anim.targetX, tz = anim.targetZ, ty = anim.topWorldY + 0.08;
+        const nx = pos.x + (tx - pos.x) * Math.min(1, 10 * delta);
+        const ny = pos.y + (ty - pos.y) * Math.min(1, 8 * delta);
+        const nz = pos.z + (tz - pos.z) * Math.min(1, 10 * delta);
+        rigidBodyRef.current.setTranslation({ x: nx, y: ny, z: nz }, true);
+        const close = Math.abs(nx - tx) < 0.015 && Math.abs(ny - ty) < 0.015 && Math.abs(nz - tz) < 0.015;
+        if (close) {
+          anim.phase = 'fall';
+          anim.currentY = ty;
+          anim.velY = 0;
+        }
+      } else if (anim.phase === 'fall') {
+        // Gravity fall
+        anim.velY -= 2.0 * delta;
+        anim.currentY += anim.velY * delta;
+        if (anim.currentY <= anim.bottomWorldY) {
+          anim.currentY = anim.bottomWorldY;
+          anim.phase = 'done';
+        }
+        rigidBodyRef.current.setTranslation({ x: anim.targetX, y: anim.currentY, z: anim.targetZ }, true);
+      } else {
+        // Animation finished — commit to store then remove external pellet
+        const storeState = useExperimentStore.getState();
+        storeState.addSubstanceToTestTube(anim.tubeId, anim.substanceId, anim.amount);
+        storeState.removeDroppedItem(droppedItem.id);
+        dropAnimRef.current = null;
+      }
+      return; // skip normal drag/snap during animation
+    }
 
     // 0. Cooling Logic
     if (isTestTube && (currentProgress > 0 || hasFinishedReaction)) {
@@ -381,6 +450,27 @@ export const EquipmentModel = ({
         }
       }
     }
+
+    // ── Snap highlight logic for substances ──────────────────────────────────
+    if (isDragging && equipment?.category === 'substances') {
+      const myPos = rigidBodyRef.current.translation();
+      let bestId = null;
+      let minDist = 0.25;
+
+      for (const [id, tubeBody] of testTubeRegistry) {
+        if (id === droppedItem.id) continue;
+        const tp = tubeBody.translation();
+        const dist2D = Math.sqrt(Math.pow(myPos.x - tp.x, 2) + Math.pow(myPos.z - tp.z, 2));
+        if (dist2D < minDist) {
+          minDist = dist2D;
+          bestId = id;
+        }
+      }
+      if (bestId !== snapTargetId) setSnapTargetId(bestId);
+    } else if (isDragging && snapTargetId) {
+      // If we were dragging but now not a substance (unlikely state)
+      setSnapTargetId(null);
+    }
   });
 
   const handlePointerDown = useCallback((e: ThreeEvent<PointerEvent>) => {
@@ -429,12 +519,91 @@ export const EquipmentModel = ({
     onDragChange?.(false);
     gl.domElement.style.cursor = isHovered ? "grab" : "auto";
     lastUnsnappedThermoIdRef.current = null;
+    if (snapTargetId) setSnapTargetId(null); // Clear highlight on release
 
     if (rigidBodyRef.current && !isSnappedRef.current) {
+      // ─── Drag-to-Add Substance ──────────────────────────────────────────
+      const isSubstance = equipment?.category === 'substances';
+      const state = useExperimentStore.getState();
+
+      if (isDragging && isSubstance) {
+        const myPos = rigidBodyRef.current.translation();
+        // Tìm ống nghiệm gần nhất
+        let closestTubeId = null;
+        let minDist = 0.25; // Khoảng cách nhận diện thả vào ống
+        // Duyệt qua registry để lấy vị trí thực tế của ống nghiệm
+        for (const [id, tubeBody] of testTubeRegistry) {
+          if (id === droppedItem.id) continue;
+          const tp = tubeBody.translation();
+          const dx = myPos.x - tp.x;
+          const dz = myPos.z - tp.z;
+          const dist2D = Math.sqrt(dx * dx + dz * dz);
+
+          if (dist2D < minDist) {
+            minDist = dist2D;
+            closestTubeId = id;
+          }
+        }
+
+        // Fallback to store positions if registry missed some (less likely)
+        if (!closestTubeId) {
+          const state = useExperimentStore.getState();
+          for (const [id, item] of state.droppedItems) {
+            if (item.equipmentId === EQUIPMENT_IDS.TEST_TUBE && id !== droppedItem.id) {
+              const dx = myPos.x - item.position[0];
+              const dz = myPos.z - item.position[2];
+              const dist2D = Math.sqrt(dx * dx + dz * dz);
+              if (dist2D < minDist) {
+                minDist = dist2D;
+                closestTubeId = id;
+              }
+            }
+          }
+        }
+
+        if (closestTubeId) {
+          const isSolid = equipment.physicalState === 'solid';
+          if (isSolid) {
+            // Get REAL-TIME positions for auto-snap jump
+            const tubeBody = testTubeRegistry.get(closestTubeId);
+            const tubePos = tubeBody ? tubeBody.translation() : state.droppedItems.get(closestTubeId)!.position;
+            const tubeItem = state.droppedItems.get(closestTubeId)!;
+            const tubeScale = getEquipmentById(tubeItem.equipmentId)?.scale || 3;
+            const tx = Array.isArray(tubePos) ? tubePos[0] : tubePos.x;
+            const tz = Array.isArray(tubePos) ? tubePos[2] : tubePos.z;
+            const ty = Array.isArray(tubePos) ? tubePos[1] : tubePos.y;
+
+            const topWorldY = ty + TUBE_TOP_Y * tubeScale;
+            const bottomWorldY = ty + TUBE_BOTTOM_Y * tubeScale;
+
+            rigidBodyRef.current.setBodyType(2, true); // kinematic
+            rigidBodyRef.current.setLinvel({ x: 0, y: 0, z: 0 }, true);
+            dropAnimRef.current = {
+              tubeId: closestTubeId,
+              targetX: tx,
+              targetZ: tz,
+              topWorldY,
+              bottomWorldY,
+              currentY: rigidBodyRef.current.translation().y,
+              velY: 0,
+              phase: 'align',
+              substanceId: equipment.id,
+              amount: 1,
+            };
+          } else {
+            // Liquid/powder: add immediately and remove
+            addSubstanceToTestTube(closestTubeId, equipment.id, equipment.id === EQUIPMENT_IDS.HCL_SOLUTION ? 5 : 1);
+            state.removeDroppedItem(droppedItem.id);
+          }
+          gl.domElement.style.cursor = 'auto';
+          return;
+        }
+      }
+
       rigidBodyRef.current.setBodyType(2, true); // Chuyển về Dynamic (0) thay vì Static (1) để trọng lực hoạt động
     }
   },
-    [gl.domElement, isHovered, onDragChange]
+    [gl.domElement, isHovered, onDragChange, equipment, droppedItem.id, addSubstanceToTestTube]
   );
 
   // ─── Hover ────────────────────────────────────────────────────────────────
@@ -564,7 +733,7 @@ export const EquipmentModel = ({
             isHovered={isHovered}
             isDragging={isDragging}
             isSnapped={isSnapped}
-            isHighlighted={isHighlighted}
+            isHighlighted={isHighlighted || snapTargetId === droppedItem.id}
             isFullHighlight={isFullHighlight}
             isGlass={isTestTube}
             playAnimations={isAlcoholLamp ? isBurning : false}
@@ -584,24 +753,94 @@ export const EquipmentModel = ({
             />
           )}
 
-          {/* Lớp bột mới thêm vào (chưa khuấy) nằm đè lên trên */}
-          {isTestTube && unmixedContents.map((item, idx) => {
-            const color = SUBSTANCE_COLORS[item.substanceId] ?? "#e5e7eb";
+          {/* Lớp chưa khuấy — phân loại và render theo trạng thái vật chất */}
+          {isTestTube && (() => {
+            const solidItems = unmixedContents.filter(c => getEquipmentById(c.substanceId)?.physicalState === 'solid');
+            const liquidItems = unmixedContents.filter(c => getEquipmentById(c.substanceId)?.physicalState === 'solution');
+            const powderItems = unmixedContents.filter(c => {
+              const state = getEquipmentById(c.substanceId)?.physicalState;
+              return state !== 'solution' && state !== 'solid';
+            });
+
+            const totalLiquidMl = liquidItems.reduce((acc, c) => acc + c.amount, 0);
+            const totalSolidAmt = solidItems.reduce((acc, c) => acc + c.amount, 0);
+            const solidOffset = 0; // Removed jump offset
+            const liquidFillFraction = Math.min(1, totalLiquidMl / MAX_TUBE_LAYERS);
+
+            const isHClPresent = liquidItems.some(c => c.substanceId === EQUIPMENT_IDS.HCL_SOLUTION);
+            const bubbleSources: { x: number; z: number }[] = [];
+
             return (
-              <PowderLayer
-                key={`${stirredCount + idx}-${item.substanceId}`}
-                color={color}
-                startGrams={getGrams(contents.slice(0, stirredCount + idx))}
-                amountGrams={item.amount}
-                reactionProgress={currentProgress}
-                coolingTime={coolingTime}
-                isHeating={isHeating}
-                spawnInstant={item.instant}
-                isIron={item.substanceId === EQUIPMENT_IDS.FE_POWDER}
-                isAttracted={isAttracted}
-              />
+              <>
+                {/* 1. Solid Zinc model rendering (internal) */}
+                {solidItems.map((item, idx) => {
+                  const equip = getEquipmentById(item.substanceId);
+                  if (!equip) return null;
+
+                  // Jitter and stacking logic to simulate collision/volume
+                  // Use Fibonacci angle for nice distribution and slight vertical stacking
+                  const angle = (idx * 137.5) * (Math.PI / 180);
+                  const dist = idx === 0 ? 0 : TUBE_INNER_R * 0.5 * Math.sqrt(idx / solidItems.length);
+                  const ox = Math.cos(angle) * dist;
+                  const oz = Math.sin(angle) * dist;
+                  const oy = Math.floor(idx / 3) * 0.004; // Stack slightly every 3 pellets
+
+                  if (item.substanceId === EQUIPMENT_IDS.ZN_POWDER && isHClPresent) {
+                    bubbleSources.push({ x: ox, z: oz });
+                  }
+
+                  return (
+                    <group
+                      key={`internal-solid-${idx}`}
+                      position={[ox, 0 - 0.0055, oz]}
+                      rotation={[0, angle + idx, 0]} // Randomized rotation
+                    >
+                      <Model
+                        modelPath={equip.modelPath}
+                        isHovered={false}
+                        isDragging={false}
+                        isSnapped={false}
+                        isGlass={false}
+                      />
+                    </group>
+                  );
+                })}
+
+                {/* 2. Liquid fills above solid granules */}
+                {liquidItems.length > 0 && (
+                  <LiquidLayer
+                    color={SUBSTANCE_COLORS[liquidItems[0].substanceId] ?? '#a5f3fc'}
+                    totalLiquidMl={totalLiquidMl}
+                    offsetAboveSolid={solidOffset}
+                    spawnInstant={liquidItems.every(c => c.instant)}
+                    bubbleSources={bubbleSources}
+                  />
+                )}
+
+                {/* 3. Powder floats on liquid surface or rests at the bottom */}
+                {powderItems.map((item, idx) => {
+                  const color = SUBSTANCE_COLORS[item.substanceId] ?? '#e5e7eb';
+                  const prevPowderAmt = powderItems.slice(0, idx).reduce((a, c) => a + c.amount, 0);
+                  const liquidEquivGrams = totalLiquidMl > 0 ? Math.round(liquidFillFraction * MAX_TUBE_LAYERS) : 0;
+                  const solidEquivGrams = totalSolidAmt > 0 ? 1 : 0;
+                  return (
+                    <PowderLayer
+                      key={`${stirredCount + unmixedContents.indexOf(item)}-${item.substanceId}`}
+                      color={color}
+                      startGrams={liquidEquivGrams + solidEquivGrams + prevPowderAmt}
+                      amountGrams={item.amount}
+                      reactionProgress={currentProgress}
+                      coolingTime={coolingTime}
+                      isHeating={isHeating}
+                      spawnInstant={item.instant}
+                      isIron={item.substanceId === EQUIPMENT_IDS.FE_POWDER}
+                      isAttracted={isAttracted}
+                    />
+                  );
+                })}
+              </>
             );
-          })}
+          })()}
         </group>
 
         {/* Lớp khói đen */}
@@ -650,7 +889,7 @@ export const EquipmentModel = ({
                   width: 6, height: 6, borderRadius: "50%",
                   background: blendedColor, flexShrink: 0,
                 }} />
-                Hỗn hợp ({totalGrams.toFixed(1)}g)
+                Hỗn hợp ({totalGrams.toFixed(1)}{contents.some(c => getEquipmentById(c.substanceId)?.physicalState === 'solution') ? 'ml' : 'g'})
               </div>
             )}
             {/* Hiển thị chi tiết TẤT CẢ các thành phần có trong ống */}
@@ -672,7 +911,12 @@ export const EquipmentModel = ({
                     background: SUBSTANCE_COLORS[subId] ?? "#e5e7eb",
                     flexShrink: 0,
                   }} />
-                  {getEquipmentById(subId)?.name ?? subId} ({amount.toFixed(1)}g)
+                  {getEquipmentById(subId)?.name ?? subId} ({amount.toFixed(1)}{(() => {
+                    const state = getEquipmentById(subId)?.physicalState;
+                    if (state === 'solution') return 'ml';
+                    if (state === 'solid') return ' viên';
+                    return 'g';
+                  })()})
                 </div>
               ));
             })()}
@@ -753,6 +997,80 @@ export const EquipmentModel = ({
           </div>
         </Html>
       )}
+
+      {/* ── Khung thông tin phản ứng HCl + Zn ── */}
+      {(() => {
+        if (!isTestTube) return null;
+        const hasHCl = contents.some(c => c.substanceId === EQUIPMENT_IDS.HCL_SOLUTION);
+        const hasZn = contents.some(c => c.substanceId === EQUIPMENT_IDS.ZN_POWDER);
+        if (!hasHCl || !hasZn) return null;
+
+        const hclAmt = contents.filter(c => c.substanceId === EQUIPMENT_IDS.HCL_SOLUTION).reduce((a, c) => a + c.amount, 0);
+        const znAmt = contents.filter(c => c.substanceId === EQUIPMENT_IDS.ZN_POWDER).reduce((a, c) => a + c.amount, 0);
+        // Stoichiometry: 1 Zn + 2 HCl; Zn molar ~1 unit, HCl 5ml≈5 units
+        // Reaction is always ongoing as long as both are present
+        const isReacting = hasHCl && hasZn;
+        const borderColor = isReacting ? "#22d3ee" : "#6ee7b7";
+        const shadowColor = isReacting ? "rgba(34,211,238,0.3)" : "rgba(110,231,183,0.2)";
+
+        return (
+          <Html
+            position={[0.18, 0.22, 0]}
+            center
+            pointerEvents="none"
+            style={{ userSelect: "none", zIndex: 100 }}
+          >
+            <div style={{
+              background: "rgba(5, 15, 30, 0.96)",
+              border: `1px solid ${borderColor}`,
+              borderRadius: "7px",
+              padding: "8px 12px",
+              minWidth: "230px",
+              color: "white",
+              fontFamily: "sans-serif",
+              fontSize: "11px",
+              boxShadow: `0 0 12px ${shadowColor}`,
+              whiteSpace: "nowrap",
+              lineHeight: 1.6,
+            }}>
+              {/* Title */}
+              <h4 style={{ margin: "0 0 5px 0", color: "#fbbf24", fontSize: "12px", letterSpacing: "0.3px" }}>
+                ⚗️ Phản ứng: Zn + HCl
+              </h4>
+
+              {/* Equation */}
+              <div style={{ color: "#7dd3fc", fontWeight: "bold", fontSize: "11px", marginBottom: "5px", fontStyle: "italic" }}>
+                Zn + 2HCl → ZnCl₂ + H₂↑
+              </div>
+
+              {/* Status */}
+              <div style={{ marginBottom: "3px" }}>
+                <span style={{ color: "#94a3b8" }}>Trạng thái: </span>
+                <span style={{ color: "#34d399", fontWeight: "bold" }}>
+                  {isReacting ? "🔬 Đang xảy ra — bọt khí H₂ thoát ra" : "Hoàn tất"}
+                </span>
+              </div>
+
+              {/* Amounts */}
+              <div style={{ display: "flex", gap: "10px", marginTop: "4px", borderTop: "1px dashed rgba(100,116,139,0.4)", paddingTop: "4px" }}>
+                <div>
+                  <span style={{ color: "#94a3b8" }}>HCl: </span>
+                  <span style={{ color: "#a5f3fc", fontWeight: "bold" }}>{hclAmt.toFixed(1)} ml</span>
+                </div>
+                <div>
+                  <span style={{ color: "#94a3b8" }}>Zn: </span>
+                  <span style={{ color: "#818cf8", fontWeight: "bold" }}>{znAmt.toFixed(1)} viên</span>
+                </div>
+              </div>
+
+              {/* Side products note */}
+              <div style={{ marginTop: "4px", color: "#6ee7b7", fontSize: "10px", fontStyle: "italic" }}>
+                Sản phẩm: dung dịch ZnCl₂ + khí H₂ không màu không mùi
+              </div>
+            </div>
+          </Html>
+        );
+      })()}
     </RigidBody>
   );
 };
@@ -970,8 +1288,415 @@ function buildPackedPositions(
   return positions;
 }
 
-// ─── PowderLayer: Real falling particles for individual layers ─────────
+// ─── LiquidLayer: Liquid pours from top and fills from bottom ─────────────────
+// Includes drop + splash + ripple/crown animation from ac.html
 
+// ── Pre-allocated types ────────────────────────────────────────────────────────
+interface LiqDrop { x: number; y: number; z: number; vy: number; scale: number; vDelta: number; active: boolean; }
+interface LiqSplash { x: number; y: number; z: number; vx: number; vy: number; vz: number; scale: number; active: boolean; }
+interface LiqRipple { x: number; z: number; age: number; active: boolean; }
+interface LiqBubble { x: number; y: number; z: number; vy: number; vx: number; vz: number; scale: number; age: number; sourceIdx: number; active: boolean; }
+
+const LL_DROP_COUNT = 6;
+const LL_SPLASH_COUNT = 40;
+const LL_RIPPLE_COUNT = 8;
+const LL_BUBBLE_COUNT = 60;
+const LL_SURF_SEG = 48;     // segments for the interactive surface mesh
+const LL_SURF_RINGS = 20;
+
+const _llDummy = new THREE.Object3D();
+
+const LiquidLayer = ({
+  color,
+  totalLiquidMl,
+  offsetAboveSolid = 0,
+  spawnInstant = false,
+  bubbleSources = [],
+}: {
+  color: string;
+  totalLiquidMl: number;
+  offsetAboveSolid?: number;
+  spawnInstant?: boolean;
+  bubbleSources?: { x: number; z: number }[];
+}) => {
+  const LIQUID_R = TUBE_INNER_R * 0.96;
+  const MAX_CYLINDER_H = TUBE_TOP_Y - TUBE_BOTTOM_Y - TUBE_MARGIN - LIQUID_R;
+  const targetFill = Math.min(1, totalLiquidMl / MAX_TUBE_LAYERS);
+
+  const bodyRef = useRef<THREE.Mesh>(null);
+  const capRef = useRef<THREE.Mesh>(null);
+  const surfRef = useRef<THREE.Mesh>(null);        // deformable top surface
+  const dropMeshRef = useRef<THREE.InstancedMesh>(null);
+  const splashMeshRef = useRef<THREE.InstancedMesh>(null);
+  const bubbleMeshRef = useRef<THREE.InstancedMesh>(null);
+  const visualFillRef = useRef(spawnInstant ? targetFill : 0);
+  const logicFillTarget = useRef(spawnInstant ? targetFill : 0);
+  const lastDropT = useRef(-99);
+  const lastHitT = useRef(-99);
+
+  // Pre-allocate particle data (never re-created)
+  const drops = useMemo<LiqDrop[]>(() => Array.from({ length: LL_DROP_COUNT }, () =>
+    ({ x: 0, y: 0, z: 0, vy: 0, scale: 0, vDelta: 0, active: false })), []);
+  const splashes = useMemo<LiqSplash[]>(() => Array.from({ length: LL_SPLASH_COUNT }, () =>
+    ({ x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, scale: 0, active: false })), []);
+  const ripples = useMemo<LiqRipple[]>(() => Array.from({ length: LL_RIPPLE_COUNT }, () =>
+    ({ x: 0, z: 0, age: 0, active: false })), []);
+  const bubbles = useMemo<LiqBubble[]>(() => Array.from({ length: LL_BUBBLE_COUNT }, () =>
+    ({ x: 0, y: 0, z: 0, vy: 0, vx: 0, vz: 0, scale: 0, age: 0, sourceIdx: -1, active: false })), []);
+
+  // ── Surface geometry: ring with writable positions ─────────────────────────
+  const surfGeo = useMemo(() => {
+    return new THREE.RingGeometry(0.0001, LIQUID_R, LL_SURF_SEG, LL_SURF_RINGS);
+  }, [LIQUID_R]);
+  const origPositions = useMemo(() => {
+    const arr = surfGeo.attributes.position.array as Float32Array;
+    return new Float32Array(arr);
+  }, [surfGeo]);
+
+  // Fixed geometries
+  const cylinderGeo = useMemo(() => {
+    const geo = new THREE.CylinderGeometry(LIQUID_R, LIQUID_R, 1, 24);
+    geo.translate(0, 0.5, 0);
+    return geo;
+  }, [LIQUID_R]);
+  const bottomGeo = useMemo(() =>
+    new THREE.SphereGeometry(LIQUID_R, 24, 12, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2),
+    [LIQUID_R]);
+  // Small sphere geometry for drops & splashes (shared)
+  const sphereGeo = useMemo(() => new THREE.SphereGeometry(1, 8, 8), []);
+
+  useFrame((state, delta) => {
+    // Note: removed early return if refs are null, because we must update logicFillTarget even when meshes are hidden
+    const dt = Math.min(delta, 0.05);
+    const t = state.clock.getElapsedTime();
+
+    const isPouring = !spawnInstant && logicFillTarget.current < targetFill;
+
+    // Smooth visual fill rise (lerp) - slightly slower for more grace
+    visualFillRef.current = THREE.MathUtils.lerp(visualFillRef.current, logicFillTarget.current, dt * 4);
+
+    // Initial instant fill lerp for spawnInstant
+    if (spawnInstant && logicFillTarget.current < targetFill) {
+      logicFillTarget.current = Math.min(targetFill, logicFillTarget.current + dt * 0.12);
+    }
+
+    // ── Liquid body position ─────────────────────────────────────────────────
+    const h = Math.max(0.0001, visualFillRef.current * MAX_CYLINDER_H);
+    if (bodyRef.current) bodyRef.current.scale.y = h;
+    const bodyBaseY = TUBE_BOTTOM_Y + offsetAboveSolid + LIQUID_R;
+    if (bodyRef.current) bodyRef.current.position.y = bodyBaseY;
+    if (capRef.current) capRef.current.position.y = bodyBaseY;
+
+    // Current liquid surface Y (local space)
+    const surfaceY = bodyBaseY + h;
+
+    const isBubbling = bubbleSources.length > 0 && h > 0.005;
+
+    // ── Spawn bubbles (if HCl + Zn) ──────────────────────────────────────────
+    if (isBubbling) {
+      // Logic for spawning bubbles continuously
+      for (let sIdx = 0; sIdx < bubbleSources.length; sIdx++) {
+        if (t % 0.15 < 0.016) { // controlled rate
+          const bi = bubbles.findIndex(b => !b.active);
+          if (bi !== -1) {
+            const b = bubbles[bi];
+            const src = bubbleSources[sIdx];
+            b.active = true;
+            b.age = 0;
+            b.sourceIdx = sIdx;
+            b.x = src.x;
+            b.y = bodyBaseY - 0.005;
+            b.z = src.z;
+            b.vy = 0.012 + Math.random() * 0.012;
+            b.vx = (Math.random() - 0.5) * 0.005;
+            b.vz = (Math.random() - 0.5) * 0.005;
+            b.scale = 0.0005;
+          }
+        }
+      }
+    }
+
+    // ── Spawn falling drops (only while pouring) ─────────────────────────────
+    if (isPouring && t - lastDropT.current > 0.12) {
+      const di = drops.findIndex(d => !d.active);
+      if (di !== -1) {
+        const d = drops[di];
+        d.active = true;
+        d.x = (Math.random() - 0.5) * TUBE_INNER_R * 0.5;
+        d.z = (Math.random() - 0.5) * TUBE_INNER_R * 0.5;
+        d.y = TUBE_TOP_Y + 0.1; // Higher spawn
+        d.vy = -0.05; // Faster initial velocity
+        d.scale = TUBE_INNER_R * 0.18;
+        // Each drop adds exactly 0.1ml worth of height
+        d.vDelta = 0.1 / MAX_TUBE_LAYERS;
+        lastDropT.current = t;
+      }
+    }
+
+    // ── Update drops ─────────────────────────────────────────────────────────
+    if (dropMeshRef.current) {
+      for (let i = 0; i < LL_DROP_COUNT; i++) {
+        const d = drops[i];
+        if (d.active) {
+          d.vy -= 1.2 * dt;   // Increased gravity for faster fall
+          d.y += d.vy * dt;
+          // Stretch along velocity
+          const stretchY = 1 + Math.abs(d.vy) * 4;
+
+          if (d.y <= surfaceY) {
+            d.active = false;
+            lastHitT.current = t;
+
+            // Increment logic target on impact
+            if (!spawnInstant) {
+              logicFillTarget.current = Math.min(targetFill, logicFillTarget.current + d.vDelta);
+            }
+
+            // Spawn ripple
+            const ri = ripples.findIndex(r => !r.active);
+            if (ri !== -1) {
+              ripples[ri].active = true;
+              ripples[ri].age = 0;
+              ripples[ri].x = d.x;
+              ripples[ri].z = d.z;
+            }
+
+            // Spawn splash particles
+            let spawned = 0;
+            for (let j = 0; j < LL_SPLASH_COUNT; j++) {
+              if (!splashes[j].active) {
+                const angle = Math.random() * Math.PI * 2;
+                // Scale spread to match model-space tube size
+                const speed = (0.015 + Math.random() * 0.01);
+                splashes[j].active = true;
+                splashes[j].x = d.x;
+                splashes[j].y = surfaceY + 0.0005;
+                splashes[j].z = d.z;
+                splashes[j].vx = Math.cos(angle) * speed;
+                splashes[j].vy = 0.02 + Math.random() * 0.02;
+                splashes[j].vz = Math.sin(angle) * speed;
+                splashes[j].scale = TUBE_INNER_R * (0.04 + Math.random() * 0.04);
+                spawned++;
+                if (spawned >= 8) break;
+              }
+            }
+          }
+
+          _llDummy.position.set(d.x, d.y, d.z);
+          _llDummy.scale.set(d.scale, d.scale * stretchY, d.scale);
+          _llDummy.updateMatrix();
+          dropMeshRef.current.setMatrixAt(i, _llDummy.matrix);
+          dropMeshRef.current.visible = true;
+        } else {
+          _llDummy.scale.setScalar(0);
+          _llDummy.updateMatrix();
+          dropMeshRef.current.setMatrixAt(i, _llDummy.matrix);
+        }
+      }
+      dropMeshRef.current.instanceMatrix.needsUpdate = true;
+    }
+
+    // ── Update bubbles ───────────────────────────────────────────────────────
+    if (bubbleMeshRef.current) {
+      for (let i = 0; i < LL_BUBBLE_COUNT; i++) {
+        const b = bubbles[i];
+        if (b.active) {
+          b.age += dt;
+          b.y += b.vy * dt * 10;
+
+          // Dome-shaped expansion as they rise
+          b.x += b.vx * dt * 5;
+          b.z += b.vz * dt * 5;
+
+          // Scale growth then shrinkage before pop
+          const life = Math.min(1, b.y / surfaceY);
+          if (b.y < surfaceY * 0.85) {
+            b.scale = THREE.MathUtils.lerp(0.0005, 0.0025, life);
+          } else {
+            b.scale = THREE.MathUtils.lerp(0.0025, 0, (life - 0.85) / 0.15);
+          }
+
+          if (b.y >= surfaceY || b.age > 2.0) {
+            b.active = false;
+          }
+
+          _llDummy.position.set(b.x, b.y, b.z);
+          _llDummy.scale.setScalar(b.scale);
+          _llDummy.updateMatrix();
+          bubbleMeshRef.current.setMatrixAt(i, _llDummy.matrix);
+        } else {
+          _llDummy.scale.setScalar(0);
+          _llDummy.updateMatrix();
+          bubbleMeshRef.current.setMatrixAt(i, _llDummy.matrix);
+        }
+      }
+      bubbleMeshRef.current.instanceMatrix.needsUpdate = true;
+    }
+
+    // ── Update splashes ───────────────────────────────────────────────────────
+    if (splashMeshRef.current) {
+      for (let i = 0; i < LL_SPLASH_COUNT; i++) {
+        const s = splashes[i];
+        if (s.active) {
+          s.vy -= 0.5 * dt;
+          s.x += s.vx * dt;
+          s.y += s.vy * dt;
+          s.z += s.vz * dt;
+          // Clamp inside tube radius
+          const rr = s.x * s.x + s.z * s.z;
+          if (rr > LIQUID_R * LIQUID_R) {
+            const inv = LIQUID_R / Math.sqrt(rr);
+            s.x *= inv; s.z *= inv;
+          }
+          if (s.y < surfaceY) { s.active = false; }
+
+          _llDummy.position.set(s.x, s.y, s.z);
+          _llDummy.scale.setScalar(s.scale);
+          _llDummy.updateMatrix();
+          splashMeshRef.current.setMatrixAt(i, _llDummy.matrix);
+        } else {
+          _llDummy.scale.setScalar(0);
+          _llDummy.updateMatrix();
+          splashMeshRef.current.setMatrixAt(i, _llDummy.matrix);
+        }
+      }
+      splashMeshRef.current.instanceMatrix.needsUpdate = true;
+    }
+
+    // ── Ripple surface deformation ────────────────────────────────────────────
+    if (surfRef.current && surfGeo) {
+      surfRef.current.position.y = surfaceY;
+
+      // Age ripples
+      for (let i = 0; i < LL_RIPPLE_COUNT; i++) {
+        if (ripples[i].active) {
+          ripples[i].age += dt;
+          if (ripples[i].age > 2.5) ripples[i].active = false;
+        }
+      }
+
+      const positions = surfGeo.attributes.position.array as Float32Array;
+      for (let i = 0; i < positions.length; i += 3) {
+        const vx = origPositions[i];
+        const vy = origPositions[i + 1];
+        const distToCenter = Math.sqrt(vx * vx + vy * vy);
+        const edgeDampen = Math.max(0, 1 - Math.pow(distToCenter / LIQUID_R, 2));
+
+        let totalZ = 0;
+        for (let ri = 0; ri < LL_RIPPLE_COUNT; ri++) {
+          const r = ripples[ri];
+          if (!r.active) continue;
+          const dx = vx - r.x;
+          const dy = vy - r.z;  // ring geo is in XY plane; r.z maps to surface Z
+          const distR = Math.sqrt(dx * dx + dy * dy);
+
+          if (r.age < 0.6) {
+            const tt = r.age / 0.6;
+            // Crater - depth increased significantly
+            const craterD = Math.max(0, 1 - tt * 3) * (-LIQUID_R * 0.75);
+            const crater = craterD * Math.max(0, 1 - distR / (LIQUID_R * 0.15));
+            // Crown rim - taller and wider
+            const rimR = LIQUID_R * (0.05 + tt * 0.45);
+            const rimW = LIQUID_R * 0.15;
+            const distRim = Math.abs(distR - rimR);
+            const rim = (LIQUID_R * 0.6) * Math.max(0, 1 - tt * 1.5) * Math.max(0, 1 - distRim / rimW);
+            totalZ += crater + rim;
+          } else {
+            const phase = distR * (25 / LIQUID_R) - (r.age - 0.6) * 15; // Higher frequency
+            if (phase < 0) {
+              const wave = Math.sin(phase);
+              const damp = Math.max(0, 1 - r.age / 1.8) * Math.max(0, 1 - distR / LIQUID_R);
+              totalZ += wave * (LIQUID_R * 0.15) * damp; // Increased amplitude
+            }
+          }
+        }
+
+        // Tremor effect during bubbling
+        if (isBubbling) {
+          const tremor = Math.sin(t * 40 + vx * 200 + vy * 200) * 0.0004;
+          totalZ += tremor;
+        }
+
+        positions[i + 2] = totalZ * edgeDampen;
+      }
+      if (surfRef.current) {
+        surfGeo.attributes.position.needsUpdate = true;
+        surfGeo.computeVertexNormals();
+      }
+    }
+  });
+
+  const isVisible = logicFillTarget.current > 0;
+
+  return (
+    <group>
+      {/* Bottom hemisphere cap */}
+      {isVisible && (
+        <mesh ref={capRef} position={[0, TUBE_BOTTOM_Y + offsetAboveSolid + LIQUID_R, 0]} geometry={bottomGeo}>
+          <meshStandardMaterial color={color} transparent opacity={0.22} roughness={0.05} depthWrite={false} />
+        </mesh>
+      )}
+
+      {/* Main cylinder body */}
+      {isVisible && (
+        <mesh ref={bodyRef} geometry={cylinderGeo}>
+          <meshStandardMaterial color={color} transparent opacity={0.22} roughness={0.05} depthWrite={false} />
+        </mesh>
+      )}
+
+      {/* Surface ripple mesh */}
+      {isVisible && (
+        <mesh
+          ref={surfRef}
+          geometry={surfGeo}
+          rotation={[-Math.PI / 2, 0, 0]}
+          position={[0, TUBE_BOTTOM_Y + offsetAboveSolid + LIQUID_R, 0]}
+        >
+          <meshPhysicalMaterial
+            color={color}
+            transparent
+            opacity={0.8}
+            roughness={0.1}
+            metalness={0.1}
+            transmission={0.4}
+            thickness={2}
+            ior={1.45}
+            reflectivity={0.5}
+          />
+        </mesh>
+      )}
+
+      {/* Falling drops */}
+      <instancedMesh ref={dropMeshRef} args={[sphereGeo, undefined, LL_DROP_COUNT]} frustumCulled={false} raycast={() => null}>
+        <meshStandardMaterial color={color} transparent opacity={0.85} roughness={0.05} depthWrite={false} />
+      </instancedMesh>
+
+      {/* Splash particles */}
+      <instancedMesh ref={splashMeshRef} args={[sphereGeo, undefined, LL_SPLASH_COUNT]} frustumCulled={false} raycast={() => null}>
+        <meshStandardMaterial color={color} transparent opacity={0.35} roughness={0} depthWrite={false} />
+      </instancedMesh>
+
+      {/* Gas bubbles */}
+      <instancedMesh ref={bubbleMeshRef} args={[sphereGeo, undefined, LL_BUBBLE_COUNT]} frustumCulled={false} raycast={() => null}>
+        <meshPhysicalMaterial
+          color="#ffffff"
+          transparent
+          opacity={0.4}
+          roughness={0}
+          metalness={0.2}
+          transmission={0.9}
+          thickness={0.01}
+          depthWrite={false}
+        />
+      </instancedMesh>
+    </group>
+  );
+};
+
+
+
+
+const _dummyObj = new THREE.Object3D();
 // interface SDropLayerGrain {
 //   startY: number;
 //   targetPos: THREE.Vector3;
@@ -1217,6 +1942,7 @@ const PowderLayer = ({
 //   speed: number;
 //   radius: number;
 // }
+
 
 
 const StirredLayer = ({

@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Mô phỏng Phản ứng: Bọt khí & Thông tin</title>
+    <style>
+        body,
+        html,
+        #root {
+            margin: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #111;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* CSS cho Bảng thông tin HUD */
+        #info-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 320px;
+            background: rgba(20, 25, 30, 0.85);
+            border-left: 4px solid #00d2ff;
+            border-radius: 4px;
+            padding: 20px;
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            z-index: 10;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
+        }
+
+        #info-panel h2 {
+            margin: 0 0 10px 0;
+            font-size: 1.2rem;
+            color: #00d2ff;
+        }
+
+        #info-panel p {
+            margin: 0;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: #ccc;
+        }
+
+        #info-panel .equation {
+            background: #000;
+            padding: 10px;
+            margin: 15px 0;
+            text-align: center;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 1.1rem;
+            color: #ffeb3b;
+        }
+
+        #progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #333;
+            margin-top: 15px;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        #progress-fill {
+            height: 100%;
+            background: #00d2ff;
+            width: 100%;
+            transition: width 0.1s linear;
+        }
+
+        #restart-btn {
+            margin-top: 15px;
+            width: 100%;
+            padding: 10px;
+            background: #00d2ff;
+            border: none;
+            border-radius: 4px;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            display: none;
+        }
+
+        #restart-btn:hover {
+            background: #00a8cc;
+        }
+    </style>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script type="importmap">
+    {
+      "imports": {
+        "react": "https://esm.sh/react@18.2.0",
+        "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+        "three": "https://esm.sh/three@0.158.0",
+        "@react-three/fiber": "https://esm.sh/@react-three/fiber@8.15.11?external=react,react-dom,three",
+        "@react-three/drei": "https://esm.sh/@react-three/drei@9.88.17?external=react,react-dom,three,@react-three/fiber"
+      }
+    }
+  </script>
+</head>
+
+<body>
+    <div id="root"></div>
+    <script type="text/babel" data-type="module">
+        import React, { useRef, useMemo, useState, useEffect } from 'react';
+        import { createRoot } from 'react-dom/client';
+        import { Canvas, useFrame } from '@react-three/fiber';
+        import { OrbitControls, Html } from '@react-three/drei';
+        import * as THREE from 'three';
+
+        const BUBBLE_COUNT = 1500;
+        const GAS_COUNT = 600;
+        const LIQUID_SURFACE_Y = 2;
+        const BOTTOM_Y = -1.8;
+
+        // Component Bảng thông tin nổi (Overlay HTML)
+        const InfoHUD = ({ stageInfo, zincLife, onRestart }) => {
+            return (
+                <div id="info-panel">
+                    <h2>{stageInfo.title}</h2>
+                    <div className="equation">Zn + 2HCl → ZnCl₂ + H₂↑</div>
+                    <p>{stageInfo.desc}</p>
+                    <div id="progress-bar">
+                        {/* Hiển thị % kẽm còn lại */}
+                        <div id="progress-fill" style={{ width: `${zincLife * 100}%` }}></div>
+                    </div>
+                    <button id="restart-btn" style={{ display: stageInfo.isEnd ? 'block' : 'none' }} onClick={onRestart}>
+                        Thực hiện lại thí nghiệm
+                    </button>
+                </div>
+            );
+        };
+
+        function IntenseAcidReaction({ setStageInfo, setZincLifeRatio }) {
+            const zincRef = useRef();
+            const bubblesRef = useRef();
+            const gasRef = useRef();
+            const dummy = useMemo(() => new THREE.Object3D(), []);
+
+            const zincLife = useRef(1.0);
+            const gasIndex = useRef(0);
+            const currentStage = useRef(0); // Để theo dõi và tránh re-render liên tục
+
+            const bubbles = useMemo(() => {
+                const temp = [];
+                for (let i = 0; i < BUBBLE_COUNT; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const initialRadius = Math.random() * 0.5;
+                    const driftSpeed = 0.005 + Math.random() * 0.015;
+
+                    temp.push({
+                        x: Math.cos(angle) * initialRadius,
+                        y: BOTTOM_Y + Math.random() * 2,
+                        z: Math.sin(angle) * initialRadius,
+                        driftX: Math.cos(angle) * driftSpeed,
+                        driftZ: Math.sin(angle) * driftSpeed,
+                        speed: 0.03 + Math.random() * 0.04,
+                        wobbleSpeed: 5 + Math.random() * 5,
+                        wobbleOffset: Math.random() * Math.PI * 2,
+                        scale: 0.015 + Math.random() * 0.03,
+                        active: true
+                    });
+                }
+                return temp;
+            }, []);
+
+            const gasParticles = useMemo(() => {
+                const temp = [];
+                for (let i = 0; i < GAS_COUNT; i++) {
+                    temp.push({
+                        active: false, x: 0, y: 0, z: 0,
+                        speed: 0.01 + Math.random() * 0.02,
+                        driftX: (Math.random() - 0.5) * 0.02,
+                        driftZ: (Math.random() - 0.5) * 0.02,
+                        life: 0, baseScale: 0.1 + Math.random() * 0.15
+                    });
+                }
+                return temp;
+            }, []);
+
+            // Lắng nghe sự kiện Restart từ UI
+            useEffect(() => {
+                const handleRestart = () => {
+                    zincLife.current = 1.0;
+                    currentStage.current = 0;
+                };
+                window.addEventListener('restart-reaction', handleRestart);
+                return () => window.removeEventListener('restart-reaction', handleRestart);
+            }, []);
+
+            useFrame(() => {
+                // --- LOGIC CẬP NHẬT GIAI ĐOẠN ---
+                if (zincLife.current > 0) {
+                    zincLife.current -= 0.0015; // Chỉnh tốc độ tan tại đây
+                    zincRef.current.scale.setScalar(Math.max(0, zincLife.current));
+                    setZincLifeRatio(Math.max(0, zincLife.current)); // Gửi ra ngoài để vẽ thanh tiến trình
+                }
+
+                // Xác định giai đoạn dựa vào % kẽm
+                let newStage = 0;
+                if (zincLife.current > 0.8) newStage = 1;      // Giai đoạn 1: Bắt đầu
+                else if (zincLife.current > 0.3) newStage = 2; // Giai đoạn 2: Mãnh liệt
+                else if (zincLife.current > 0.01) newStage = 3;// Giai đoạn 3: Suy yếu
+                else newStage = 4;                             // Giai đoạn 4: Kết thúc
+
+                // Chỉ cập nhật UI nếu chuyển giai đoạn (tránh lag)
+                if (currentStage.current !== newStage) {
+                    currentStage.current = newStage;
+                    if (newStage === 1) {
+                        setStageInfo({ title: "Giai đoạn 1: Khởi động", desc: "Bề mặt Kẽm (Zn) bắt đầu tiếp xúc với Axit. Các bọt khí Hydro (H₂) li ti bắt đầu hình thành và bám quanh khối kim loại.", isEnd: false });
+                    } else if (newStage === 2) {
+                        setStageInfo({ title: "Giai đoạn 2: Mãnh liệt", desc: "Phản ứng tỏa nhiệt. Khí H₂ thoát ra dữ dội đẩy bọt khí lan rộng ra xung quanh tạo hình phễu, kéo theo hơi nước mờ bay lên mặt thoáng.", isEnd: false });
+                    } else if (newStage === 3) {
+                        setStageInfo({ title: "Giai đoạn 3: Suy yếu", desc: "Khối lượng và diện tích bề mặt viên kẽm giảm rõ rệt. Lượng bọt khí sinh ra thưa thớt dần.", isEnd: false });
+                    } else if (newStage === 4) {
+                        setStageInfo({ title: "Giai đoạn 4: Hoàn tất", desc: "Kẽm đã tan hoàn toàn, tạo thành dung dịch Kẽm Clorua (ZnCl₂) trong suốt. Phản ứng kết thúc, bọt khí ngừng sinh ra.", isEnd: true });
+                    }
+                }
+                // ------------------------------
+
+                bubbles.forEach((p, i) => {
+                    if (!p.active) return;
+                    p.y += p.speed;
+                    p.x += p.driftX + Math.sin(p.y * p.wobbleSpeed + p.wobbleOffset) * 0.002;
+                    p.z += p.driftZ + Math.cos(p.y * p.wobbleSpeed + p.wobbleOffset) * 0.002;
+
+                    if (p.y >= LIQUID_SURFACE_Y) {
+                        if (zincLife.current > 0) {
+                            const gas = gasParticles[gasIndex.current];
+                            gas.active = true; gas.x = p.x; gas.y = LIQUID_SURFACE_Y; gas.z = p.z; gas.life = 1.0;
+                            gasIndex.current = (gasIndex.current + 1) % GAS_COUNT;
+                        }
+
+                        if (zincLife.current > 0) {
+                            p.y = BOTTOM_Y + (Math.random() * 0.1);
+                            const currentRadius = 0.5 * zincLife.current;
+                            const angle = Math.random() * Math.PI * 2;
+                            const distance = Math.random() * currentRadius;
+
+                            p.x = Math.cos(angle) * distance;
+                            p.z = Math.sin(angle) * distance;
+
+                            const driftSpeed = 0.005 + Math.random() * 0.015;
+                            p.driftX = Math.cos(angle) * driftSpeed;
+                            p.driftZ = Math.sin(angle) * driftSpeed;
+                        } else {
+                            p.scale = 0; p.active = false;
+                        }
+                    }
+                    dummy.position.set(p.x, p.y, p.z); dummy.scale.setScalar(p.scale); dummy.updateMatrix(); bubblesRef.current.setMatrixAt(i, dummy.matrix);
+                });
+                bubblesRef.current.instanceMatrix.needsUpdate = true;
+
+                gasParticles.forEach((g, i) => {
+                    if (!g.active) { dummy.position.set(0, -100, 0); dummy.updateMatrix(); gasRef.current.setMatrixAt(i, dummy.matrix); return; }
+                    g.y += g.speed; g.x += g.driftX; g.z += g.driftZ; g.life -= 0.005;
+                    if (g.life <= 0) { g.active = false; }
+                    const currentScale = g.baseScale * g.life;
+                    dummy.position.set(g.x, g.y, g.z); dummy.scale.setScalar(Math.max(0, currentScale)); dummy.updateMatrix(); gasRef.current.setMatrixAt(i, dummy.matrix);
+                });
+                gasRef.current.instanceMatrix.needsUpdate = true;
+            });
+
+            return (
+                <group>
+                    <mesh position={[0, 0, 0]}>
+                        <cylinderGeometry args={[1.5, 1.5, 4, 32]} />
+                        <meshStandardMaterial color="#aaddff" transparent opacity={0.15} depthWrite={false} side={THREE.DoubleSide} />
+                    </mesh>
+                    <mesh ref={zincRef} position={[0, BOTTOM_Y + 0.2, 0]}>
+                        <dodecahedronGeometry args={[0.5, 1]} />
+                        <meshStandardMaterial color="#888c8d" roughness={0.8} metalness={0.4} />
+                    </mesh>
+                    <instancedMesh ref={bubblesRef} args={[null, null, BUBBLE_COUNT]}>
+                        <sphereGeometry args={[1, 8, 8]} />
+                        <meshStandardMaterial color="#ffffff" transparent opacity={0.8} roughness={0} metalness={0.2} />
+                    </instancedMesh>
+                    <instancedMesh ref={gasRef} args={[null, null, GAS_COUNT]}>
+                        <sphereGeometry args={[1, 16, 16]} />
+                        <meshBasicMaterial color="#ffffff" transparent opacity={0.25} depthWrite={false} />
+                    </instancedMesh>
+                </group>
+            );
+        }
+
+        const App = () => {
+            // Quản lý trạng thái cho UI ở ngoài Canvas
+            const [stageInfo, setStageInfo] = useState({ title: "Chuẩn bị", desc: "Đang nạp dữ liệu...", isEnd: false });
+            const [zincLifeRatio, setZincLifeRatio] = useState(1);
+
+            const handleRestart = () => {
+                // Gửi sự kiện vào bên trong Canvas để reset biến zincLife
+                window.dispatchEvent(new Event('restart-reaction'));
+            };
+
+            return (
+                <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
+                    <InfoHUD stageInfo={stageInfo} zincLife={zincLifeRatio} onRestart={handleRestart} />
+
+                    <Canvas camera={{ position: [0, 1.5, 7] }}>
+                        <OrbitControls />
+                        <ambientLight intensity={0.5} />
+                        <directionalLight position={[5, 5, 5]} intensity={1.5} />
+                        <IntenseAcidReaction setStageInfo={setStageInfo} setZincLifeRatio={setZincLifeRatio} />
+                    </Canvas>
+                </div>
+            );
+        };
+
+        createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+
+</html>
