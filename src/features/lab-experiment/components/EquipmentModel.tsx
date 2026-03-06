@@ -289,7 +289,7 @@ export const EquipmentModel = ({
         snappedToBodyRef.current = null;
         snappedToThermoIdRef.current = null;
         snapAnimRef.current = null;
-        rigidBodyRef.current.setBodyType(0, true);
+        rigidBodyRef.current.setBodyType(2, true);
       }
       return;
     }
@@ -431,7 +431,7 @@ export const EquipmentModel = ({
     lastUnsnappedThermoIdRef.current = null;
 
     if (rigidBodyRef.current && !isSnappedRef.current) {
-      rigidBodyRef.current.setBodyType(0, true); // Chuyển về Dynamic (0) thay vì Static (1) để trọng lực hoạt động
+      rigidBodyRef.current.setBodyType(2, true); // Chuyển về Dynamic (0) thay vì Static (1) để trọng lực hoạt động
     }
   },
     [gl.domElement, isHovered, onDragChange]
