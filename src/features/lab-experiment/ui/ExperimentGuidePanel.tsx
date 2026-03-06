@@ -20,7 +20,6 @@ const accent = '#438BC4';   // Bluebird
 const accentB = '#0055A0';   // Blueberry
 const green = '#34d399';
 const red = '#f87171';
-const yellow = '#fbbf24';
 
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap');
