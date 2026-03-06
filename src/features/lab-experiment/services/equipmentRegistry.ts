@@ -249,7 +249,6 @@ export const GUIDED_EXPERIMENTS = [
         'Đèn cồn',
         'Giá đỡ ống nghiệm (kẹp)',
         'Nam châm',
-        'Thìa thuỷ tinh / đũa thuỷ tinh',
       ],
       steps: [
         {
