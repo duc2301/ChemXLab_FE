@@ -385,7 +385,7 @@ export const EquipmentModel = ({
 
   const handlePointerDown = useCallback((e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation();
-    if (e.nativeEvent.button === 2) return;
+    if (e.nativeEvent.button === 2 || heldSubstance?.substanceId) return;
 
     // DETACH snap: Chỉ detach khi KHÔNG đang cầm chất
     if ((isTestTube || isAlcoholLamp || isMagnet) && isSnappedRef.current && !heldSubstance) {
