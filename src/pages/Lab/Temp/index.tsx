@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLabSettings } from '../../../features/lab-environment/services/labSettingsStore';
+import Mascot7 from '../../../shared/assets/mascot/7.png';
 import { LabScene } from '../../../Widget/lab-scene/ui/LabScene';
 
 type GameState = 'welcome' | 'playing' | 'paused' | 'settings';
@@ -424,17 +425,7 @@ const LabTest = () => {
           {/* Main content */}
           <div className="relative z-10 flex flex-col items-center text-center px-6 max-w-3xl">
             <div className="mb-6" style={{ animation: 'fadeInUp 0.6s ease-out' }}>
-              <div
-                className="w-20 h-20 rounded-2xl flex items-center justify-center text-4xl"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(59,130,246,0.2), rgba(34,211,238,0.2))',
-                  border: '1px solid rgba(59,130,246,0.3)',
-                  backdropFilter: 'blur(10px)',
-                  animation: 'pulseGlow 3s ease-in-out infinite',
-                }}
-              >
-                🧪
-              </div>
+              <img src={Mascot7} alt="Mascot" className="w-[220px] h-auto drop-shadow-[0_0_30px_rgba(59,130,246,0.5)] hover:scale-110 hover:-translate-y-2 transition-all duration-500" />
             </div>
 
             <h1

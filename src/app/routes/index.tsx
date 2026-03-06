@@ -2,6 +2,7 @@ import { Route, Routes } from "react-router-dom";
 import AdminLayout from "../../Widget/components/AdminLayout";
 import Layout from "../../Widget/components/Layout";
 import AboutPage from "../../pages/About";
+import AdminChemicalsPage from "../../pages/Admin/Chemical";
 import AdminDashboard from "../../pages/Admin/Dashboard";
 import AdminElements from "../../pages/Admin/Elements";
 import AdminPackages from "../../pages/Admin/Packages";
@@ -18,12 +19,12 @@ import LabTest from "../../pages/Lab/Temp";
 import LibraryPage from "../../pages/Library";
 import GradeDetail from "../../pages/Library/GradeDetail";
 import PaymentPage from "../../pages/Payment";
+import PaymentFailedPage from "../../pages/Payment/Failed";
 import PaymentSuccessPage from "../../pages/Payment/Success";
 import PeriodicTablePage from "../../pages/PeriodicTable";
 import ProductsPage from "../../pages/Products";
 import ProfilePage from "../../pages/Profile";
 import SupportPage from "../../pages/Support";
-import AdminChemicalsPage from "../../pages/Admin/Chemical";
 export const AppRoutes = () => {
   return (
     <Routes>
@@ -47,6 +48,7 @@ export const AppRoutes = () => {
       <Route path="payment" element={<PaymentPage />} />
       <Route path="chatbot" element={<ChatbotPage />} />
       <Route path="payment/success" element={<PaymentSuccessPage />} />
+      <Route path="payment/failed" element={<PaymentFailedPage />} />
       {/* Admin Routes */}
       <Route path="/admin" element={<AdminLayout />}>
         <Route index element={<AdminDashboard />} />
