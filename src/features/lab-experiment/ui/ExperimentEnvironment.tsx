@@ -345,9 +345,9 @@ const ExperimentCanvasContent = ({ onItemDropped: _ }: ExperimentCanvasProps) =>
             <Suspense key={item.id} fallback={null}>
               <EquipmentModel
                 droppedItem={item}
-                tableHeight={TABLE_HEIGHT + TABLE_TOP_SIZE[1] / 2}
                 onDragChange={setIsDragging}
                 onRemove={removeDroppedItem}
+                tableHeight={TABLE_HEIGHT + TABLE_TOP_SIZE[1] / 2}
               />
             </Suspense>
           ))}
