@@ -217,7 +217,7 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     dimensions: { width: 0.1, height: 0.001, depth: 0.1 },
     description: 'Viên kẽm',
     rotation: { x: 0, y: 0, z: 0 },
-    scale: 4,
+    scale: 5,
     physicalState: 'solid',
     isExtractable: false,
   },
@@ -248,6 +248,7 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     rotation: { x: 0, y: 0, z: 0 },
     isMagnetic: false,
     physicalState: 'solution',
+    hideInMenu: true,
   },
   {
     id: 'BaCl2-solution',
@@ -262,6 +263,7 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     rotation: { x: 0, y: 0, z: 0 },
     isMagnetic: false,
     physicalState: 'solution',
+    hideInMenu: true,
   },
   {
     id: 'ZnCl2-solution',
@@ -276,6 +278,7 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     rotation: { x: 0, y: 0, z: 0 },
     isMagnetic: false,
     physicalState: 'solution',
+    hideInMenu: true,
   },
 ];
 
