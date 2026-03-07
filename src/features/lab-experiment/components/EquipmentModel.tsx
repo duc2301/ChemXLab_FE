@@ -211,6 +211,22 @@ export const EquipmentModel = ({
 
   useEffect(() => {
     if (!isTestTube) return;
+    
+    const currentContents = testTubeContents.get(droppedItem.id) ?? [];
+    const hasBaCl2 = currentContents.some(c => c.substanceId === EQUIPMENT_IDS.BaCl2_SOLUTION);
+    const hasNa2SO4 = currentContents.some(c => c.substanceId === EQUIPMENT_IDS.Na2SO4_SOLUTION);
+
+    if (hasBaCl2 && hasNa2SO4) {
+      // Delay 600ms để người dùng thấy dung dịch vừa đổ vào trước khi kết tủa xuất hiện
+      const timer = setTimeout(() => {
+        useExperimentStore.getState().triggerPrecipitation(droppedItem.id);
+      }, 20000);
+      return () => clearTimeout(timer);
+    }
+  }, [isTestTube, testTubeContents, droppedItem.id]);
+
+  useEffect(() => {
+    if (!isTestTube) return;
     const interval = setInterval(() => {
       if (rigidBodyRef.current) {
         testTubeRegistry.set(droppedItem.id, rigidBodyRef.current);
@@ -1074,6 +1090,62 @@ export const EquipmentModel = ({
               {/* Side products note */}
               <div style={{ marginTop: "4px", color: "#6ee7b7", fontSize: "10px", fontStyle: "italic" }}>
                 Sản phẩm: dung dịch ZnCl₂ + khí H₂ không màu không mùi
+              </div>
+            </div>
+          </Html>
+        );
+      })()}
+
+      {/* ── Khung thông tin phản ứng BaCl2 + Na2SO4 ── */}
+      {(() => {
+        if (!isTestTube) return null;
+        const hasBaSO4 = contents.some(c => c.substanceId === EQUIPMENT_IDS.BaSO4_PRECIPITATE);
+        
+        // Chỉ hiện khi đã có sản phẩm hoặc đang có mặt cả 2 chất
+        if (!hasBaSO4) return null;
+
+        const baso4Amt = contents.filter(c => c.substanceId === EQUIPMENT_IDS.BaSO4_PRECIPITATE).reduce((a, c) => a + c.amount, 0);
+        
+        return (
+          <Html
+            position={[1.2, 0.22, 0]} // Đặt bên phải để không đè lên UI HCl + Zn (nếu có)
+            center
+            pointerEvents="none"
+            style={{ userSelect: "none", zIndex: 100 }}
+          >
+            <div style={{
+              background: "rgba(10, 15, 25, 0.95)",
+              border: `1px solid #c084fc`, // Viền tím mộng mơ
+              borderRadius: "7px",
+              padding: "8px 12px",
+              minWidth: "230px",
+              color: "white",
+              fontFamily: "sans-serif",
+              fontSize: "11px",
+              boxShadow: `0 0 12px rgba(192, 132, 252, 0.3)`,
+              whiteSpace: "nowrap",
+              lineHeight: 1.6,
+            }}>
+              <h4 style={{ margin: "0 0 5px 0", color: "#e879f9", fontSize: "12px", letterSpacing: "0.3px" }}>
+                ⚗️ Phản ứng Trao đổi
+              </h4>
+
+              <div style={{ color: "#d8b4fe", fontWeight: "bold", fontSize: "11px", marginBottom: "5px", fontStyle: "italic" }}>
+                BaCl₂ + Na₂SO₄ → BaSO₄↓ + 2NaCl
+              </div>
+
+              <div style={{ marginBottom: "3px" }}>
+                <span style={{ color: "#94a3b8" }}>Hiện tượng: </span>
+                <span style={{ color: "#f8fafc", fontWeight: "bold" }}>
+                  Xuất hiện kết tủa trắng ☁️
+                </span>
+              </div>
+
+              <div style={{ display: "flex", gap: "10px", marginTop: "4px", borderTop: "1px dashed rgba(100,116,139,0.4)", paddingTop: "4px" }}>
+                <div>
+                  <span style={{ color: "#94a3b8" }}>Kết tủa BaSO₄: </span>
+                  <span style={{ color: "#ffffff", fontWeight: "bold" }}>{baso4Amt.toFixed(1)} g</span>
+                </div>
               </div>
             </div>
           </Html>

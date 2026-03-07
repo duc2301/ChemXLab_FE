@@ -286,6 +286,8 @@ export const EQUIPMENT_IDS = {
   HCL_SOLUTION: "HCL-solution",
   Na2SO4_SOLUTION: "Na2SO4-solution",
   BaCl2_SOLUTION: "BaCl2-solution",
+  BaSO4_PRECIPITATE: "BaSO4-precipitate",
+  NACL_SOLUTION: "NaCl-solution",
 };
 
 export const GUIDED_EXPERIMENTS = [
@@ -319,7 +321,7 @@ export const GUIDED_EXPERIMENTS = [
     equipment: [
       { id: EQUIPMENT_IDS.TEST_TUBE, position: [-0.5, 1.5, 0], rotation: [0, 0, 0] },
       { id: EQUIPMENT_IDS.THERMOMETER, position: [0, 1.5, 0], rotation: [0, 0, 0] },
-      // { id: EQUIPMENT_IDS.BaCl2_SOLUTION, position: [0.5, 1.5, 0], rotation: [0, 0, 0] },
+      { id: EQUIPMENT_IDS.BaCl2_SOLUTION, position: [0.5, 1.5, 0], rotation: [0, 0, 0] },
       { id: EQUIPMENT_IDS.Na2SO4_SOLUTION, position: [1, 1.5, 0], rotation: [0, 0, 0] },
     ]
   },
@@ -332,6 +334,10 @@ export const SUBSTANCE_COLORS: Record<string, string> = {
   "FeS-powder": "#2d2d2d", // đen/xám đậm (Sắt(II) sulfide)
   "Zn-powder": "#818cf8", // xám xanh (Kẽm)
   "HCL-solution": "#a5f3fc", // xanh cực nhạt (Axit Clohydric)
+  "Na2SO4-solution": "#f0f9ff", // Trắng xanh nhạt (Natri Sulfat)
+  "BaCl2-solution": "#f1f5f9",  // Trắng xám nhạt (Bari Clorua)
+  "BaSO4-precipitate": "#ffffff", // Trắng tinh khiết
+  "NaCl-solution": "#f0f9ff",     // Trong suốt/trắng xanh nhạt
 };
 
 /**

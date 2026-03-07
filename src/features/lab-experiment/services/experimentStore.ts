@@ -56,6 +56,7 @@ interface ExperimentStore extends ExperimentState {
   setSnapTargetId: (id: string | null) => void;
   clearItems: () => void;
   unstirTestTube: (tubeId: string) => void;
+  triggerPrecipitation: (tubeId: string) => void;
 }
 
 export const useExperimentStore = create<ExperimentStore>((set, get) => ({
@@ -180,7 +181,7 @@ export const useExperimentStore = create<ExperimentStore>((set, get) => ({
   unstirTestTube: (tubeId: string) =>
     set((state) => {
       const newContents = state.stirredTubes;
-      delete newContents[tubeId]
+      delete newContents[tubeId];
 
       return { stirredTubes: newContents };
     }),
@@ -261,6 +262,79 @@ export const useExperimentStore = create<ExperimentStore>((set, get) => ({
   },
 
   setSnapTargetId: (id) => set({ snapTargetId: id }),
+  triggerPrecipitation: (tubeId) =>
+    set((state) => {
+      const newContents = new Map(state.testTubeContents);
+      const contents = newContents.get(tubeId) || [];
+
+      const baCl2 = contents.find(
+        (c) => c.substanceId === EQUIPMENT_IDS.BaCl2_SOLUTION,
+      );
+      const na2SO4 = contents.find(
+        (c) => c.substanceId === EQUIPMENT_IDS.Na2SO4_SOLUTION,
+      );
+
+      if (baCl2 && na2SO4 && baCl2.amount > 0 && na2SO4.amount > 0) {
+        const molBaCl2 = baCl2.amount / 208.2;
+        const molNa2SO4 = na2SO4.amount / 142.0;
+
+        // Phản ứng theo số mol chất thiếu
+        const reactMol = Math.min(molBaCl2, molNa2SO4);
+
+        // Khối lượng các chất tham gia đã phản ứng
+        const reactMassBaCl2 = reactMol * 208.2;
+        const reactMassNa2SO4 = reactMol * 142.0;
+
+        // Khối lượng các chất sản phẩm sinh ra
+        const producedBaSO4 = reactMol * 233.4;
+        const producedNaCl = reactMol * (2 * 58.5);
+
+        // 1. Cập nhật lại danh sách chất trong ống nghiệm
+        const updatedContents = contents
+          .map((c) => {
+            if (c.substanceId === EQUIPMENT_IDS.BaCl2_SOLUTION) {
+              return { ...c, amount: Math.max(0, c.amount - reactMassBaCl2) };
+            }
+            if (c.substanceId === EQUIPMENT_IDS.Na2SO4_SOLUTION) {
+              return { ...c, amount: Math.max(0, c.amount - reactMassNa2SO4) };
+            }
+            return c;
+          })
+          .filter((c) => c.amount > 0.001); // Loại bỏ chất đã hết
+
+        // 2. Thêm kết tủa BaSO4 (Render bằng PowderLayer)
+        const existingBaSO4 = updatedContents.find(
+          (c) => c.substanceId === EQUIPMENT_IDS.BaSO4_PRECIPITATE,
+        );
+        if (existingBaSO4) {
+          existingBaSO4.amount += producedBaSO4;
+        } else {
+          updatedContents.push({
+            substanceId: EQUIPMENT_IDS.BaSO4_PRECIPITATE,
+            amount: producedBaSO4,
+            instant: false, // Tạo hiệu ứng rơi
+          });
+        }
+
+        // 3. Thêm dung dịch NaCl (Render bằng LiquidLayer)
+        const existingNaCl = updatedContents.find(
+          (c) => c.substanceId === EQUIPMENT_IDS.NACL_SOLUTION,
+        );
+        if (existingNaCl) {
+          existingNaCl.amount += producedNaCl;
+        } else {
+          updatedContents.push({
+            substanceId: EQUIPMENT_IDS.NACL_SOLUTION,
+            amount: producedNaCl,
+            instant: true,
+          });
+        }
+
+        newContents.set(tubeId, updatedContents);
+        return { testTubeContents: newContents };
+      }
+      return state;
+    }),
 
   clearItems: () =>
     set({
