@@ -332,29 +332,6 @@ export const GUIDED_EXPERIMENTS: GuidedExperiment[] = [
       { id: EQUIPMENT_IDS.THERMOMETER, position: [0.5, 1.5, 0], rotation: [0, 0, 0] },
       { id: EQUIPMENT_IDS.FE_POWDER, position: [1, 1.5, 0], rotation: [0, 0, 0] },
       { id: EQUIPMENT_IDS.S_POWDER, position: [1.5, 1.5, 0], rotation: [0, 0, 0] },
-    ]
-  },
-  {
-    id: 'HCl_Zn',
-    name: 'Điều chế Axit Clohidric (HCl) + Kẽm (Zn)',
-    description: 'description',
-    equipment: [
-      { id: EQUIPMENT_IDS.TEST_TUBE, position: [-0.5, 1.5, 0], rotation: [0, 0, 0] },
-      { id: EQUIPMENT_IDS.HCL_SOLUTION, position: [0, 1.5, 0], rotation: [0, 0, 0] },
-      { id: EQUIPMENT_IDS.ZN_POWDER, position: [0.5, 1.5, 0], rotation: [0, 0, 0] },
-    ]
-  },
-  {
-    id: 'BaCl2_Na2SO4',
-    name: 'Định luật bảo toàn khối lượng (BaCl2 + Na2SO4)',
-    description: 'Thí nghiệm phản ứng giữa BaCl₂ và Na₂SO₄ để chứng minh tổng khối lượng không đổi.',
-    equipment: [
-      { id: EQUIPMENT_IDS.TEST_TUBE, position: [-0.5, 1.5, 0], rotation: [0, 0, 0] },
-      { id: EQUIPMENT_IDS.THERMOMETER, position: [0, 1.5, 0], rotation: [0, 0, 0] },
-      // { id: EQUIPMENT_IDS.BaCl2_SOLUTION, position: [0.5, 1.5, 0], rotation: [0, 0, 0] },
-      { id: EQUIPMENT_IDS.Na2SO4_SOLUTION, position: [1, 1.5, 0], rotation: [0, 0, 0] },
-    ]
-  },
     ],
     guide: {
       title: 'Thí nghiệm về biến đổi hoá học',
@@ -414,8 +391,29 @@ export const GUIDED_EXPERIMENTS: GuidedExperiment[] = [
         'Không chạm trực tiếp vào ống nghiệm nóng.',
         'Phản ứng tỏa nhiệt rất mạnh – cẩn thận tránh bỏng.',
       ],
-    }
-  }
+    },
+  },
+  {
+    id: 'HCl_Zn',
+    name: 'Điều chế Axit Clohidric (HCl) + Kẽm (Zn)',
+    description: 'description',
+    equipment: [
+      { id: EQUIPMENT_IDS.TEST_TUBE, position: [-0.5, 1.5, 0], rotation: [0, 0, 0] },
+      { id: EQUIPMENT_IDS.HCL_SOLUTION, position: [0, 1.5, 0], rotation: [0, 0, 0] },
+      { id: EQUIPMENT_IDS.ZN_POWDER, position: [0.5, 1.5, 0], rotation: [0, 0, 0] },
+    ]
+  },
+  {
+    id: 'BaCl2_Na2SO4',
+    name: 'Định luật bảo toàn khối lượng (BaCl2 + Na2SO4)',
+    description: 'Thí nghiệm phản ứng giữa BaCl₂ và Na₂SO₄ để chứng minh tổng khối lượng không đổi.',
+    equipment: [
+      { id: EQUIPMENT_IDS.TEST_TUBE, position: [-0.5, 1.5, 0], rotation: [0, 0, 0] },
+      { id: EQUIPMENT_IDS.THERMOMETER, position: [0, 1.5, 0], rotation: [0, 0, 0] },
+      // { id: EQUIPMENT_IDS.BaCl2_SOLUTION, position: [0.5, 1.5, 0], rotation: [0, 0, 0] },
+      { id: EQUIPMENT_IDS.Na2SO4_SOLUTION, position: [1, 1.5, 0], rotation: [0, 0, 0] },
+    ],
+  },
 ];
 
 /** Màu hiển thị tương ứng với từng chất bột */
