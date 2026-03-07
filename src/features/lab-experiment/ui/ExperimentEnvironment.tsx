@@ -347,6 +347,7 @@ const ExperimentCanvasContent = ({ onItemDropped: _ }: ExperimentCanvasProps) =>
                 droppedItem={item}
                 onDragChange={setIsDragging}
                 onRemove={removeDroppedItem}
+                tableHeight={TABLE_HEIGHT + TABLE_TOP_SIZE[1] / 2}
               />
             </Suspense>
           ))}

@@ -41,6 +41,7 @@ interface EquipmentModelProps {
   droppedItem: DroppedItem;
   onDragChange?: (isDragging: boolean) => void;
   onRemove?: (itemId: string) => void;
+  tableHeight: number;
 }
 
 const thermometerRegistry = new Map<string, RapierRigidBody>();
@@ -107,6 +108,7 @@ const ChemicalShader = {
 export const EquipmentModel = ({
   droppedItem,
   onDragChange,
+  tableHeight
 }: EquipmentModelProps) => {
   const rigidBodyRef = useRef<RapierRigidBody>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -742,7 +744,7 @@ export const EquipmentModel = ({
       key={droppedItem.id}
       ref={rigidBodyRef}
       type={isDragging || isSnapped ? "kinematicPosition" : "dynamic"}
-      position={initialPosition}
+      position={[droppedItem.position[0], tableHeight, droppedItem.position[2]]}
       rotation={initialRotation}
       colliders="hull"
       collisionGroups={isDragging || isSnapped ? 0x00000000 : (isTestTube ? CG_TEST_TUBE : CG_EQUIPMENT)}
