@@ -146,7 +146,6 @@ export const EquipmentModel = ({
     freeFeAmount > 0;
 
   // Use stable initial transform for RigidBody to prevent React re-renders from teleporting it
-  const initialPosition = useRef<[number, number, number]>(droppedItem.position).current;
   const initialRotation = useRef<[number, number, number]>(droppedItem.rotation).current;
   // Tránh snap lại ngay lập tức
   const lastUnsnappedThermoIdRef = useRef<string | null>(null);

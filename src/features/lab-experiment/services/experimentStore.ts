@@ -184,10 +184,10 @@ export const useExperimentStore = create<ExperimentStore>((set, get) => ({
 
   unstirTestTube: (tubeId: string) =>
     set((state) => {
-      const newContents = state.stirredTubes;
-      delete newContents[tubeId];
+      const newStirredTubes = { ...state.stirredTubes };
+      delete newStirredTubes[tubeId];
 
-      return { stirredTubes: newContents };
+      return { stirredTubes: newStirredTubes };
     }),
 
   updateReactionProgress: (tubeId, progressDelta) =>
@@ -204,12 +204,10 @@ export const useExperimentStore = create<ExperimentStore>((set, get) => ({
       const newContents = new Map(state.testTubeContents);
       const currentContents = newContents.get(tubeId) ?? [];
 
-      const fe =
-        currentContents.find((c) => c.substanceId === EQUIPMENT_IDS.FE_POWDER)
-          ?.amount || 0;
-      const s =
-        currentContents.find((c) => c.substanceId === EQUIPMENT_IDS.S_POWDER)
-          ?.amount || 0;
+      const fe = currentContents.find((c) => c.substanceId === EQUIPMENT_IDS.FE_POWDER)
+        ?.amount || 0;
+      const s = currentContents.find((c) => c.substanceId === EQUIPMENT_IDS.S_POWDER)
+        ?.amount || 0;
 
       // Tỉ lệ Fe:S là 7:4 (56:32)
       const reactedS = Math.min(s, fe / 1.75);
@@ -244,14 +242,14 @@ export const useExperimentStore = create<ExperimentStore>((set, get) => ({
 
       const newProgress = new Map(state.reactionProgress);
       newProgress.set(tubeId, 0);
-      
-      const newStirredTubes = state.stirredTubes;
+
+      const newStirredTubes = { ...state.stirredTubes };
       delete newStirredTubes[tubeId];
 
       return {
         testTubeContents: newContents,
         reactionProgress: newProgress,
-        stirredTubes: newContents 
+        stirredTubes: newStirredTubes,
       };
     }),
 
