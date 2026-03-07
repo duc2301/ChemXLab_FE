@@ -236,7 +236,7 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     physicalState: 'solution',
   },
   {
-    id: 'Na2SO4-solution', 
+    id: 'Na2SO4-solution',
     name: 'Natri Sunfat (Na₂SO₄)',
     category: 'substances',
     modelPath: '/models/Na2SO4.glb',
@@ -250,7 +250,7 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     physicalState: 'solution',
   },
   {
-    id: 'BaCl2-solution', 
+    id: 'BaCl2-solution',
     name: 'Bari Clorua (BaCl₂)',
     category: 'substances',
     modelPath: '/models/BaCl2.glb',
@@ -288,7 +288,38 @@ export const EQUIPMENT_IDS = {
   BaCl2_SOLUTION: "BaCl2-solution",
 };
 
-export const GUIDED_EXPERIMENTS = [
+export interface GuideStep {
+  icon?: string;
+  title: string;
+  content: string;
+  tip?: string;
+}
+
+export interface GuideObservation {
+  question: string;
+  answer: string;
+}
+
+export interface GuideData {
+  reference: string;
+  title: string;
+  subtitle: string;
+  equation: string;
+  objective: string;
+  steps: GuideStep[];
+  observations: GuideObservation[];
+  safetyNotes: string[];
+}
+
+export interface GuidedExperiment {
+  id: string;
+  name: string;
+  description: string;
+  equipment: { id: string; position: number[]; rotation: number[] }[];
+  guide?: GuideData;
+}
+
+export const GUIDED_EXPERIMENTS: GuidedExperiment[] = [
   {
     id: 'Fe_S',
     name: 'Điều chế Fe + S → FeS',

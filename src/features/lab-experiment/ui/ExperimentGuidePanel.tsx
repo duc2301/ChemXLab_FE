@@ -1,6 +1,7 @@
 import { Beaker, BookOpen, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, FlaskConical, HelpCircle, ShieldAlert, Sparkles, Target } from 'lucide-react';
 import { useState } from 'react';
 import { GUIDED_EXPERIMENTS } from '../services/equipmentRegistry';
+import type { GuideObservation, GuideStep } from '../services/equipmentRegistry';
 
 interface ExperimentGuidePanelProps {
     experimentId: string;
@@ -259,7 +260,7 @@ export const ExperimentGuidePanel = ({ experimentId }: ExperimentGuidePanelProps
 
                             {/* Progress dots */}
                             <div style={{ display: 'flex', gap: 4, marginBottom: 14, paddingLeft: 2 }}>
-                                {guide.steps.map((_, i) => (
+                                {guide.steps.map((_: GuideStep, i: number) => (
                                     <div
                                         key={i}
                                         style={{
@@ -276,7 +277,7 @@ export const ExperimentGuidePanel = ({ experimentId }: ExperimentGuidePanelProps
                             </div>
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                                {guide.steps.map((step, index) => {
+                                {guide.steps.map((step: GuideStep, index: number) => {
                                     const isExpanded = expandedSteps.has(index);
                                     const isActive = activeStep === index;
 
@@ -427,7 +428,7 @@ export const ExperimentGuidePanel = ({ experimentId }: ExperimentGuidePanelProps
 
                             {showObservations && (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 12 }}>
-                                    {guide.observations.map((obs, index) => (
+                                    {guide.observations.map((obs: GuideObservation, index: number) => (
                                         <div
                                             key={index}
                                             style={{
@@ -510,7 +511,7 @@ export const ExperimentGuidePanel = ({ experimentId }: ExperimentGuidePanelProps
                                 <span style={{ color: '#fca5a5', fontSize: 13, fontWeight: 700 }}>⚠️ Lưu ý an toàn</span>
                             </div>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                                {guide.safetyNotes.map((note, index) => (
+                                {guide.safetyNotes.map((note: string, index: number) => (
                                     <div
                                         key={index}
                                         style={{

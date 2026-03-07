@@ -791,8 +791,6 @@ export const EquipmentModel = ({
                   const dist = idx === 0 ? 0 : TUBE_INNER_R * 0.5 * Math.sqrt(idx / solidItems.length);
                   const ox = Math.cos(angle) * dist;
                   const oz = Math.sin(angle) * dist;
-                  const oy = Math.floor(idx / 3) * 0.004; // Stack slightly every 3 pellets
-
                   if (item.substanceId === EQUIPMENT_IDS.ZN_POWDER && isHClPresent) {
                     bubbleSources.push({ x: ox, z: oz });
                   }
@@ -1704,7 +1702,7 @@ const LiquidLayer = ({
 
 
 
-const _dummyObj = new THREE.Object3D();
+
 // interface SDropLayerGrain {
 //   startY: number;
 //   targetPos: THREE.Vector3;
