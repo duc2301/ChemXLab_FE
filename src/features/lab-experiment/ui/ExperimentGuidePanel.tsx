@@ -1,5 +1,6 @@
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, CheckCircle2 } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp } from 'lucide-react';
 import { useState } from 'react';
+import type { GuideObservation, GuideStep } from '../services/equipmentRegistry';
 import { getEquipmentById, GUIDED_EXPERIMENTS } from '../services/equipmentRegistry';
 import { useExperimentStore } from '../services/experimentStore';
 import { generateUUID } from '../services/idGenerator';
@@ -16,8 +17,8 @@ const textPrimary = '#e8f1f9';
 const textSecond = '#7aa8c8';
 const textMuted = 'rgba(122,168,200,0.5)';
 
-const accent = '#438BC4';   // Bluebird
-const accentB = '#0055A0';   // Blueberry
+const accent = '#438BC4';
+const accentB = '#0055A0';
 const green = '#34d399';
 const red = '#f87171';
 
@@ -40,7 +41,7 @@ const CSS = `
 .egp-collapse:hover { background:rgba(67,139,196,0.08) !important; border-color:rgba(67,139,196,0.3) !important; }
 `;
 
-// ─── Reusable section label ───────────────────
+// ─── Reusable components ──────────────────────
 const SectionLabel = ({ children }: { children: React.ReactNode }) => (
     <div style={{
         fontSize: 10, fontWeight: 700, letterSpacing: 1.5,
@@ -69,7 +70,8 @@ export const ExperimentGuidePanel = ({ experimentId }: ExperimentGuidePanelProps
     const toggleStep = (i: number) => {
         const s = new Set(expandedSteps);
         s.has(i) ? s.delete(i) : s.add(i);
-        setExpandedSteps(s); setActiveStep(i);
+        setExpandedSteps(s);
+        setActiveStep(i);
     };
     const toggleAnswer = (i: number) => {
         const s = new Set(revealedAnswers);
@@ -231,11 +233,11 @@ export const ExperimentGuidePanel = ({ experimentId }: ExperimentGuidePanelProps
 
                             <Divider />
 
-                            {/* Các bước */}
+                            {/* Progress bar */}
                             <div>
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                                     <SectionLabel>Các bước tiến hành</SectionLabel>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                                         <div style={{ width: 56, height: 3, borderRadius: 99, background: border, overflow: 'hidden' }}>
                                             <div style={{
                                                 height: '100%', borderRadius: 99,
@@ -250,86 +252,97 @@ export const ExperimentGuidePanel = ({ experimentId }: ExperimentGuidePanelProps
                                     </div>
                                 </div>
 
-                                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                    {guide.steps.map((step, idx) => {
-                                        const expanded = expandedSteps.has(idx);
-                                        const active = activeStep === idx;
-                                        const done = idx < activeStep;
-                                        return (
-                                            <div key={idx} style={{ display: 'flex', gap: 0 }}>
-                                                {/* Timeline */}
-                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 36, flexShrink: 0 }}>
-                                                    <div style={{
-                                                        width: 26, height: 26, borderRadius: 8, flexShrink: 0, marginTop: 6,
-                                                        background: active ? `linear-gradient(135deg, ${accentB}, ${accent})`
-                                                            : done ? 'rgba(52,211,153,0.12)' : bgSurface,
-                                                        border: `1.5px solid ${active ? accent : done ? green : border}`,
-                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                        boxShadow: active ? `0 0 0 3px rgba(0,85,160,0.2)` : 'none',
-                                                        transition: 'all 0.2s',
-                                                    }}>
-                                                        {done
-                                                            ? <CheckCircle2 size={12} color={green} />
-                                                            : <span style={{ fontSize: 10.5, fontWeight: 800, color: active ? '#fff' : textMuted }}>{idx + 1}</span>
-                                                        }
-                                                    </div>
-                                                    {idx < guide.steps.length - 1 && (
-                                                        <div style={{
-                                                            width: 1.5, flex: 1, minHeight: 8, borderRadius: 99,
-                                                            background: done ? green : border, opacity: done ? 0.5 : 1,
-                                                            marginTop: 2, marginBottom: 2,
-                                                        }} />
-                                                    )}
-                                                </div>
+                                {/* Progress dots */}
+                                <div style={{ display: 'flex', gap: 4, marginBottom: 14, paddingLeft: 2 }}>
+                                    {guide.steps.map((_: GuideStep, i: number) => (
+                                        <div
+                                            key={i}
+                                            style={{
+                                                flex: 1, height: 4, borderRadius: 2,
+                                                background: i <= activeStep
+                                                    ? 'linear-gradient(90deg, #3b82f6, #8b5cf6)'
+                                                    : 'rgba(255,255,255,0.08)',
+                                                transition: 'background 0.3s',
+                                            }}
+                                        />
+                                    ))}
+                                </div>
 
-                                                {/* Content */}
-                                                <div style={{ flex: 1, minWidth: 0 }}>
-                                                    <button className="egp-step" onClick={() => toggleStep(idx)} style={{
-                                                        width: '100%', padding: '6px 8px 6px 6px', marginTop: 4,
-                                                        display: 'flex', alignItems: 'center', gap: 8,
-                                                        background: active ? 'rgba(0,85,160,0.1)' : 'transparent',
-                                                        border: `1px solid ${active ? borderMid : 'transparent'}`,
-                                                        cursor: 'pointer', textAlign: 'left', borderRadius: 8,
-                                                        transition: 'all 0.15s',
+                                {/* Step cards */}
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                                    {guide.steps.map((step: GuideStep, index: number) => {
+                                        const isExpanded = expandedSteps.has(index);
+                                        const isActive = activeStep === index;
+                                        return (
+                                            <div
+                                                key={index}
+                                                style={{
+                                                    borderRadius: 14,
+                                                    border: isActive
+                                                        ? '1.5px solid rgba(99,102,241,0.4)'
+                                                        : '1px solid rgba(255,255,255,0.08)',
+                                                    background: isActive
+                                                        ? 'linear-gradient(135deg, rgba(59,130,246,0.08), rgba(139,92,246,0.05))'
+                                                        : 'rgba(255,255,255,0.03)',
+                                                    overflow: 'hidden',
+                                                    transition: 'all 0.25s ease',
+                                                }}
+                                            >
+                                                <button
+                                                    onClick={() => toggleStep(index)}
+                                                    style={{
+                                                        width: '100%', padding: '14px 16px',
+                                                        display: 'flex', alignItems: 'center', gap: 12,
+                                                        background: 'none', border: 'none',
+                                                        cursor: 'pointer', textAlign: 'left',
+                                                    }}
+                                                >
+                                                    <div style={{
+                                                        width: 38, height: 38, borderRadius: 12, flexShrink: 0,
+                                                        background: isActive
+                                                            ? 'linear-gradient(135deg, #3b82f6, #8b5cf6)'
+                                                            : 'rgba(255,255,255,0.06)',
+                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                        fontSize: 18,
+                                                        boxShadow: isActive ? '0 4px 15px rgba(59,130,246,0.3)' : 'none',
+                                                        transition: 'all 0.25s',
                                                     }}>
-                                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                                        {step.icon}
+                                                    </div>
+                                                    <span style={{
+                                                        flex: 1, color: isActive ? textPrimary : textSecond,
+                                                        fontSize: 13, fontWeight: isActive ? 700 : 500, lineHeight: 1.4,
+                                                    }}>
+                                                        {step.title}
+                                                    </span>
+                                                    {isExpanded
+                                                        ? <ChevronUp size={13} color={textMuted} style={{ flexShrink: 0 }} />
+                                                        : <ChevronDown size={13} color={textMuted} style={{ flexShrink: 0 }} />
+                                                    }
+                                                </button>
+
+                                                {isExpanded && (
+                                                    <div style={{ padding: '0 16px 16px' }}>
+                                                        <p style={{
+                                                            color: '#d1d5db', fontSize: 13, lineHeight: 1.7,
+                                                            margin: '0 0 10px', paddingLeft: 50,
+                                                        }}>
+                                                            {step.content}
+                                                        </p>
+                                                        {step.tip && (
                                                             <div style={{
-                                                                fontSize: 13, fontWeight: 700,
-                                                                color: active ? textPrimary : done ? green : textSecond,
-                                                                lineHeight: 1.35,
+                                                                padding: '10px 13px', borderRadius: 8,
+                                                                background: 'rgba(251,191,36,0.05)',
+                                                                border: '1px solid rgba(251,191,36,0.18)',
+                                                                borderLeft: '3px solid rgba(251,191,36,0.45)',
+                                                                marginLeft: 50,
                                                             }}>
-                                                                {step.title}
+                                                                <div style={{ color: 'rgba(251,191,36,0.6)', fontSize: 10, fontWeight: 700, letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 5 }}>Gợi ý</div>
+                                                                <p style={{ color: 'rgba(251,191,36,0.8)', fontSize: 12.5, lineHeight: 1.7, margin: 0 }}>{step.tip}</p>
                                                             </div>
-                                                            {!expanded && (
-                                                                <div style={{ fontSize: 11, color: textMuted, marginTop: 2 }}>
-                                                                    Nhấn để xem chi tiết
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                        {expanded
-                                                            ? <ChevronUp size={12} color={textMuted} style={{ flexShrink: 0 }} />
-                                                            : <ChevronDown size={12} color={textMuted} style={{ flexShrink: 0 }} />
-                                                        }
-                                                    </button>
-                                                    {expanded && (
-                                                        <div className="egp-in" style={{ paddingLeft: 6, paddingBottom: 10, paddingRight: 8 }}>
-                                                            <p style={{ color: textSecond, fontSize: 13, lineHeight: 1.8, margin: '6px 0 8px' }}>
-                                                                {step.content}
-                                                            </p>
-                                                            {step.tip && (
-                                                                <div style={{
-                                                                    padding: '10px 13px', borderRadius: 8,
-                                                                    background: 'rgba(251,191,36,0.05)',
-                                                                    border: `1px solid rgba(251,191,36,0.18)`,
-                                                                    borderLeft: `3px solid rgba(251,191,36,0.45)`,
-                                                                }}>
-                                                                    <div style={{ color: `rgba(251,191,36,0.6)`, fontSize: 10, fontWeight: 700, letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 5 }}>Gợi ý</div>
-                                                                    <p style={{ color: `rgba(251,191,36,0.8)`, fontSize: 12.5, lineHeight: 1.7, margin: 0 }}>{step.tip}</p>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    )}
-                                                </div>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
                                         );
                                     })}
@@ -358,7 +371,7 @@ export const ExperimentGuidePanel = ({ experimentId }: ExperimentGuidePanelProps
                                 </button>
                                 {showObs && (
                                     <div className="egp-in" style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                                        {guide.observations.map((obs, idx) => (
+                                        {guide.observations.map((obs: GuideObservation, idx: number) => (
                                             <div key={idx} style={{
                                                 padding: '12px 14px', borderRadius: 9,
                                                 background: bgSurface, border: `1px solid ${border}`,
@@ -413,7 +426,7 @@ export const ExperimentGuidePanel = ({ experimentId }: ExperimentGuidePanelProps
                                     borderLeft: `2px solid rgba(248,113,113,0.3)`, paddingLeft: 14,
                                     display: 'flex', flexDirection: 'column', gap: 9,
                                 }}>
-                                    {guide.safetyNotes.map((note, i) => (
+                                    {guide.safetyNotes.map((note: string, i: number) => (
                                         <p key={i} style={{ color: 'rgba(252,165,165,0.85)', fontSize: 13, lineHeight: 1.75, margin: 0 }}>{note}</p>
                                     ))}
                                 </div>
@@ -429,7 +442,7 @@ export const ExperimentGuidePanel = ({ experimentId }: ExperimentGuidePanelProps
                             <div>
                                 <SectionLabel>Dụng cụ & Hóa chất</SectionLabel>
                                 <div style={{ borderRadius: 9, border: `1px solid ${border}`, overflow: 'hidden' }}>
-                                    {guide.materials.map((item, i) => (
+                                    {guide.materials.map((item: string, i: number) => (
                                         <div key={i} style={{
                                             display: 'flex', alignItems: 'center', gap: 12,
                                             padding: '9px 14px',
@@ -523,7 +536,7 @@ export const ExperimentGuidePanel = ({ experimentId }: ExperimentGuidePanelProps
                                     borderLeft: `2px solid rgba(248,113,113,0.3)`, paddingLeft: 14,
                                     display: 'flex', flexDirection: 'column', gap: 9,
                                 }}>
-                                    {guide.safetyNotes.map((note, i) => (
+                                    {guide.safetyNotes.map((note: string, i: number) => (
                                         <p key={i} style={{ color: 'rgba(252,165,165,0.85)', fontSize: 13, lineHeight: 1.75, margin: 0 }}>{note}</p>
                                     ))}
                                 </div>

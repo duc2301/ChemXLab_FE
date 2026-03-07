@@ -176,7 +176,8 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     description: 'Bột sắt',
     scale: 2.5,
     isMagnetic: true,
-    rotation: { x: 0, y: 0, z: 0 }
+    rotation: { x: 0, y: 0, z: 0 },
+    physicalState: 'powder',
   },
   {
     id: 'S-powder',
@@ -188,7 +189,8 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     dimensions: { width: 0.1, height: 0.001, depth: 0.1 },
     description: 'Bột lưu huỳnh',
     scale: 2.5,
-    rotation: { x: 0, y: 0, z: 0 }
+    rotation: { x: 0, y: 0, z: 0 },
+    physicalState: 'powder',
   },
   {
     id: 'FeS-powder',
@@ -201,7 +203,65 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     description: 'Sắt(II) sulfide',
     scale: 2.5,
     isMagnetic: false,
-    rotation: { x: 0, y: 0, z: 0 }
+    rotation: { x: 0, y: 0, z: 0 },
+    hideInMenu: true,
+    physicalState: 'powder',
+  },
+  {
+    id: 'Zn-powder',
+    name: 'Viên Zn',
+    category: 'substances',
+    modelPath: '/models/zn.glb',
+    mass: 0.01,
+    isDraggable: true,
+    dimensions: { width: 0.1, height: 0.001, depth: 0.1 },
+    description: 'Viên kẽm',
+    rotation: { x: 0, y: 0, z: 0 },
+    scale: 2.5,
+    physicalState: 'solid',
+    isExtractable: false,
+  },
+  {
+    id: 'HCL-solution',
+    name: 'Dung dịch HCL',
+    category: 'substances',
+    modelPath: '/models/HCl.glb',
+    mass: 0.01,
+    isDraggable: true,
+    dimensions: { width: 0.1, height: 0.001, depth: 0.1 },
+    description: 'Dung dịch HCl',
+    scale: 2.5,
+    rotation: { x: 0, y: 0, z: 0 },
+    isMagnetic: false,
+    physicalState: 'solution',
+  },
+  {
+    id: 'Na2SO4-solution',
+    name: 'Natri Sunfat (Na₂SO₄)',
+    category: 'substances',
+    modelPath: '/models/Na2SO4.glb',
+    mass: 0.01,
+    isDraggable: true,
+    dimensions: { width: 0.1, height: 0.001, depth: 0.1 },
+    description: 'Dung dịch Natri Sunfat',
+    scale: 2.5,
+    rotation: { x: 0, y: 0, z: 0 },
+    isMagnetic: false,
+    physicalState: 'solution',
+  },
+  {
+    id: 'BaCl2-solution',
+    name: 'Bari Clorua (BaCl₂)',
+    category: 'substances',
+    modelPath: '/models/BaCl2.glb',
+    mass: 0.01,
+    isDraggable: true,
+    dimensions: { width: 0.1, height: 0.001, depth: 0.1 },
+    description: 'Dung dịch Bari Clorua',
+    scale: 2.5,
+    rotation: { x: 0, y: 0, z: 0 },
+    isMagnetic: false,
+    physicalState: 'solution',
   },
 ];
 
@@ -222,13 +282,49 @@ export const EQUIPMENT_IDS = {
   FE_POWDER: "FE-powder",
   S_POWDER: "S-powder",
   FES_POWDER: "FeS-powder",
+  ZN_POWDER: "Zn-powder",
+  HCL_SOLUTION: "HCL-solution",
+  Na2SO4_SOLUTION: "Na2SO4-solution",
+  BaCl2_SOLUTION: "BaCl2-solution",
 };
 
-export const GUIDED_EXPERIMENTS = [
+export interface GuideStep {
+  icon?: string;
+  title: string;
+  content: string;
+  tip?: string;
+}
+
+export interface GuideObservation {
+  question: string;
+  answer: string;
+}
+
+export interface GuideData {
+  reference: string;
+  title: string;
+  subtitle: string;
+  equation: string;
+  objective: string;
+  materials: string[];
+  steps: GuideStep[];
+  observations: GuideObservation[];
+  safetyNotes: string[];
+}
+
+export interface GuidedExperiment {
+  id: string;
+  name: string;
+  description: string;
+  equipment: { id: string; position: number[]; rotation: number[] }[];
+  guide?: GuideData;
+}
+
+export const GUIDED_EXPERIMENTS: GuidedExperiment[] = [
   {
-    id: 'test1',
-    name: 'Điều chế FeS trong phòng thí nghiệm',
-    description: 'Thí nghiệm về biến đổi hoá học - SGK KHTN 8 (Bài 2)',
+    id: 'Fe_S',
+    name: 'Điều chế Fe + S → FeS',
+    description: 'description',
     equipment: [
       { id: EQUIPMENT_IDS.MAGNET, position: [-1, 1.5, 0], rotation: [0, Math.PI / 2, 0] },
       { id: EQUIPMENT_IDS.ALCOHOL_LAMP, position: [-0.5, 1.5, 0], rotation: [0, 0, 0] },
@@ -249,6 +345,7 @@ export const GUIDED_EXPERIMENTS = [
         'Đèn cồn',
         'Giá đỡ ống nghiệm (kẹp)',
         'Nam châm',
+        'Thìa thuỷ tinh / đũa thuỷ tinh',
       ],
       steps: [
         {
@@ -294,8 +391,29 @@ export const GUIDED_EXPERIMENTS = [
         'Không chạm trực tiếp vào ống nghiệm nóng.',
         'Phản ứng tỏa nhiệt rất mạnh – cẩn thận tránh bỏng.',
       ],
-    }
-  }
+    },
+  },
+  {
+    id: 'HCl_Zn',
+    name: 'Điều chế Axit Clohidric (HCl) + Kẽm (Zn)',
+    description: 'description',
+    equipment: [
+      { id: EQUIPMENT_IDS.TEST_TUBE, position: [-0.5, 1.5, 0], rotation: [0, 0, 0] },
+      { id: EQUIPMENT_IDS.HCL_SOLUTION, position: [0, 1.5, 0], rotation: [0, 0, 0] },
+      { id: EQUIPMENT_IDS.ZN_POWDER, position: [0.5, 1.5, 0], rotation: [0, 0, 0] },
+    ]
+  },
+  {
+    id: 'BaCl2_Na2SO4',
+    name: 'Định luật bảo toàn khối lượng (BaCl2 + Na2SO4)',
+    description: 'Thí nghiệm phản ứng giữa BaCl₂ và Na₂SO₄ để chứng minh tổng khối lượng không đổi.',
+    equipment: [
+      { id: EQUIPMENT_IDS.TEST_TUBE, position: [-0.5, 1.5, 0], rotation: [0, 0, 0] },
+      { id: EQUIPMENT_IDS.THERMOMETER, position: [0, 1.5, 0], rotation: [0, 0, 0] },
+      // { id: EQUIPMENT_IDS.BaCl2_SOLUTION, position: [0.5, 1.5, 0], rotation: [0, 0, 0] },
+      { id: EQUIPMENT_IDS.Na2SO4_SOLUTION, position: [1, 1.5, 0], rotation: [0, 0, 0] },
+    ],
+  },
 ];
 
 /** Màu hiển thị tương ứng với từng chất bột */
@@ -303,13 +421,15 @@ export const SUBSTANCE_COLORS: Record<string, string> = {
   "FE-powder": "#9ca3af",  // xám bạc (bột sắt)
   "S-powder": "#fef08a",  // vàng nhạt hơn (lưu huỳnh)
   "FeS-powder": "#2d2d2d", // đen/xám đậm (Sắt(II) sulfide)
+  "Zn-powder": "#818cf8", // xám xanh (Kẽm)
+  "HCL-solution": "#a5f3fc", // xanh cực nhạt (Axit Clohydric)
 };
 
 /**
  * Group equipment by category
  */
 export const getEquipmentByCategory = (category: EquipmentItem['category']): EquipmentItem[] => {
-  return EQUIPMENT_REGISTRY.filter((item) => item.category === category);
+  return EQUIPMENT_REGISTRY.filter((item) => item.category === category && !item.hideInMenu);
 };
 
 /**
@@ -323,6 +443,8 @@ export const getEquipmentById = (id: string): EquipmentItem | undefined => {
  * Get all unique categories
  */
 export const getAllCategories = (): EquipmentItem['category'][] => {
-  const categories = new Set(EQUIPMENT_REGISTRY.map((item) => item.category));
+  const categories = new Set(
+    EQUIPMENT_REGISTRY.filter((item) => !item.hideInMenu).map((item) => item.category),
+  );
   return Array.from(categories);
 };

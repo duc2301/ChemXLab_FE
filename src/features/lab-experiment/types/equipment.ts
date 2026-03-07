@@ -24,6 +24,9 @@ export interface EquipmentItem {
   description?: string;
   scale?: number; // Scale multiplier for 3D model (default: 1)
   isMagnetic?: boolean;
+  hideInMenu?: boolean;
+  physicalState?: 'powder' | 'solution' | 'solid';
+  isExtractable?: boolean;
 }
 
 export interface DroppedItem {
