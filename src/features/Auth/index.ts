@@ -99,7 +99,7 @@ export const DecodeJwt = async (token: string): Promise<JwtDecode | null> => {
 
 export const SendRegisterOtp = async (email: string): Promise<boolean> => {
   try {
-    const response = await api.post("Auth/verify-otp", { email });
+    const response = await api.post("Auth/send-otp", { email });
     const data: ResponseDTO<null> = response.data;
 
     if (data.isSuccess) {
