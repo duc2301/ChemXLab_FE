@@ -119,6 +119,7 @@ export const EquipmentModel = ({
   const addSubstanceToTestTube = useExperimentStore((s) => s.addSubstanceToTestTube);
   const testTubeContents = useExperimentStore((s) => s.testTubeContents);
   const stirredTubes = useExperimentStore((s) => s.stirredTubes);
+  const unstirTestTube = useExperimentStore((s) => s.unstirTestTube);
   const alcoholLampStatus = useExperimentStore((s) => s.alcoholLampStatus);
   const isHoldingSubstance = heldSubstance !== null;
   const [showFull, setShowFull] = useState(false);
@@ -189,6 +190,10 @@ export const EquipmentModel = ({
   const dragPlane = useMemo(() => new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), []);
   const intersectionPoint = useMemo(() => new THREE.Vector3(), []);
 
+  // ─── Stir state ─────────────────────────────────────────────────────────────
+  const stirredCount = isTestTube ? (stirredTubes[droppedItem.id] ?? 0) : 0;
+  const isStirred = stirredCount > 0;
+
   useEffect(() => {
     if (!isThermometer) return;
     const interval = setInterval(() => {
@@ -228,6 +233,12 @@ export const EquipmentModel = ({
       }
     };
   }, [isTestTube, isAlcoholLamp, isMagnet]);
+
+  useEffect(() => {
+    if (isAttracted && isStirred) {
+      unstirTestTube(droppedItem.id);
+    }
+  }, [isAttracted, isStirred, droppedItem.id, unstirTestTube]);
 
   // ─── Chemical Reaction Logic (Fe + S) ───────────────────────────────────────
   useEffect(() => {
@@ -485,6 +496,7 @@ export const EquipmentModel = ({
         if (isMagnet) occupiedByMagnet.delete(snappedToThermoIdRef.current);
 
         lastUnsnappedThermoIdRef.current = snappedToThermoIdRef.current;
+        snappedToThermoIdRef.current = null;
       }
       isSnappedRef.current = false;
       setIsSnapped(false);
@@ -680,10 +692,6 @@ export const EquipmentModel = ({
     ? occupiedThermometersByLamp.get(snappedToThermoIdRef.current)
     : null;
   const isHeating = !!activeLampId && !!alcoholLampStatus.get(activeLampId);
-
-  // ─── Stir state ─────────────────────────────────────────────────────────────
-  const stirredCount = isTestTube ? (stirredTubes[droppedItem.id] ?? 0) : 0;
-  const isStirred = stirredCount > 0;
 
   const mixedContents = contents.slice(0, stirredCount);
   const unmixedContents = contents.slice(stirredCount);
