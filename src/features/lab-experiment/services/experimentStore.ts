@@ -57,6 +57,9 @@ interface ExperimentStore extends ExperimentState {
   clearItems: () => void;
   unstirTestTube: (tubeId: string) => void;
   triggerPrecipitation: (tubeId: string) => void;
+  removeSubstanceFromTestTube: (tubeId: string, substanceId: string) => void;
+  handleZnDissolved: (tubeId: string) => void;
+  znFinishedTubes: Set<string>;
 }
 
 export const useExperimentStore = create<ExperimentStore>((set, get) => ({
@@ -69,6 +72,7 @@ export const useExperimentStore = create<ExperimentStore>((set, get) => ({
   testTubeContents: new Map(),
   stirredTubes: {},
   reactionProgress: new Map(),
+  znFinishedTubes: new Set(),
   snapTargetId: null,
 
   openModal: () =>
@@ -336,6 +340,59 @@ export const useExperimentStore = create<ExperimentStore>((set, get) => ({
       return state;
     }),
 
+  removeSubstanceFromTestTube: (tubeId, substanceId) =>
+    set((state) => {
+      const newContents = new Map(state.testTubeContents);
+      const contents = newContents.get(tubeId) || [];
+      const updated = contents.filter((c) => c.substanceId !== substanceId);
+      newContents.set(tubeId, updated);
+      return { testTubeContents: newContents };
+    }),
+
+  handleZnDissolved: (tubeId) =>
+    set((state) => {
+      const newContents = new Map(state.testTubeContents);
+      const contents = [...(newContents.get(tubeId) || [])];
+
+      // 1. Remove 1 pellet of Zinc
+      const znIdx = contents.findIndex(c => c.substanceId === EQUIPMENT_IDS.ZN_POWDER);
+      if (znIdx !== -1) {
+        if (contents[znIdx].amount > 1) {
+          contents[znIdx] = { ...contents[znIdx], amount: contents[znIdx].amount - 1 };
+        } else {
+          contents.splice(znIdx, 1);
+          // Mark as finished if no more Zn but had reaction
+          const newFinished = new Set(state.znFinishedTubes);
+          newFinished.add(tubeId);
+          set({ znFinishedTubes: newFinished });
+        }
+      }
+
+      // 2. Convert some HCL to ZnCl2
+      const hclIdx = contents.findIndex(c => c.substanceId === EQUIPMENT_IDS.HCL_SOLUTION);
+      if (hclIdx !== -1) {
+        const hclAmt = contents[hclIdx].amount;
+        const consumeAmt = Math.min(hclAmt, 1.5); // Consume 1.5ml per pellet approx
+
+        if (hclAmt > consumeAmt + 0.1) {
+          contents[hclIdx] = { ...contents[hclIdx], amount: hclAmt - consumeAmt };
+        } else {
+          contents.splice(hclIdx, 1);
+        }
+
+        // Add ZnCl2
+        const zncl2Idx = contents.findIndex(c => c.substanceId === EQUIPMENT_IDS.ZNCL2_SOLUTION);
+        if (zncl2Idx !== -1) {
+          contents[zncl2Idx] = { ...contents[zncl2Idx], amount: contents[zncl2Idx].amount + consumeAmt };
+        } else {
+          contents.push({ substanceId: EQUIPMENT_IDS.ZNCL2_SOLUTION, amount: consumeAmt, instant: true });
+        }
+      }
+
+      newContents.set(tubeId, contents);
+      return { testTubeContents: newContents };
+    }),
+
   clearItems: () =>
     set({
       droppedItems: new Map(),
@@ -343,5 +400,6 @@ export const useExperimentStore = create<ExperimentStore>((set, get) => ({
       heldSubstance: null,
       contextMenu: null,
       reactionProgress: new Map(),
+      znFinishedTubes: new Set(),
     }),
 }));

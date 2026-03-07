@@ -217,7 +217,7 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     dimensions: { width: 0.1, height: 0.001, depth: 0.1 },
     description: 'Viên kẽm',
     rotation: { x: 0, y: 0, z: 0 },
-    scale: 2.5,
+    scale: 4,
     physicalState: 'solid',
     isExtractable: false,
   },
@@ -263,6 +263,20 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     isMagnetic: false,
     physicalState: 'solution',
   },
+  {
+    id: 'ZnCl2-solution',
+    name: 'Kẽm Clorua (ZnCl₂)',
+    category: 'substances',
+    modelPath: '/models/BaCl2.glb', // Placeholder model
+    mass: 0.01,
+    isDraggable: false,
+    dimensions: { width: 0.1, height: 0.001, depth: 0.1 },
+    description: 'Dung dịch Kẽm Clorua',
+    scale: 2.5,
+    rotation: { x: 0, y: 0, z: 0 },
+    isMagnetic: false,
+    physicalState: 'solution',
+  },
 ];
 
 export const EQUIPMENT_IDS = {
@@ -288,6 +302,7 @@ export const EQUIPMENT_IDS = {
   BaCl2_SOLUTION: "BaCl2-solution",
   BaSO4_PRECIPITATE: "BaSO4-precipitate",
   NACL_SOLUTION: "NaCl-solution",
+  ZNCL2_SOLUTION: "ZnCl2-solution",
 };
 
 export interface GuideStep {
@@ -400,9 +415,10 @@ export const GUIDED_EXPERIMENTS: GuidedExperiment[] = [
     name: 'Điều chế Axit Clohidric (HCl) + Kẽm (Zn)',
     description: 'description',
     equipment: [
-      { id: EQUIPMENT_IDS.TEST_TUBE, position: [-0.5, 1.5, 0], rotation: [0, 0, 0] },
-      { id: EQUIPMENT_IDS.HCL_SOLUTION, position: [0, 1.5, 0], rotation: [0, 0, 0] },
-      { id: EQUIPMENT_IDS.ZN_POWDER, position: [0.5, 1.5, 0], rotation: [0, 0, 0] },
+      { id: EQUIPMENT_IDS.TEST_TUBE, position: [-0.75, 1.5, 0], rotation: [0, 0, 0] },
+      { id: EQUIPMENT_IDS.THERMOMETER, position: [-0.25, 1.5, 0], rotation: [0, 0, 0] },
+      { id: EQUIPMENT_IDS.HCL_SOLUTION, position: [0.25, 1.5, 0], rotation: [0, 0, 0] },
+      { id: EQUIPMENT_IDS.ZN_POWDER, position: [0.75, 1.5, 0], rotation: [0, 0, 0] },
     ]
   },
   {
@@ -429,6 +445,7 @@ export const SUBSTANCE_COLORS: Record<string, string> = {
   "BaCl2-solution": "#f1f5f9",  // Trắng xám nhạt (Bari Clorua)
   "BaSO4-precipitate": "#ffffff", // Trắng tinh khiết
   "NaCl-solution": "#f0f9ff",     // Trong suốt/trắng xanh nhạt
+  "ZnCl2-solution": "#e0f2fe",    // Trong suốt/xanh trời cực nhạt
 };
 
 /**

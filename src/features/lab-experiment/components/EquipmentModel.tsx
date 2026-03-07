@@ -39,7 +39,6 @@ const getGrams = (arr: TubeContent[]) => arr.reduce((acc, c) => acc + c.amount, 
 
 interface EquipmentModelProps {
   droppedItem: DroppedItem;
-  tableHeight?: number;
   onDragChange?: (isDragging: boolean) => void;
   onRemove?: (itemId: string) => void;
 }
@@ -107,7 +106,6 @@ const ChemicalShader = {
 
 export const EquipmentModel = ({
   droppedItem,
-  tableHeight = 0.9,
   onDragChange,
 }: EquipmentModelProps) => {
   const rigidBodyRef = useRef<RapierRigidBody>(null);
@@ -117,12 +115,16 @@ export const EquipmentModel = ({
   const heldSubstance = useExperimentStore((s) => s.heldSubstance);
   const setHeldSubstance = useExperimentStore((s) => s.setHeldSubstance);
   const addSubstanceToTestTube = useExperimentStore((s) => s.addSubstanceToTestTube);
+  const setSnapTargetId = useExperimentStore((s) => s.setSnapTargetId);
+  const znFinishedTubes = useExperimentStore((s) => s.znFinishedTubes);
   const testTubeContents = useExperimentStore((s) => s.testTubeContents);
   const stirredTubes = useExperimentStore((s) => s.stirredTubes);
   const unstirTestTube = useExperimentStore((s) => s.unstirTestTube);
   const alcoholLampStatus = useExperimentStore((s) => s.alcoholLampStatus);
   const isHoldingSubstance = heldSubstance !== null;
   const [showFull, setShowFull] = useState(false);
+  const [znDissolved, setZnDissolved] = useState(false);
+  const [hasActiveBubbles, setHasActiveBubbles] = useState(false);
 
   // ─── Snap state ────────────────────────────────────────────────────────────
   const isSnappedRef = useRef(false);
@@ -136,10 +138,14 @@ export const EquipmentModel = ({
     state.getFreeIronAmount(droppedItem.id, EQUIPMENT_IDS.FES_POWDER),
   );
   const snapTargetId = useExperimentStore((s) => s.snapTargetId);
-  const setSnapTargetId = useExperimentStore((s) => s.setSnapTargetId);
+  const handleZnDissolved = useExperimentStore((s) => s.handleZnDissolved);
   const isAttracted =
     occupiedByMagnet.get(snappedToThermoIdRef?.current ?? "") &&
     freeFeAmount > 0;
+
+  // Use stable initial transform for RigidBody to prevent React re-renders from teleporting it
+  const initialPosition = useRef<[number, number, number]>(droppedItem.position).current;
+  const initialRotation = useRef<[number, number, number]>(droppedItem.rotation).current;
   // Tránh snap lại ngay lập tức
   const lastUnsnappedThermoIdRef = useRef<string | null>(null);
   const coolingStartTimeRef = useRef<number | null>(null);
@@ -211,7 +217,7 @@ export const EquipmentModel = ({
 
   useEffect(() => {
     if (!isTestTube) return;
-    
+
     const currentContents = testTubeContents.get(droppedItem.id) ?? [];
     const hasBaCl2 = currentContents.some(c => c.substanceId === EQUIPMENT_IDS.BaCl2_SOLUTION);
     const hasNa2SO4 = currentContents.some(c => c.substanceId === EQUIPMENT_IDS.Na2SO4_SOLUTION);
@@ -303,23 +309,16 @@ export const EquipmentModel = ({
     // ── Drop-into-tube animation for solid items (e.g. Zinc) ────────────────
     const anim = dropAnimRef.current;
     if (anim) {
-      const pos = rigidBodyRef.current.translation();
       if (anim.phase === 'align') {
-        // Smoothly lerp above the tube mouth
-        const tx = anim.targetX, tz = anim.targetZ, ty = anim.topWorldY + 0.08;
-        const nx = pos.x + (tx - pos.x) * Math.min(1, 10 * delta);
-        const ny = pos.y + (ty - pos.y) * Math.min(1, 8 * delta);
-        const nz = pos.z + (tz - pos.z) * Math.min(1, 10 * delta);
-        rigidBodyRef.current.setTranslation({ x: nx, y: ny, z: nz }, true);
-        const close = Math.abs(nx - tx) < 0.015 && Math.abs(ny - ty) < 0.015 && Math.abs(nz - tz) < 0.015;
-        if (close) {
-          anim.phase = 'fall';
-          anim.currentY = ty;
-          anim.velY = 0;
-        }
+        // Instantly teleport pellet to tube mouth then begin falling
+        const ty = anim.topWorldY + 0.02;
+        rigidBodyRef.current.setTranslation({ x: anim.targetX, y: ty, z: anim.targetZ }, true);
+        anim.phase = 'fall';
+        anim.currentY = ty;
+        anim.velY = 0;
       } else if (anim.phase === 'fall') {
-        // Gravity fall
-        anim.velY -= 2.0 * delta;
+        // Gravity fall — realistic gravity
+        anim.velY -= 9.8 * delta;
         anim.currentY += anim.velY * delta;
         if (anim.currentY <= anim.bottomWorldY) {
           anim.currentY = anim.bottomWorldY;
@@ -330,7 +329,7 @@ export const EquipmentModel = ({
         // Animation finished — commit to store then remove external pellet
         const storeState = useExperimentStore.getState();
         storeState.addSubstanceToTestTube(anim.tubeId, anim.substanceId, anim.amount);
-        storeState.removeDroppedItem(droppedItem.id);
+        setTimeout(() => storeState.removeDroppedItem(droppedItem.id), 0);
         dropAnimRef.current = null;
       }
       return; // skip normal drag/snap during animation
@@ -355,6 +354,18 @@ export const EquipmentModel = ({
 
     // 1. Follow / Animate snap
     if ((isTestTube || isAlcoholLamp || isMagnet) && isSnappedRef.current && snappedToBodyRef.current) {
+      const thermoId = snappedToThermoIdRef.current;
+      if (thermoId && !thermometerRegistry.has(thermoId)) {
+        // Rack completely deleted while we were snapped! Unsnap gracefully to not crash rust.
+        isSnappedRef.current = false;
+        setIsSnapped(false);
+        snappedToBodyRef.current = null;
+        snappedToThermoIdRef.current = null;
+        snapAnimRef.current = null;
+        rigidBodyRef.current?.setBodyType(0, true);
+        return;
+      }
+
       try {
         const tp = snappedToBodyRef.current.translation();
         const offset_Y = getOffsetY();
@@ -547,7 +558,7 @@ export const EquipmentModel = ({
     onDragChange?.(false);
     gl.domElement.style.cursor = isHovered ? "grab" : "auto";
     lastUnsnappedThermoIdRef.current = null;
-    if (snapTargetId) setSnapTargetId(null); // Clear highlight on release
+    setSnapTargetId(null); // Clear highlight on release unconditionally
 
     if (rigidBodyRef.current && !isSnappedRef.current) {
       // ─── Drag-to-Add Substance ──────────────────────────────────────────
@@ -628,7 +639,7 @@ export const EquipmentModel = ({
         }
       }
 
-      rigidBodyRef.current.setBodyType(2, true); // Chuyển về Dynamic (0) thay vì Static (1) để trọng lực hoạt động
+      rigidBodyRef.current.setBodyType(0, true); // Chuyển về Dynamic (0) thay vì Static (1) để trọng lực hoạt động
     }
   },
     [gl.domElement, isHovered, onDragChange, equipment, droppedItem.id, addSubstanceToTestTube]
@@ -728,12 +739,13 @@ export const EquipmentModel = ({
 
   return (
     <RigidBody
+      key={droppedItem.id}
       ref={rigidBodyRef}
       type={isDragging || isSnapped ? "kinematicPosition" : "dynamic"}
-      position={[droppedItem.position[0], tableHeight, droppedItem.position[2]]}
-      rotation={droppedItem.rotation}
-      colliders={isDragging || isSnapped ? false : "hull"}
-      collisionGroups={isTestTube ? CG_TEST_TUBE : CG_EQUIPMENT}
+      position={initialPosition}
+      rotation={initialRotation}
+      colliders="hull"
+      collisionGroups={isDragging || isSnapped ? 0x00000000 : (isTestTube ? CG_TEST_TUBE : CG_EQUIPMENT)}
       name={droppedItem.equipmentId}
       gravityScale={isDragging || isSnapped ? 0 : 1}
       lockRotations={true}
@@ -774,6 +786,7 @@ export const EquipmentModel = ({
               reactionProgress={currentProgress}
               coolingTime={coolingTime}
               isHeating={isHeating}
+              hasFinishedReaction={freeFeAmount <= 0}
             />
           )}
 
@@ -793,6 +806,8 @@ export const EquipmentModel = ({
 
             const isHClPresent = liquidItems.some(c => c.substanceId === EQUIPMENT_IDS.HCL_SOLUTION);
             const bubbleSources: { x: number; z: number }[] = [];
+            // Track zinc reaction elapsed time for shrink effect
+            const znReactionActive = isHClPresent && solidItems.some(c => c.substanceId === EQUIPMENT_IDS.ZN_POWDER);
 
             return (
               <>
@@ -801,8 +816,6 @@ export const EquipmentModel = ({
                   const equip = getEquipmentById(item.substanceId);
                   if (!equip) return null;
 
-                  // Jitter and stacking logic to simulate collision/volume
-                  // Use Fibonacci angle for nice distribution and slight vertical stacking
                   const angle = (idx * 137.5) * (Math.PI / 180);
                   const dist = idx === 0 ? 0 : TUBE_INNER_R * 0.5 * Math.sqrt(idx / solidItems.length);
                   const ox = Math.cos(angle) * dist;
@@ -811,11 +824,31 @@ export const EquipmentModel = ({
                     bubbleSources.push({ x: ox, z: oz });
                   }
 
+                  const isZnReacting = item.substanceId === EQUIPMENT_IDS.ZN_POWDER && isHClPresent;
+
+                  if (isZnReacting) {
+                    // Replace GLB model with a simple mesh pellet at tube bottom
+                    return (
+                      <ZnPelletMesh
+                        key={`internal-solid-${idx}`}
+                        ox={ox}
+                        oz={oz}
+                        bottomY={TUBE_BOTTOM_Y}
+                        onDissolvedChange={(dissolved) => {
+                          setZnDissolved(dissolved);
+                          if (dissolved) {
+                            handleZnDissolved(droppedItem.id);
+                          }
+                        }}
+                      />
+                    );
+                  }
+
                   return (
                     <group
                       key={`internal-solid-${idx}`}
                       position={[ox, 0 - 0.0055, oz]}
-                      rotation={[0, angle + idx, 0]} // Randomized rotation
+                      rotation={[0, angle + idx, 0]}
                     >
                       <Model
                         modelPath={equip.modelPath}
@@ -836,6 +869,8 @@ export const EquipmentModel = ({
                     offsetAboveSolid={solidOffset}
                     spawnInstant={liquidItems.every(c => c.instant)}
                     bubbleSources={bubbleSources}
+                    znDissolved={znDissolved}
+                    setHasActiveBubbles={setHasActiveBubbles}
                   />
                 )}
 
@@ -860,6 +895,23 @@ export const EquipmentModel = ({
                     />
                   );
                 })}
+                {/* 4. H2 Gas Vapor (white smoke) for Zn + HCl reaction */}
+                {znReactionActive && (() => {
+                  // Compute actual liquid surface Y for H2 smoke start position
+                  const LIQUID_R = TUBE_INNER_R * 0.96;
+                  const MAX_CYL_H = TUBE_TOP_Y - TUBE_BOTTOM_Y - TUBE_MARGIN - LIQUID_R;
+                  const fillFrac = Math.min(1, totalLiquidMl / MAX_TUBE_LAYERS);
+                  const liquidBodyBaseY = TUBE_BOTTOM_Y + solidOffset + LIQUID_R;
+                  const liquidSurfY = liquidBodyBaseY + fillFrac * MAX_CYL_H - 0.003;
+                  return (
+                    <H2GasEmitter
+                      liquidSurfaceY={liquidSurfY}
+                      tubeTopY={TUBE_TOP_Y}
+                      tubeR={TUBE_INNER_R}
+                      active={!znDissolved || hasActiveBubbles}
+                    />
+                  );
+                })()}
               </>
             );
           })()}
@@ -1020,17 +1072,15 @@ export const EquipmentModel = ({
         </Html>
       )}
 
-      {/* ── Khung thông tin phản ứng HCl + Zn ── */}
       {(() => {
         if (!isTestTube) return null;
         const hasHCl = contents.some(c => c.substanceId === EQUIPMENT_IDS.HCL_SOLUTION);
         const hasZn = contents.some(c => c.substanceId === EQUIPMENT_IDS.ZN_POWDER);
-        if (!hasHCl || !hasZn) return null;
+        const hasZnCl2 = contents.some(c => c.substanceId === EQUIPMENT_IDS.ZNCL2_SOLUTION);
+        const isFinished = znFinishedTubes.has(droppedItem.id);
 
-        const hclAmt = contents.filter(c => c.substanceId === EQUIPMENT_IDS.HCL_SOLUTION).reduce((a, c) => a + c.amount, 0);
-        const znAmt = contents.filter(c => c.substanceId === EQUIPMENT_IDS.ZN_POWDER).reduce((a, c) => a + c.amount, 0);
-        // Stoichiometry: 1 Zn + 2 HCl; Zn molar ~1 unit, HCl 5ml≈5 units
-        // Reaction is always ongoing as long as both are present
+        if (!isSnapped || (!hasHCl && !hasZnCl2) || (!hasZn && !isFinished)) return null;
+
         const isReacting = hasHCl && hasZn;
         const borderColor = isReacting ? "#22d3ee" : "#6ee7b7";
         const shadowColor = isReacting ? "rgba(34,211,238,0.3)" : "rgba(110,231,183,0.2)";
@@ -1068,26 +1118,9 @@ export const EquipmentModel = ({
               {/* Status */}
               <div style={{ marginBottom: "3px" }}>
                 <span style={{ color: "#94a3b8" }}>Trạng thái: </span>
-                <span style={{ color: "#34d399", fontWeight: "bold" }}>
-                  {isReacting ? "🔬 Đang xảy ra — bọt khí H₂ thoát ra" : "Hoàn tất"}
+                <span style={{ color: isReacting ? "#22d3ee" : "#34d399", fontWeight: "bold" }}>
+                  {isReacting ? "🔬 Đang xảy ra — bọt khí H₂ thoát ra" : "Hoàn tất: Zn tan hết trong HCl"}
                 </span>
-              </div>
-
-              {/* Amounts */}
-              <div style={{ display: "flex", gap: "10px", marginTop: "4px", borderTop: "1px dashed rgba(100,116,139,0.4)", paddingTop: "4px" }}>
-                <div>
-                  <span style={{ color: "#94a3b8" }}>HCl: </span>
-                  <span style={{ color: "#a5f3fc", fontWeight: "bold" }}>{hclAmt.toFixed(1)} ml</span>
-                </div>
-                <div>
-                  <span style={{ color: "#94a3b8" }}>Zn: </span>
-                  <span style={{ color: "#818cf8", fontWeight: "bold" }}>{znAmt.toFixed(1)} viên</span>
-                </div>
-              </div>
-
-              {/* Side products note */}
-              <div style={{ marginTop: "4px", color: "#6ee7b7", fontSize: "10px", fontStyle: "italic" }}>
-                Sản phẩm: dung dịch ZnCl₂ + khí H₂ không màu không mùi
               </div>
             </div>
           </Html>
@@ -1098,12 +1131,12 @@ export const EquipmentModel = ({
       {(() => {
         if (!isTestTube) return null;
         const hasBaSO4 = contents.some(c => c.substanceId === EQUIPMENT_IDS.BaSO4_PRECIPITATE);
-        
+
         // Chỉ hiện khi đã có sản phẩm hoặc đang có mặt cả 2 chất
         if (!hasBaSO4) return null;
 
         const baso4Amt = contents.filter(c => c.substanceId === EQUIPMENT_IDS.BaSO4_PRECIPITATE).reduce((a, c) => a + c.amount, 0);
-        
+
         return (
           <Html
             position={[1.2, 0.22, 0]} // Đặt bên phải để không đè lên UI HCl + Zn (nếu có)
@@ -1373,12 +1406,12 @@ function buildPackedPositions(
 interface LiqDrop { x: number; y: number; z: number; vy: number; scale: number; vDelta: number; active: boolean; }
 interface LiqSplash { x: number; y: number; z: number; vx: number; vy: number; vz: number; scale: number; active: boolean; }
 interface LiqRipple { x: number; z: number; age: number; active: boolean; }
-interface LiqBubble { x: number; y: number; z: number; vy: number; vx: number; vz: number; scale: number; age: number; sourceIdx: number; active: boolean; }
+interface LiqBubble { x: number; y: number; z: number; vy: number; vx: number; vz: number; scale: number; age: number; maxAge: number; sourceIdx: number; active: boolean; type: 'riser' | 'wanderer' | 'churner'; wobblePhase: number; }
 
-const LL_DROP_COUNT = 6;
+const LL_DROP_COUNT = 10;
 const LL_SPLASH_COUNT = 40;
 const LL_RIPPLE_COUNT = 8;
-const LL_BUBBLE_COUNT = 60;
+const LL_BUBBLE_COUNT = 10000;
 const LL_SURF_SEG = 48;     // segments for the interactive surface mesh
 const LL_SURF_RINGS = 20;
 
@@ -1390,12 +1423,16 @@ const LiquidLayer = ({
   offsetAboveSolid = 0,
   spawnInstant = false,
   bubbleSources = [],
+  znDissolved = false,
+  setHasActiveBubbles,
 }: {
   color: string;
   totalLiquidMl: number;
   offsetAboveSolid?: number;
   spawnInstant?: boolean;
   bubbleSources?: { x: number; z: number }[];
+  znDissolved?: boolean;
+  setHasActiveBubbles?: (active: boolean) => void;
 }) => {
   const LIQUID_R = TUBE_INNER_R * 0.96;
   const MAX_CYLINDER_H = TUBE_TOP_Y - TUBE_BOTTOM_Y - TUBE_MARGIN - LIQUID_R;
@@ -1411,6 +1448,7 @@ const LiquidLayer = ({
   const logicFillTarget = useRef(spawnInstant ? targetFill : 0);
   const lastDropT = useRef(-99);
   const lastHitT = useRef(-99);
+  const [isVisible, setIsVisible] = useState(spawnInstant && targetFill > 0);
 
   // Pre-allocate particle data (never re-created)
   const drops = useMemo<LiqDrop[]>(() => Array.from({ length: LL_DROP_COUNT }, () =>
@@ -1420,7 +1458,8 @@ const LiquidLayer = ({
   const ripples = useMemo<LiqRipple[]>(() => Array.from({ length: LL_RIPPLE_COUNT }, () =>
     ({ x: 0, z: 0, age: 0, active: false })), []);
   const bubbles = useMemo<LiqBubble[]>(() => Array.from({ length: LL_BUBBLE_COUNT }, () =>
-    ({ x: 0, y: 0, z: 0, vy: 0, vx: 0, vz: 0, scale: 0, age: 0, sourceIdx: -1, active: false })), []);
+    ({ x: 0, y: 0, z: 0, vy: 0, vx: 0, vz: 0, scale: 0, age: 0, maxAge: 2, sourceIdx: -1, active: false, type: 'riser' as const, wobblePhase: 0 })), []);
+  const bubbleStartT = useRef<number | null>(null);
 
   // ── Surface geometry: ring with writable positions ─────────────────────────
   const surfGeo = useMemo(() => {
@@ -1448,6 +1487,9 @@ const LiquidLayer = ({
     const dt = Math.min(delta, 0.05);
     const t = state.clock.getElapsedTime();
 
+    // Fix: trigger re-render when liquid first becomes visible
+    if (!isVisible && logicFillTarget.current > 0) setIsVisible(true);
+
     const isPouring = !spawnInstant && logicFillTarget.current < targetFill;
 
     // Smooth visual fill rise (lerp) - slightly slower for more grace
@@ -1471,42 +1513,100 @@ const LiquidLayer = ({
     const isBubbling = bubbleSources.length > 0 && h > 0.005;
 
     // ── Spawn bubbles (if HCl + Zn) ──────────────────────────────────────────
-    if (isBubbling) {
-      // Logic for spawning bubbles continuously
+    if (isBubbling && !znDissolved) {
+      // Track when bubbling started
+      if (bubbleStartT.current === null) bubbleStartT.current = t;
+      const bubbleElapsed = t - bubbleStartT.current;
+      // Speed multiplier: ramps up to peak at ~8s then slowly decreases as zinc dissolves
+      const dissolvePct = Math.min(1, bubbleElapsed / 25);
+      const speedMult = dissolvePct < 0.4
+        ? THREE.MathUtils.lerp(1.2, 2.0, dissolvePct / 0.4)   // faster ramp up
+        : THREE.MathUtils.lerp(2.0, 0.4, (dissolvePct - 0.4) / 0.6);
+
+      // Spawn rate: 12 bubbles/0.03s at start → 30 bubbles/0.012s at peak
+      const rampFactor = Math.min(1, bubbleElapsed / 8);
+      const spawnInterval = THREE.MathUtils.lerp(0.03, 0.012, rampFactor);
+      const bubblesPerSpawn = Math.floor(THREE.MathUtils.lerp(12, 30, rampFactor * speedMult));
+
       for (let sIdx = 0; sIdx < bubbleSources.length; sIdx++) {
-        if (t % 0.15 < 0.016) { // controlled rate
-          const bi = bubbles.findIndex(b => !b.active);
-          if (bi !== -1) {
-            const b = bubbles[bi];
-            const src = bubbleSources[sIdx];
-            b.active = true;
-            b.age = 0;
-            b.sourceIdx = sIdx;
-            b.x = src.x;
-            b.y = bodyBaseY - 0.005;
-            b.z = src.z;
-            b.vy = 0.012 + Math.random() * 0.012;
-            b.vx = (Math.random() - 0.5) * 0.005;
-            b.vz = (Math.random() - 0.5) * 0.005;
-            b.scale = 0.0005;
+        if (t % spawnInterval < 0.016) {
+          for (let n = 0; n < bubblesPerSpawn; n++) {
+            const bi = bubbles.findIndex(b => !b.active);
+            if (bi !== -1) {
+              const b = bubbles[bi];
+              const src = bubbleSources[sIdx];
+              b.active = true;
+              b.age = 0;
+              b.sourceIdx = sIdx;
+              b.wobblePhase = Math.random() * Math.PI * 2;
+              // Spawn at zinc bottom (center - radius)
+              b.x = src.x;
+              b.y = TUBE_BOTTOM_Y + offsetAboveSolid;
+              b.z = src.z;
+
+              // V-shaped spread: outward + upward like a fountain from zinc bottom
+              const theta = Math.random() * Math.PI * 2;
+              // V-angle: bubbles spread 20°-70° from vertical (narrow V shape)
+              const vAngle = (0.35 + Math.random() * 0.9); // radians from vertical
+              const spd = (0.004 + Math.random() * 0.01) * speedMult;
+              b.vx = Math.sin(vAngle) * Math.cos(theta) * spd;
+              b.vz = Math.sin(vAngle) * Math.sin(theta) * spd;
+              b.vy = Math.cos(vAngle) * spd; // always upward
+
+              // Type distribution: 20% risers, 50% wanderers, 30% churners
+              const roll = Math.random();
+              if (roll < 0.2) {
+                b.type = 'riser';
+                b.vy *= 2.5; // boost upward for risers
+                b.maxAge = 0.8 + Math.random() * 0.6;
+              } else if (roll < 0.7) {
+                b.type = 'wanderer';
+                b.maxAge = 2.0 + Math.random() * 3.0;
+              } else {
+                b.type = 'churner';
+                b.vy = -(0.003 + Math.random() * 0.008) * speedMult; // override: goes DOWN
+                b.maxAge = 2.5 + Math.random() * 2.5;
+              }
+              b.scale = 0.00005 + Math.random() * 0.0001;
+            }
           }
         }
       }
+    } else if (znDissolved) {
+      // Zinc fully dissolved: remaining bubbles slowly rise to surface and pop naturally
+      for (let i = 0; i < LL_BUBBLE_COUNT; i++) {
+        const b = bubbles[i];
+        if (b.active && b.type !== 'riser') {
+          b.type = 'riser';
+          // Slow gentle rise — drift up naturally over several seconds
+          b.vy = 0.002 + Math.random() * 0.003;
+          b.vx *= 0.15;
+          b.vz *= 0.15;
+          // Longer lifetime so they reach surface gradually
+          b.maxAge = b.age + 4.0 + Math.random() * 4.0;
+        }
+      }
+      bubbleStartT.current = null;
+    } else {
+      bubbleStartT.current = null;
     }
 
     // ── Spawn falling drops (only while pouring) ─────────────────────────────
-    if (isPouring && t - lastDropT.current > 0.12) {
+    // Always exactly 10 drops, each carries 1/10 of totalLiquidMl
+    const volumePerDrop = totalLiquidMl / LL_DROP_COUNT;
+    const dropScaleFactor = Math.max(0.08, Math.min(0.35, volumePerDrop / 5)); // scale 0.08..0.35 based on volume
+    if (isPouring && t - lastDropT.current > 0.15) {
       const di = drops.findIndex(d => !d.active);
       if (di !== -1) {
         const d = drops[di];
         d.active = true;
         d.x = (Math.random() - 0.5) * TUBE_INNER_R * 0.5;
         d.z = (Math.random() - 0.5) * TUBE_INNER_R * 0.5;
-        d.y = TUBE_TOP_Y + 0.1; // Higher spawn
-        d.vy = -0.05; // Faster initial velocity
-        d.scale = TUBE_INNER_R * 0.18;
-        // Each drop adds exactly 0.1ml worth of height
-        d.vDelta = 0.1 / MAX_TUBE_LAYERS;
+        d.y = TUBE_TOP_Y + 0.1;
+        d.vy = -0.05;
+        d.scale = TUBE_INNER_R * dropScaleFactor;
+        // Each drop adds 1/10 of total fill
+        d.vDelta = targetFill / LL_DROP_COUNT;
         lastDropT.current = t;
       }
     }
@@ -1521,7 +1621,7 @@ const LiquidLayer = ({
           // Stretch along velocity
           const stretchY = 1 + Math.abs(d.vy) * 4;
 
-          if (d.y <= surfaceY) {
+          if (d.y - d.scale * stretchY <= surfaceY) {
             d.active = false;
             lastHitT.current = t;
 
@@ -1576,25 +1676,130 @@ const LiquidLayer = ({
 
     // ── Update bubbles ───────────────────────────────────────────────────────
     if (bubbleMeshRef.current) {
+      const liquidR = TUBE_INNER_R * 0.96;
+      const tubeBottomLocal = TUBE_BOTTOM_Y + offsetAboveSolid;
+      let anyBubblesActive = false;
+
       for (let i = 0; i < LL_BUBBLE_COUNT; i++) {
         const b = bubbles[i];
         if (b.active) {
+          anyBubblesActive = true;
           b.age += dt;
-          b.y += b.vy * dt * 10;
 
-          // Dome-shaped expansion as they rise
-          b.x += b.vx * dt * 5;
-          b.z += b.vz * dt * 5;
-
-          // Scale growth then shrinkage before pop
-          const life = Math.min(1, b.y / surfaceY);
-          if (b.y < surfaceY * 0.85) {
-            b.scale = THREE.MathUtils.lerp(0.0005, 0.0025, life);
+          if (b.type === 'riser') {
+            // Fast risers: go mostly straight up with dome spread
+            b.y += b.vy * dt * 12;
+            b.x += b.vx * dt * 3;
+            b.z += b.vz * dt * 3;
+            b.x += Math.sin(t * 10 + b.wobblePhase) * 0.00008;
+            b.z += Math.cos(t * 10 + b.wobblePhase + 1.5) * 0.00008;
+            const lifeFrac = b.age / b.maxAge;
+            if (lifeFrac < 0.8) {
+              b.scale = THREE.MathUtils.lerp(0.00005, 0.0003, lifeFrac / 0.8);
+            } else {
+              b.scale = THREE.MathUtils.lerp(0.0003, 0, (lifeFrac - 0.8) / 0.2);
+            }
+          } else if (b.type === 'churner') {
+            // Churners: go DOWN first, then reverse and rise up
+            const churnTime = b.age / b.maxAge;
+            if (churnTime < 0.3) {
+              // Phase 1: sink down with outward spread
+              b.y += b.vy * dt * 4;
+              b.x += b.vx * dt * 5;
+              b.z += b.vz * dt * 5;
+              // Clamp to tube bottom
+              if (b.y < tubeBottomLocal + 0.001) {
+                b.y = tubeBottomLocal + 0.001;
+                b.vy *= -0.3; // weak bounce
+              }
+            } else if (churnTime < 0.5) {
+              // Phase 2: reverse direction, start rising
+              b.vy = Math.abs(b.vy) + 0.005;
+              b.y += b.vy * dt * 3;
+              b.x += b.vx * dt * 2 + Math.sin(t * 6 + b.wobblePhase) * 0.0003 * dt;
+              b.z += b.vz * dt * 2 + Math.cos(t * 5 + b.wobblePhase) * 0.0003 * dt;
+            } else {
+              // Phase 3: rise to surface like a riser
+              b.y += (0.01 + b.vy * 0.5) * dt * 6;
+              b.x += Math.sin(t * 4 + b.wobblePhase) * 0.0001;
+              b.z += Math.cos(t * 3.5 + b.wobblePhase + 1) * 0.0001;
+            }
+            // Scale
+            if (churnTime < 0.15) {
+              b.scale = THREE.MathUtils.lerp(0.00005, 0.00025, churnTime / 0.15);
+            } else if (churnTime < 0.85) {
+              b.scale = 0.00025;
+            } else {
+              b.scale = THREE.MathUtils.lerp(0.00025, 0, (churnTime - 0.85) / 0.15);
+            }
           } else {
-            b.scale = THREE.MathUtils.lerp(0.0025, 0, (life - 0.85) / 0.15);
+            // Wanderers: dome-shaped drift with slow upward bias
+            const wanderTime = b.age / b.maxAge;
+            const upBias = wanderTime < 0.5 ? 0.25 : THREE.MathUtils.lerp(0.25, 1.0, (wanderTime - 0.5) / 0.5);
+            b.y += b.vy * dt * upBias * 10;
+            b.x += b.vx * dt * 4 + Math.sin(t * 4 + b.wobblePhase) * 0.0003 * dt;
+            b.z += b.vz * dt * 4 + Math.cos(t * 3 + b.wobblePhase + 2) * 0.0003 * dt;
+            if (Math.random() < 0.015) { b.vx *= -0.7; b.vz *= -0.7; }
+            if (wanderTime < 0.2) {
+              b.scale = THREE.MathUtils.lerp(0.00005, 0.0002, wanderTime / 0.2);
+            } else if (wanderTime < 0.85) {
+              b.scale = 0.0002;
+            } else {
+              b.scale = THREE.MathUtils.lerp(0.0002, 0, (wanderTime - 0.85) / 0.15);
+            }
           }
 
-          if (b.y >= surfaceY || b.age > 2.0) {
+          // ── Tube wall containment with velocity reflection ──
+          const tubeHemiCenterY = TUBE_BOTTOM_Y + TUBE_INNER_R;
+          const relY = b.y - tubeHemiCenterY;
+          const innerR = TUBE_INNER_R * 0.93; // slightly inside the wall
+
+          if (relY < 0) {
+            // Hemispherical region: check distance from hemisphere center
+            const dist = Math.sqrt(b.x * b.x + relY * relY + b.z * b.z);
+            if (dist > innerR) {
+              // Push position back inside
+              const pushScale = innerR / dist;
+              b.x *= pushScale;
+              b.z *= pushScale;
+              b.y = tubeHemiCenterY + relY * pushScale;
+
+              // Reflect velocity off hemisphere surface normal
+              // Normal = (bx, relY, bz) normalized (pointing inward from surface)
+              const nx = b.x / innerR;
+              const ny = (b.y - tubeHemiCenterY) / innerR;
+              const nz = b.z / innerR;
+              // v_dot_n = velocity projected onto normal
+              const vDotN = b.vx * nx + b.vy * ny + b.vz * nz;
+              if (vDotN < 0) {
+                // Reflect: v = v - 2*(v·n)*n, with 0.5 energy loss
+                b.vx -= 1.5 * vDotN * nx;
+                b.vy -= 1.5 * vDotN * ny;
+                b.vz -= 1.5 * vDotN * nz;
+              }
+              // Ensure minimum upward velocity to escape the bowl
+              if (b.vy < 0.012) b.vy = 0.012 + Math.random() * 0.005;
+            }
+          } else {
+            // Cylindrical region: simple radius clamp
+            const rr = b.x * b.x + b.z * b.z;
+            if (rr > liquidR * liquidR) {
+              const inv = liquidR / Math.sqrt(rr);
+              b.x *= inv; b.z *= inv;
+              // Reflect horizontal velocity inward
+              const rLen = Math.sqrt(rr);
+              const nx = b.x / rLen;
+              const nz = b.z / rLen;
+              const vDotN = b.vx * nx + b.vz * nz;
+              if (vDotN > 0) {
+                b.vx -= 1.5 * vDotN * nx;
+                b.vz -= 1.5 * vDotN * nz;
+              }
+            }
+          }
+
+          // Pop when reaching surface or max age
+          if (b.y >= surfaceY || b.age > b.maxAge) {
             b.active = false;
           }
 
@@ -1609,6 +1814,7 @@ const LiquidLayer = ({
         }
       }
       bubbleMeshRef.current.instanceMatrix.needsUpdate = true;
+      setHasActiveBubbles?.(anyBubblesActive);
     }
 
     // ── Update splashes ───────────────────────────────────────────────────────
@@ -1689,8 +1895,8 @@ const LiquidLayer = ({
           }
         }
 
-        // Tremor effect during bubbling
-        if (isBubbling) {
+        // Tremor effect during bubbling (only while zinc is still dissolving)
+        if (isBubbling && !znDissolved) {
           const tremor = Math.sin(t * 40 + vx * 200 + vy * 200) * 0.0004;
           totalZ += tremor;
         }
@@ -1704,21 +1910,21 @@ const LiquidLayer = ({
     }
   });
 
-  const isVisible = logicFillTarget.current > 0;
+  // isVisible is now a useState above — triggers re-render when liquid first fills
 
   return (
     <group>
       {/* Bottom hemisphere cap */}
       {isVisible && (
         <mesh ref={capRef} position={[0, TUBE_BOTTOM_Y + offsetAboveSolid + LIQUID_R, 0]} geometry={bottomGeo}>
-          <meshStandardMaterial color={color} transparent opacity={0.22} roughness={0.05} depthWrite={false} />
+          <meshStandardMaterial color={color} transparent opacity={0.15} roughness={0.05} depthWrite={false} />
         </mesh>
       )}
 
       {/* Main cylinder body */}
       {isVisible && (
         <mesh ref={bodyRef} geometry={cylinderGeo}>
-          <meshStandardMaterial color={color} transparent opacity={0.22} roughness={0.05} depthWrite={false} />
+          <meshStandardMaterial color={color} transparent opacity={0.15} roughness={0.05} depthWrite={false} />
         </mesh>
       )}
 
@@ -1757,13 +1963,13 @@ const LiquidLayer = ({
       {/* Gas bubbles */}
       <instancedMesh ref={bubbleMeshRef} args={[sphereGeo, undefined, LL_BUBBLE_COUNT]} frustumCulled={false} raycast={() => null}>
         <meshPhysicalMaterial
-          color="#ffffff"
+          color="#f0f0f0"
           transparent
-          opacity={0.4}
-          roughness={0}
-          metalness={0.2}
-          transmission={0.9}
-          thickness={0.01}
+          opacity={0.7}
+          roughness={0.1}
+          metalness={0.1}
+          transmission={0.5}
+          thickness={0.007}
           depthWrite={false}
         />
       </instancedMesh>
@@ -2029,6 +2235,7 @@ const StirredLayer = ({
   reactionProgress = 0,
   coolingTime = null,
   isHeating = false,
+  hasFinishedReaction = false,
 }: any) => {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const grainRef = useRef<any[] | null>(null);
@@ -2069,8 +2276,9 @@ const StirredLayer = ({
 
     // Đánh thức logic khi có dữ liệu mới
     isLogicDeadRef.current = false;
-    elapsed.current = 0;
-  }, [itemsKey, totalGrams]);
+    // Bỏ qua splash animation nếu phản ứng đã xong
+    elapsed.current = hasFinishedReaction ? 1.5 : 0;
+  }, [itemsKey, totalGrams, hasFinishedReaction]);
 
   // Attribute Data
   const { aRandomData, aColorData } = useMemo(() => {
@@ -2121,6 +2329,8 @@ const StirredLayer = ({
     } else if (elapsed.current < STIR_DURATION + 0.5) {
       const tSmooth = (elapsed.current - STIR_DURATION) / 0.5;
       intensity = 1.0 - (tSmooth * tSmooth * (3 - 2 * tSmooth));
+    } else if (!hasFinishedReaction && !isActivelyAnimating) {
+      isLogicDeadRef.current = true;
     }
 
     const grains = grainRef.current;
@@ -2197,6 +2407,231 @@ const StirredLayer = ({
         <instancedBufferAttribute attach="attributes-aColor" args={[aColorData, 3]} />
       </sphereGeometry>
       <shaderMaterial args={[ChemicalShader]} transparent={true} />
+    </instancedMesh>
+  );
+};
+
+// ─── ZnPelletMesh: Simple mesh pellet that shrinks and dissolves at tube bottom ──
+const ZN_PELLET_RADIUS = 0.004;
+
+const ZnPelletMesh = ({ ox, oz, bottomY, onDissolvedChange }: {
+  ox: number;
+  oz: number;
+  bottomY: number;
+  onDissolvedChange?: (dissolved: boolean) => void;
+}) => {
+  const meshRef = useRef<THREE.Mesh>(null);
+  const startTimeRef = useRef<number | null>(null);
+  const reportedDissolved = useRef(false);
+
+  useFrame((state) => {
+    if (!meshRef.current) return;
+    if (startTimeRef.current === null) startTimeRef.current = state.clock.elapsedTime;
+    const elapsed = state.clock.elapsedTime - startTimeRef.current;
+    // Shrink from 1.0 to 0 over 25 seconds
+    const shrink = Math.max(0, 1.0 - elapsed / 25);
+    meshRef.current.scale.setScalar(shrink);
+    // Keep bottom edge touching the floor: center_y = bottomY + radius * scale
+    meshRef.current.position.y = bottomY + ZN_PELLET_RADIUS * shrink;
+
+    if (shrink <= 0.01 && !reportedDissolved.current) {
+      reportedDissolved.current = true;
+      onDissolvedChange?.(true);
+    }
+    meshRef.current.visible = shrink > 0.01;
+  });
+
+  return (
+    <mesh ref={meshRef} position={[ox, bottomY + ZN_PELLET_RADIUS, oz]}>
+      <dodecahedronGeometry args={[ZN_PELLET_RADIUS, 1]} />
+      <meshStandardMaterial
+        color="#9ca3af"
+        metalness={0.7}
+        roughness={0.3}
+      />
+    </mesh>
+  );
+};
+
+// ─── H2GasEmitter: White smoke/vapor for H2 gas from Zn + HCl reaction ────────
+const H2_GAS_COUNT = 150;
+const H2_MAX_SCALE = 0.0022;
+const H2_UP_SPEED = 0.025;
+const H2_DELAY = 1.5; // Reduced from 3.0 seconds delay before H2 appears
+
+const _h2Dummy = new THREE.Object3D();
+
+interface H2Particle {
+  x: number; y: number; z: number;
+  phase: number;
+  speedMult: number;
+  age: number;
+  maxAge: number;
+  rotX: number; rotY: number; rotZ: number;
+  rotSpeedX: number; rotSpeedY: number;
+}
+
+const H2GasEmitter = ({ liquidSurfaceY, tubeTopY, tubeR, active = true }: {
+  liquidSurfaceY: number;
+  tubeTopY: number;
+  tubeR: number;
+  active?: boolean;
+}) => {
+  const meshRef = useRef<THREE.InstancedMesh>(null);
+  const matRef = useRef<THREE.MeshBasicMaterial>(null);
+  const mountTimeRef = useRef<number | null>(null);
+
+  const particles = useMemo<H2Particle[]>(() => {
+    const arr: H2Particle[] = [];
+    for (let i = 0; i < H2_GAS_COUNT; i++) {
+      const maxA = 2.0 + Math.random() * 2.0;
+      arr.push({
+        x: 0, y: -999, z: 0,
+        phase: Math.random() * Math.PI * 2,
+        speedMult: 0.6 + Math.random() * 0.8,
+        age: Math.random() * maxA, // staggered initial age so they respawn gradually
+        maxAge: maxA,
+        rotX: Math.random() * Math.PI * 2,
+        rotY: Math.random() * Math.PI * 2,
+        rotZ: Math.random() * Math.PI * 2,
+        rotSpeedX: (Math.random() - 0.5) * 0.3,
+        rotSpeedY: (Math.random() - 0.5) * 0.3,
+      });
+    }
+    return arr;
+  }, []);
+
+  const resetH2Particle = (p: H2Particle, startY: number) => {
+    const theta = Math.random() * Math.PI * 2;
+    const r = Math.random() * tubeR * 0.7;
+    p.x = Math.cos(theta) * r;
+    p.y = startY;
+    p.z = Math.sin(theta) * r;
+    p.phase = Math.random() * Math.PI * 2;
+    p.speedMult = 0.6 + Math.random() * 0.8;
+    p.age = 0;
+    p.maxAge = 2.0 + Math.random() * 2.0;
+    p.rotSpeedX = (Math.random() - 0.5) * 0.3;
+    p.rotSpeedY = (Math.random() - 0.5) * 0.3;
+  };
+
+  useFrame((state, delta) => {
+    if (!meshRef.current || !matRef.current) return;
+
+    const dt = Math.min(delta, 0.05);
+    const t = state.clock.elapsedTime;
+
+    // Track mount time for 3s delay
+    if (mountTimeRef.current === null) mountTimeRef.current = t;
+    const elapsed = t - mountTimeRef.current;
+
+    // Don't show anything for first 3 seconds
+    if (elapsed < H2_DELAY) {
+      if (meshRef.current.visible) meshRef.current.visible = false;
+      return;
+    }
+    if (!meshRef.current.visible) meshRef.current.visible = true;
+
+    // Opacity ramps up from 0 to 0.15 over 2 seconds after delay
+    const fadeIn = Math.min(1, (elapsed - H2_DELAY) / 2.0);
+    // Fade out when zinc is fully dissolved (active = false)
+    const fadeOutTarget = active ? 1.0 : 0.0;
+    const currentOpacity = matRef.current.opacity;
+    const targetOpacity = fadeIn * 0.15 * fadeOutTarget;
+    matRef.current.opacity = THREE.MathUtils.lerp(currentOpacity, targetOpacity, dt * 3);
+
+    // Stop respawning when inactive and opacity is very low
+    if (!active && matRef.current.opacity < 0.005) {
+      meshRef.current.visible = false;
+      return;
+    }
+    // Also skip respawning dead particles when inactive
+    const shouldRespawn = active;
+
+    // Height range for particles: from liquid surface — allow smoke to rise above tube mouth
+    const maxHeight = (tubeTopY - liquidSurfaceY) * 1.5;
+
+    for (let i = 0; i < H2_GAS_COUNT; i++) {
+      const p = particles[i];
+
+      p.age += dt;
+      if (p.age >= p.maxAge) {
+        if (shouldRespawn) {
+          resetH2Particle(p, 0);
+        } else {
+          // Don't respawn — hide this particle
+          _h2Dummy.scale.setScalar(0);
+          _h2Dummy.updateMatrix();
+          meshRef.current.setMatrixAt(i, _h2Dummy.matrix);
+          continue;
+        }
+      }
+
+      const lifePct = p.age / p.maxAge;
+
+      // Rise up — but cap at tube mouth height
+      const upV = H2_UP_SPEED * p.speedMult * (1.0 - 0.4 * lifePct);
+      p.y += upV * dt;
+      if (p.y > maxHeight) p.y = maxHeight;
+
+      // Horizontal drift
+      const convectAmp = 0.0006;
+      p.x += Math.sin(t * 1.5 + p.phase) * convectAmp * dt;
+      p.z += Math.cos(t * 1.2 + p.phase + 1.3) * convectAmp * dt;
+
+      // Clamp inside tube radius
+      const rr = p.x * p.x + p.z * p.z;
+      const innerR = tubeR - 0.001;
+      if (rr > innerR * innerR) {
+        const inv = innerR / Math.sqrt(rr);
+        p.x *= inv;
+        p.z *= inv;
+      }
+
+      // Scale lifecycle: grow → hold → fade
+      let scalePct: number;
+      if (lifePct < 0.15) {
+        const tt = lifePct / 0.15;
+        scalePct = tt * tt * (3 - 2 * tt);
+      } else if (lifePct < 0.65) {
+        scalePct = 1.0;
+      } else {
+        const tt = (lifePct - 0.65) / 0.35;
+        scalePct = 1.0 - tt * tt * (3 - 2 * tt);
+      }
+      const s = H2_MAX_SCALE * scalePct;
+
+      // Tumble
+      p.rotX += p.rotSpeedX * dt;
+      p.rotY += p.rotSpeedY * dt;
+
+      _h2Dummy.position.set(p.x, p.y, p.z);
+      _h2Dummy.rotation.set(p.rotX, p.rotY, p.rotZ);
+      _h2Dummy.scale.setScalar(s);
+      _h2Dummy.updateMatrix();
+      meshRef.current.setMatrixAt(i, _h2Dummy.matrix);
+    }
+
+    meshRef.current.instanceMatrix.needsUpdate = true;
+  });
+
+  return (
+    <instancedMesh
+      ref={meshRef}
+      args={[undefined, undefined, H2_GAS_COUNT]}
+      position={[0, liquidSurfaceY, 0]}
+      raycast={() => null}
+      frustumCulled={false}
+      visible={false}
+    >
+      <dodecahedronGeometry args={[1, 0]} />
+      <meshBasicMaterial
+        ref={matRef}
+        color="#ffffff"
+        transparent
+        opacity={0}
+        depthWrite={false}
+      />
     </instancedMesh>
   );
 };
