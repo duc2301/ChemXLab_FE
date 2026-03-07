@@ -240,10 +240,14 @@ export const useExperimentStore = create<ExperimentStore>((set, get) => ({
 
       const newProgress = new Map(state.reactionProgress);
       newProgress.set(tubeId, 0);
+      
+      const newStirredTubes = state.stirredTubes;
+      delete newStirredTubes[tubeId];
 
       return {
         testTubeContents: newContents,
         reactionProgress: newProgress,
+        stirredTubes: newContents 
       };
     }),
 
