@@ -1,6 +1,8 @@
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp } from 'lucide-react';
 import { useState } from 'react';
 import type { GuideStep } from '../services/equipmentRegistry';
+import { GUIDED_EXPERIMENTS } from '../services/equipmentRegistry';
+import type { GuideObservation, GuideStep } from '../services/equipmentRegistry';
 import { getEquipmentById, GUIDED_EXPERIMENTS } from '../services/equipmentRegistry';
 import { useExperimentStore } from '../services/experimentStore';
 import { generateUUID } from '../services/idGenerator';
@@ -301,21 +303,24 @@ export const ExperimentGuidePanel = ({ experimentId }: ExperimentGuidePanelProps
                                                     transition: 'all 0.25s',
                                                 }}>
                                                     {step.icon}
-                                                </div>
-                                                <span style={{
-                                                    flex: 1,
-                                                    fontSize: 13,
-                                                    fontWeight: 700,
-                                                    color: isActive ? '#93c5fd' : '#cbd5e1',
-                                                }}>
-                                                    {step.title}
-                                                </span>
-                                                {isExpanded
-                                                    ? <ChevronUp size={16} color="#64748b" />
-                                                    : <ChevronDown size={16} color="#64748b" />
-                                                }
-                                            </button>
-
+                            {/* Các bước */}
+                            <div>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                                    <SectionLabel>Các bước tiến hành</SectionLabel>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+                                        <div style={{ width: 56, height: 3, borderRadius: 99, background: border, overflow: 'hidden' }}>
+                                            <div style={{
+                                                height: '100%', borderRadius: 99,
+                                                width: `${((activeStep + 1) / guide.steps.length) * 100}%`,
+                                                background: `linear-gradient(90deg, ${accentB}, ${accent})`,
+                                                transition: 'width 0.35s ease',
+                                            }} />
+                                        </div>
+                                        <span style={{ color: textMuted, fontSize: 10, fontWeight: 600 }}>
+                                            {activeStep + 1}/{guide.steps.length}
+                                        </span>
+                                    </div>
+                                </div>
                                             {isExpanded && (
                                                 <div style={{ padding: '0 16px 16px' }}>
                                                     <p style={{
@@ -324,6 +329,23 @@ export const ExperimentGuidePanel = ({ experimentId }: ExperimentGuidePanelProps
                                                         lineHeight: 1.7,
                                                         margin: '0 0 10px',
                                                         paddingLeft: 50,
+                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                    {guide.steps.map((step, idx) => {
+                                        const expanded = expandedSteps.has(idx);
+                                        const active = activeStep === idx;
+                                        const done = idx < activeStep;
+                                        return (
+                                            <div key={idx} style={{ display: 'flex', gap: 0 }}>
+                                                {/* Timeline */}
+                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 36, flexShrink: 0 }}>
+                                                    <div style={{
+                                                        width: 26, height: 26, borderRadius: 8, flexShrink: 0, marginTop: 6,
+                                                        background: active ? `linear-gradient(135deg, ${accentB}, ${accent})`
+                                                            : done ? 'rgba(52,211,153,0.12)' : bgSurface,
+                                                        border: `1.5px solid ${active ? accent : done ? green : border}`,
+                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                        boxShadow: active ? `0 0 0 3px rgba(0,85,160,0.2)` : 'none',
+                                                        transition: 'all 0.2s',
                                                     }}>
                                                         {step.content}
                                                     </p>
@@ -430,7 +452,72 @@ export const ExperimentGuidePanel = ({ experimentId }: ExperimentGuidePanelProps
                             </div>
                         </div>
                     )}
-
+                            {showObservations && (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 12 }}>
+                                    {guide.observations.map((obs: GuideObservation, index: number) => (
+                                        <div
+                                            key={index}
+                                            style={{
+                                                padding: '14px 16px',
+                                                borderRadius: 12,
+                                                background: 'rgba(255,255,255,0.03)',
+                                                border: '1px solid rgba(255,255,255,0.08)',
+                                            }}
+                                        >
+                                            <p style={{ color: '#e2e8f0', fontSize: 13, lineHeight: 1.6, margin: '0 0 10px' }}>
+                                                <span style={{
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    width: 22,
+                                                    height: 22,
+                                                    borderRadius: 7,
+                                                    background: 'linear-gradient(135deg, #8b5cf6, #a78bfa)',
+                                                    color: 'white',
+                                                    fontSize: 11,
+                                                    fontWeight: 700,
+                                                    marginRight: 8,
+                                                    verticalAlign: 'middle',
+                                                }}>
+                                                    {index + 1}
+                                                </span>
+                                                {obs.question}
+                                            </p>
+                                            {revealedAnswers.has(index) ? (
+                                                <div style={{
+                                                    padding: '10px 14px',
+                                                    borderRadius: 10,
+                                                    background: 'rgba(16, 185, 129, 0.08)',
+                                                    borderLeft: '3px solid #34d399',
+                                                }}>
+                                                    <p style={{ color: '#6ee7b7', fontSize: 13, margin: 0, lineHeight: 1.5 }}>
+                                                        ✅ {obs.answer}
+                                                    </p>
+                                                </div>
+                                            ) : (
+                                                <button
+                                                    onClick={() => toggleAnswer(index)}
+                                                    style={{
+                                                        padding: '6px 14px',
+                                                        borderRadius: 8,
+                                                        background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.1))',
+                                                        border: '1px solid rgba(99, 102, 241, 0.3)',
+                                                        color: '#a5b4fc',
+                                                        fontSize: 12,
+                                                        fontWeight: 600,
+                                                        cursor: 'pointer',
+                                                        transition: 'all 0.2s',
+                                                    }}
+                                                    onMouseEnter={e => {
+                                                        e.currentTarget.style.background = 'linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(139, 92, 246, 0.15))';
+                                                    }}
+                                                    onMouseLeave={e => {
+                                                        e.currentTarget.style.background = 'linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.1))';
+                                                    }}
+                                                >
+                                                    👁 Xem đáp án
+                                                </button>
+                                            )}
                     {/* ── TOOLS TAB ── */}
                     {activeTab === 'tools' && (
                         <div className="egp-in" style={{ padding: '0 18px 32px', display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -496,6 +583,23 @@ export const ExperimentGuidePanel = ({ experimentId }: ExperimentGuidePanelProps
                                     })}
                                 </div>
                             </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                {guide.safetyNotes.map((note: string, index: number) => (
+                                    <div
+                                        key={index}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'flex-start',
+                                            gap: 8,
+                                            padding: '8px 10px',
+                                            borderRadius: 8,
+                                            background: 'rgba(239, 68, 68, 0.05)',
+                                        }}
+                                    >
+                                        <span style={{ color: '#f87171', fontSize: 14, flexShrink: 0, marginTop: 1 }}>•</span>
+                                        <p style={{ color: '#d1d5db', fontSize: 12, lineHeight: 1.6, margin: 0 }}>{note}</p>
+                                    </div>
+                                ))}
 
                             <Divider />
 
