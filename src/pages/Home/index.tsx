@@ -1,370 +1,319 @@
-import {
-  ArrowRight, Box, CheckCircle2, FlaskConical,
-  Globe2, Layers, Play, ShieldCheck, Zap
-} from "lucide-react";
+import { ArrowRight, FlaskConical, Play, Star, Users } from "lucide-react";
 import { Link } from "react-router-dom";
-import MoleculeViewer from "../../components/ThreeD/MoleculeViewer";
-import Mascot5 from "../../shared/assets/mascot/5.png";
-import Mascot6 from "../../shared/assets/mascot/6.png";
+
+import Mascot7 from "../../shared/assets/mascot/7.png";
+import Mascot8 from "../../shared/assets/mascot/8.png";
+import Mascot9 from "../../shared/assets/mascot/9.png";
 
 const HomePage = () => {
   return (
-    <div className="min-h-screen bg-white font-sans text-slate-900">
+    <div className="min-h-screen bg-white font-sans text-slate-900 overflow-x-hidden">
 
-      {/* --- 1. HERO SECTION --- */}
-      <section className="relative pt-16 pb-12 lg:pt-24 lg:pb-16 overflow-hidden bg-[#0F172A]">
-        {/* Abstract Background Shapes */}
-        <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
-          <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-[120px] animate-pulse"></div>
-          <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-cyan-500/10 rounded-full blur-[100px]"></div>
-        </div>
+      {/* ══════════════════════════════════════════
+          1. HERO SECTION  
+          Centered text, mascot overlaid right,
+          soft lavender-blue background glow
+      ══════════════════════════════════════════ */}
+      <section className="relative pt-28 pb-14 lg:pt-36 lg:pb-20 overflow-hidden bg-white">
 
         <div className="container mx-auto px-6 relative z-10">
-          <div className="flex flex-col lg:flex-row items-center justify-between gap-8 xl:gap-12 relative">
 
-            {/* Left Content Area */}
-            <div className="w-full lg:w-[60%] xl:w-[60%] space-y-10 z-30 relative shrink-0">
+          {/* ── Main layout: text centered, mascot absolute right ── */}
+          <div className="relative">
+            {/* Mascot – positioned absolute on the right on desktop */}
+            <div className="hidden lg:block absolute right-0 top-1/2 -translate-y-1/2 w-[380px] xl:w-[440px] z-0">
+            </div>
 
-              {/* Mascot & Text container */}
-              <div className="flex flex-col lg:flex-row items-center lg:items-center gap-6 xl:gap-8">
-                {/* Mascot 5 - Positioned on the left of the text */}
-                <div className="hidden lg:block w-[180px] xl:w-[260px] shrink-0 z-20 relative">
-                  <img src={Mascot5} alt="Mascot Hóa học" className="w-full h-auto drop-shadow-2xl hover:scale-105 transition-transform duration-500 object-contain" />
-                </div>
-
-                {/* Title and Description */}
-                <div className="space-y-6 text-center lg:text-left">
-                  <h1 className="text-5xl lg:text-6xl xl:text-7xl font-extrabold text-white leading-tight tracking-tight uppercase">
-                    KHÁM PHÁ <br />
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">
-                      CHEMXLAB
-                    </span>
-                  </h1>
-
-                  <p className="text-lg text-slate-300 max-w-xl mx-auto lg:mx-0 leading-relaxed font-medium">
-                    ChemXLab giúp bạn mô phỏng thí nghiệm Hóa học chỉ với vài cú nhấp chuột — trực quan, sáng tạo và đầy cảm hứng.
-                  </p>
-                </div>
+            {/* Text – centered */}
+            <div className="max-w-2xl mx-auto text-center relative z-10 space-y-5"
+              style={{ background: "radial-gradient(ellipse at center, rgba(56,189,248,0.1) 30%, rgba(56,189,248,0.1) 35%, transparent 45%)" }}
+            >
+              {/* Eyebrow badge */}
+              <div className="inline-flex items-center gap-2 bg-white backdrop-blur border border-blue-100 text-blue-600 text-xs font-semibold px-4 py-1.5 rounded-full shadow-sm">
+                Nền tảng học hóa học số một tại Việt Nam
               </div>
 
-              <div className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start">
+              {/* Heading */}
+              <h1 className="text-3xl sm:text-4xl md:text-5xl xl:text-[3.4rem] font-extrabold text-[#1e2a4a] leading-[1.15] tracking-tight">
+                Phòng thí nghiệm{" "}
+                <br className="hidden md:block" />
+                <span className="relative text-sky-600">
+                  hóa học ảo
+                  {/* Small blue glow behind "ảo" */}
+                  <span
+                    className="pointer-events-none absolute -inset-x-8 -inset-y-4 -z-10 rounded-full blur-2xl"
+                  />
+                </span>{" "}
+                của bạn
+              </h1>
+
+              {/* Subtitle */}
+              <p className="text-[15px] lg:text-base text-slate-500 max-w-lg mx-auto leading-relaxed font-bold">
+                ChemXLab giúp bạn mô phỏng thí nghiệm Hóa học chỉ với vài cú nhấp chuột — trực quan, sáng tạo và đầy cảm hứng.
+              </p>
+
+              {/* Social proof: avatars + counter */}
+              <div className="flex items-center justify-center gap-3 pt-1">
+                <div className="flex items-center -space-x-2.5">
+                  {[
+                    { src: "https://upxptuaomuqukfwvtepi.supabase.co/storage/v1/object/public/avatars/avatars/6d2c7bc6-7931-4e6e-8f73-6675239ff25d_1772243682818_470670641_2295482670829220_492093017164720489_n.jpg", name: "Huyền" },
+                    { src: "https://lh3.googleusercontent.com/a/ACg8ocJO4bW8S0AbEUb3TPF8U88qO9FqXaAQadWnDsra0fX0kRKRlVl2yw=s96-c", name: "Khánh" },
+                    { src: "https://lh3.googleusercontent.com/a/ACg8ocKfFgJLGz4nGRf8QGNH_ZG_qzY2DD7yb0j-NO5lHqEW1O47IH8h=s96-c", name: "Nam" },
+                  ].map((user, i) => (
+                    <img
+                      key={i}
+                      src={user.src}
+                      alt={user.name}
+                      title={user.name}
+                      className="w-9 h-9 rounded-full border-2 border-white object-cover shadow-sm hover:scale-110 hover:z-10 transition-transform cursor-pointer"
+                    />
+                  ))}
+                </div>
+                <span className="text-lg font-extrabold text-[#1e2a4a]">+125</span>
+                <span className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider leading-tight text-left">
+                  Người dùng<br />tham gia trải nghiệm
+                </span>
+              </div>
+
+              {/* CTA Buttons */}
+              <div className="flex flex-col sm:flex-row items-center gap-3 justify-center pt-1">
                 <Link
                   to="/labtest"
-                  className="w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition-all shadow-[0_0_20px_rgba(37,99,235,0.4)] hover:shadow-[0_0_30px_rgba(37,99,235,0.6)] flex items-center justify-center gap-2 group"
+                  className="flex items-center gap-2 bg-linear-to-r from-sky-500 to-sky-700 hover:from-sky-600 hover:to-sky-700 text-white font-semibold px-7 py-3 rounded-full text-sm transition-all shadow-lg shadow-blue-500/25 hover:-translate-y-0.5 "
                 >
-                  <FlaskConical className="w-5 h-5 group-hover:rotate-12 transition-transform" />
-                  Bắt đầu thí nghiệm
+                  Khám phá ngay
+                  <ArrowRight size={15} />
                 </Link>
                 <Link
                   to="/about"
-                  className="w-full sm:w-auto px-8 py-4 bg-slate-800/50 hover:bg-slate-800 text-white border border-slate-700 font-bold rounded-xl transition-all flex items-center justify-center gap-2 backdrop-blur-md"
+                  className="flex items-center gap-2 text-slate-600 hover:text-blue-600 font-medium px-6 py-3 rounded-full text-sm transition-all border border-slate-200 bg-white hover:border-blue-200 hover:bg-blue-50/50"
                 >
-                  <Play className="w-5 h-5 fill-current" />
-                  Xem Video giới thiệu
+                  <Play size={13} className="fill-current" />
+                  Xem Demo
                 </Link>
-              </div>
-
-              <div className="flex items-center justify-center lg:justify-start gap-8 pt-4 text-slate-400 text-sm font-medium">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-green-500" /> Miễn phí sử dụng
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-green-500" /> Không cần cài đặt
-                </div>
-              </div>
-            </div>
-
-            {/* Right Visual - 3D Molecule Viewer */}
-            <div className="w-full lg:w-[35%] xl:w-[35%] relative perspective-1000">
-              <div className="relative w-full aspect-square max-w-[450px] xl:max-w-[550px] mx-auto lg:ml-auto lg:mr-0 z-10">
-                {/* Main Glowing Circle */}
-                <div className="absolute inset-0 bg-gradient-to-tr from-blue-600/30 to-cyan-500/20 rounded-full blur-3xl"></div>
-
-                {/* Clean 3D Viewer Frame */}
-                <div className="absolute inset-4 md:inset-8 bg-slate-800/60 backdrop-blur-xl border border-slate-600/50 rounded-3xl shadow-2xl overflow-hidden">
-                  <MoleculeViewer modelPath="/models/elements/element_006_carbon.glb" autoRotate={true} />
-                </div>
               </div>
             </div>
 
           </div>
+
         </div>
       </section>
 
-      {/* --- 2. STATS STRIP --- */}
-      <div className="border-y border-slate-100 bg-white shadow-sm relative z-20">
-        <div className="container mx-auto px-6 py-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+      {/* ══════════════════════════════════════════
+          2. STATS STRIP – Pill / Capsule shape
+      ══════════════════════════════════════════ */}
+      <section className="bg-white py-8">
+        <div className="mx-auto">
+          <div className="w-full flex flex-col sm:flex-row items-center bg-sky-50 px-4 sm:px-8 py-5 sm:py-7 gap-4 sm:gap-0 sm:divide-x divide-sky-200">
             {[
-              { label: "Thí nghiệm có sẵn", value: "300+" },
-              { label: "Người dùng hoạt động", value: "10k+" },
-              { label: "Trường học tin dùng", value: "50+" },
-              { label: "Đánh giá tích cực", value: "4.9/5" },
-            ].map((stat, idx) => (
-              <div key={idx}>
-                <div className="text-3xl font-extrabold text-slate-900 mb-1">{stat.value}</div>
-                <div className="text-sm font-medium text-slate-500 uppercase tracking-wide">{stat.label}</div>
+              { icon: <Users size={18} className="text-sky-500" />, value: "10,000+", label: "Bạn học tham gia" },
+              { icon: <FlaskConical size={18} className="text-sky-500" />, value: "500+", label: "Thí nghiệm thú vị" },
+              { icon: <Star size={18} className="text-sky-500" />, value: "4.9/5", label: "Đánh giá yêu thích" },
+            ].map((s, i) => (
+              <div key={i} className="flex items-center justify-center gap-3 flex-1 px-4">
+                <div className="w-10 h-10 flex items-center justify-center shrink-0">{s.icon}</div>
+                <div>
+                  <div className="text-lg font-extrabold text-sky-600 leading-tight">{s.value}</div>
+                  <div className="text-[11px] text-slate-600 font-medium">{s.label}</div>
+                </div>
               </div>
             ))}
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* --- 3. BENTO GRID FEATURES --- */}
-      <section className="py-24 bg-slate-50">
+      {/* ══════════════════════════════════════════
+          3. HOW IT WORKS
+      ══════════════════════════════════════════ */}
+      <section className="py-20 bg-white">
         <div className="container mx-auto px-6">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <h2 className="text-blue-600 font-bold tracking-widest uppercase text-sm mb-3">Tại sao chọn ChemXLab?</h2>
-            <h3 className="text-4xl font-extrabold text-slate-900 mb-4">Nền tảng giáo dục <br />cho kỷ nguyên số</h3>
-            <p className="text-slate-600 text-lg">
-              Giải pháp toàn diện thay thế phòng thí nghiệm truyền thống, giúp việc dạy và học hóa học trở nên an toàn, tiết kiệm và hiệu quả hơn.
-            </p>
+
+          {/* Section header */}
+          <div className="text-center mb-16 space-y-2">
+            <p className="text-blue-500 font-semibold text-xs uppercase tracking-[0.2em]">Dễ dàng và thuận lợi</p>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-[#1e2a4a]">Cách thức hoạt động</h2>
+            <p className="text-slate-500 max-w-md mx-auto text-sm">Chỉ 3 bước đơn giản, không cần cài đặt gì cả</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Card 1: Safety (Wide) */}
-            <div className="md:col-span-2 bg-white rounded-3xl p-8 border border-slate-100 shadow-sm hover:shadow-xl transition-all group overflow-hidden relative">
-              <div className="relative z-10 w-full md:w-2/3">
-                <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center text-green-600 mb-6">
-                  <ShieldCheck size={28} />
+          <div className="space-y-20">
+            {/* Step 01 */}
+            <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
+              <div className="w-full lg:w-1/2 space-y-4">
+                <span className="text-5xl sm:text-[72px] font-black text-blue-100/80 leading-none select-none block">01</span>
+                <h3 className="text-2xl font-bold text-[#1e2a4a] -mt-5">Chọn thí nghiệm từ thư viện</h3>
+                <p className="text-slate-500 leading-relaxed text-sm">
+                  Truy cập kho hàng <strong className="text-slate-700">500+ bài thí nghiệm</strong> được phân loại theo lớp học và chủ đề. Tìm phản ứng phù hợp, đơn giản chỉ với vài cú chạm.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <span className="px-3 py-1 bg-sky-100 text-blue-700 text-xs font-semibold rounded-full ">Lớp 8 - 9</span>
+                  <span className="px-3 py-1 bg-purple-100 text-violet-600 text-xs font-semibold rounded-full ">Lớp 10 - 11</span>
+                  <span className="px-3 py-1 bg-rose-100 text-rose-600 text-xs font-semibold rounded-full ">Lớp 12</span>
                 </div>
-                <h4 className="text-2xl font-bold text-slate-900 mb-3">An toàn tuyệt đối</h4>
-                <p className="text-slate-600 leading-relaxed mb-6">
-                  Loại bỏ hoàn toàn rủi ro cháy nổ, hóa chất độc hại. Học sinh có thể tự do thử nghiệm, sai sót và học hỏi trong môi trường giả lập an toàn 100%.
+              </div>
+              <div className="w-full lg:w-1/2 flex flex-col items-center gap-5">
+                <img src={Mascot7} alt="ChemXLab mascot" className="w-[260px] md:w-[320px] h-auto object-contain drop-shadow-xl hover:scale-105 transition-transform duration-500" />
+                <Link
+                  to="/labtest"
+                  className="inline-flex items-center gap-2 bg-linear-to-r from-sky-500 to-sky-700 hover:from-sky-600 hover:to-sky-800 text-white font-semibold px-6 py-3 rounded-full text-sm transition-all shadow-md shadow-sky-400/25 hover:-translate-y-0.5"
+                >
+                  Vào phòng thí nghiệm ngay
+                  <ArrowRight size={16} />
+                </Link>
+              </div>
+            </div>
+
+            {/* Step 02 */}
+            <div className="flex flex-col lg:flex-row-reverse items-center gap-10 lg:gap-16">
+              <div className="w-full lg:w-1/2 space-y-4">
+                <span className="text-5xl sm:text-[72px] font-black text-blue-100/80 leading-none select-none block">02</span>
+                <h3 className="text-2xl font-bold text-[#1e2a4a] -mt-5">Tương tác với mô hình 3D</h3>
+                <p className="text-slate-500 leading-relaxed text-sm">
+                  Kéo, thả, xoay mô hình phân tử 3D. Quan sát phản ứng xảy ra ngay trong phòng thí nghiệm ảo như thật với hiệu ứng vật lý chính xác.
                 </p>
               </div>
-              {/* Decorative */}
-              <div className="absolute bottom-0 right-0 w-1/3 h-full bg-gradient-to-l from-green-50 to-transparent hidden md:block"></div>
-              <ShieldCheck className="absolute -bottom-10 -right-10 w-64 h-64 text-green-50 group-hover:text-green-100 transition-colors" />
+              <div className="w-full lg:w-1/2 flex justify-center">
+                <div className="w-full max-w-full rounded-2xl overflow-hidden shadow-xl border border-slate-100">
+                  <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+                    <iframe
+                      src="https://drive.google.com/file/d/17leoGdPdiLI99hp_AMrerqkqOCHZk3tT/preview"
+                      allow="autoplay"
+                      allowFullScreen
+                      className="absolute inset-0 w-full h-full"
+                      title="Demo tương tác 3D"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
 
-            {/* Card 2: Cost (Tall) */}
-            <div className="md:row-span-2 bg-[#0B3B69] rounded-3xl p-8 text-white shadow-xl flex flex-col relative overflow-hidden group">
-              <div className="relative z-10">
-                <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center text-white mb-6 backdrop-blur">
-                  <Globe2 size={28} />
-                </div>
-                <h4 className="text-2xl font-bold mb-3">Truy cập mọi lúc</h4>
-                <p className="text-blue-100 leading-relaxed mb-6">
-                  Không giới hạn thời gian và địa điểm. Học sinh có thể thực hành tại nhà, trên máy tính bảng hoặc laptop cá nhân.
+            {/* Step 03 */}
+            <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
+              <div className="w-full lg:w-1/2 space-y-4">
+                <span className="text-5xl sm:text-[72px] font-black text-blue-100/80 leading-none select-none block">03</span>
+                <h3 className="text-2xl font-bold text-[#1e2a4a] -mt-5">Nhận kết quả và giải thích</h3>
+                <p className="text-slate-500 leading-relaxed text-sm">
+                  Hệ thống tự động cung cấp chi tiết hiện tượng hóa học. Học sinh hiểu rõ nguyên lý sau mỗi phản ứng, giúp học môn hóa thật chắc.
                 </p>
               </div>
-              <div className="mt-auto relative h-48 w-full bg-blue-500/20 rounded-xl border border-blue-400/30 overflow-hidden">
-                {/* Fake Map/Globe UI */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Globe2 className="w-32 h-32 text-blue-400/50 animate-pulse" />
+              <div className="w-full lg:w-1/2 flex justify-center">
+                <div className="w-full max-w-full rounded-2xl overflow-hidden shadow-xl border border-slate-100">
+                  <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+                    <iframe
+                      src="https://drive.google.com/file/d/1Bw1Azf_r7uncF4cYSyMUiqUwxZNgg4Em/preview"
+                      allow="autoplay"
+                      allowFullScreen
+                      className="absolute inset-0 w-full h-full"
+                      title="Demo kết quả thí nghiệm"
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-
-            {/* Card 3: 3D (Normal) */}
-            <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm hover:shadow-xl transition-all group">
-              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 mb-6">
-                <Box size={28} />
-              </div>
-              <h4 className="text-xl font-bold text-slate-900 mb-2">Mô hình 3D</h4>
-              <p className="text-slate-600">
-                Quan sát cấu trúc phân tử từ mọi góc độ với độ chi tiết cực cao.
-              </p>
-            </div>
-
-            {/* Card 4: Interactive (Normal) */}
-            <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm hover:shadow-xl transition-all group">
-              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center text-purple-600 mb-6">
-                <Zap size={28} />
-              </div>
-              <h4 className="text-xl font-bold text-slate-900 mb-2">Phản ứng tức thì</h4>
-              <p className="text-slate-600">
-                Kết quả thí nghiệm hiển thị ngay lập tức theo thời gian thực.
-              </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* --- 4. VISUAL LIBRARY / CAROUSEL --- */}
-      <section className="py-24 bg-white border-t border-slate-100">
+      {/* ══════════════════════════════════════════
+          4. LIBRARY SECTION
+      ══════════════════════════════════════════ */}
+      <section className="py-20 bg-[#f7f8fa]">
         <div className="container mx-auto px-6">
-          <div className="flex flex-col md:flex-row items-center gap-8 mb-12 relative w-full justify-between">
-            <div className="flex items-center gap-6 z-20 relative">
-              {/* Mascot 6 - Đã bỏ absolute và -ml-24, thêm shrink-0 để không bị bóp méo */}
-              <div className="hidden lg:block w-[150px] xl:w-[180px] shrink-0">
-                <img src={Mascot6} alt="Mascot" className="w-full h-auto drop-shadow-2xl hover:scale-105 transition-transform duration-500" />
-              </div>
+          <div className="text-center mb-3 space-y-2">
+            <p className="text-sky-500 font-semibold text-xs uppercase tracking-[0.2em]">Xem thêm nhiều hơn nữa</p>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-[#1e2a4a]">
+              Thư viện thí nghiệm <span className="text-sky-600">không giới hạn</span>
+            </h2>
+            <p className="text-slate-500 text-sm max-w-md mx-auto">Không giới hạn bài thí nghiệm có thể học, được cập nhật liên tục.</p>
+          </div>
 
-              {/* Phần chữ - Đã bỏ lg:ml-28 vì không cần bù trừ khoảng trống cho absolute nữa */}
-              <div className="max-w-xl text-center md:text-left z-10">
-                <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-4">Thư viện thí nghiệm phong phú</h2>
-                <p className="text-slate-600 text-lg">Hàng trăm mô hình và bài thí nghiệm được cập nhật liên tục theo chương trình giáo dục mới.</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-10">
+            {/* Card 1 */}
+            <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border border-slate-100/80">
+              <div className="h-52 bg-linear-to-br from-violet-50 to-blue-50 relative flex items-center justify-center overflow-hidden">
+                <iframe src="https://drive.google.com/file/d/1HOiDW0xomJeXph71lW2iMhOQIF0ryHWr/preview" width="640" height="480"></iframe>
+              </div>
+              <div className="p-4">
+                <h4 className="font-bold text-slate-800 text-sm mb-1">Bảng tuần hoàn hóa học</h4>
+                <p className="text-slate-500 text-xs mb-3 leading-relaxed">Khám phá các nguyên tố hóa học và cấu tạo nguyên tử</p>
+                <div className="flex items-center justify-between text-xs text-slate-400">
+                  <span className="flex items-center gap-1"><Star size={11} className="fill-yellow-400 text-yellow-400" />4.8</span>
+                  <Link to="/labtest" className="text-blue-500 font-semibold hover:underline">Xem ngay →</Link>
+                </div>
               </div>
             </div>
-
-            <Link to="/library" className="hidden md:flex items-center gap-2 text-blue-600 font-bold hover:gap-4 transition-all uppercase text-sm tracking-wider z-20 shrink-0">
-              Xem tất cả <ArrowRight size={20} />
-            </Link>
-          </div>
-          {/* Gallery Grid - 2 Cards: Periodic Table & Chemistry Library */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-
-            {/* Card 1: Bảng Tuần hoàn - Element grid pattern */}
-            <Link
-              to="/periodic-table"
-              className="group relative h-96 rounded-3xl overflow-hidden cursor-pointer block shadow-xl shadow-purple-500/30 hover:shadow-purple-500/50 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2"
-            >
-              {/* Gradient background */}
-              <div className="absolute inset-0 bg-gradient-to-br from-violet-900 via-purple-800 to-fuchsia-900"></div>
-
-              {/* Periodic table grid pattern */}
-              <div className="absolute inset-0 p-6 grid grid-cols-8 grid-rows-5 gap-2 opacity-60 group-hover:opacity-80 transition-opacity">
-                {[...Array(40)].map((_, i) => (
-                  <div
-                    key={i}
-                    className={`rounded-md border border-white/20 flex items-center justify-center text-[10px] font-bold text-white/70 transition-all duration-300 hover:bg-white/20
-                      ${i === 0 ? 'bg-red-500/40' : ''}
-                      ${i === 7 ? 'bg-yellow-500/40' : ''}
-                      ${[1, 2, 9, 10].includes(i) ? 'bg-blue-500/30' : ''}
-                      ${[16, 17, 24, 25].includes(i) ? 'bg-green-500/30' : ''}
-                      ${[18, 19, 26, 27].includes(i) ? 'bg-orange-500/30' : ''}
-                      ${[32, 33, 34, 35].includes(i) ? 'bg-teal-500/30' : ''}
-                    `}
-                    style={{ animationDelay: `${i * 40}ms` }}
-                  >
-                    {['H', 'He', 'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne', 'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar', 'K', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Fe', 'Co', 'Ni', 'Cu', 'Zn', 'Ga', 'Ge', 'As', 'Se', 'Br', 'Kr', 'Rb', 'Sr', 'Y', 'Zr'][i]}
-                  </div>
-                ))}
+            {/* Card 2 */}
+            <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border border-slate-100/80">
+              <div className="h-44 bg-linear-to-br from-sky-50 to-cyan-50 relative flex items-center justify-center">
+                <img src={Mascot8} alt="mascot" className="h-32 object-contain drop-shadow" />
+                <span className="absolute top-3 left-3 px-2.5 py-1 bg-blue-600 text-white text-[10px] font-bold rounded-md">MỚI</span>
               </div>
-
-              {/* Glowing orb */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-gradient-to-br from-purple-400/30 to-fuchsia-600/30 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
-
-              {/* Icon */}
-              <div className="absolute top-6 left-6 p-3 bg-purple-500/20 backdrop-blur-xl rounded-xl border border-purple-400/30 group-hover:bg-purple-500/30 group-hover:scale-110 transition-all duration-300 z-10">
-                <Layers className="text-purple-200 w-7 h-7" />
-              </div>
-
-              {/* 3D Model indicator */}
-              <div className="absolute top-6 right-6 px-3 py-1.5 bg-white/10 backdrop-blur-xl rounded-full border border-white/20 z-10">
-                <span className="text-white/90 text-xs font-semibold flex items-center gap-1.5">
-                  <Box className="w-3.5 h-3.5" />
-                  118 mô hình 3D
-                </span>
-              </div>
-
-              {/* Bottom Content */}
-              <div className="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-violet-950/95 via-violet-900/60 to-transparent z-10">
-                <p className="text-purple-300/80 text-sm font-medium uppercase tracking-widest mb-2">Tương tác 3D với mọi nguyên tố</p>
-                <h4 className="text-2xl md:text-3xl font-bold text-white mb-3">Bảng Tuần hoàn</h4>
-                <p className="text-purple-200/70 text-sm mb-4 max-w-md">Khám phá 118 nguyên tố với mô hình 3D chi tiết, thông tin đầy đủ và trực quan</p>
-                <span className="text-purple-200/80 text-sm font-medium flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  Khám phá ngay <ArrowRight size={18} className="group-hover:translate-x-2 transition-transform" />
-                </span>
-              </div>
-            </Link>
-
-            {/* Card 2: Thư viện Hóa học - Knowledge Library with molecules */}
-            <Link
-              to="/library"
-              className="group relative h-96 rounded-3xl overflow-hidden cursor-pointer block shadow-xl shadow-blue-500/30 hover:shadow-blue-500/50 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2"
-            >
-              {/* Premium dark gradient background */}
-              <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950"></div>
-
-              {/* Molecular structure pattern */}
-              <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'60\' height=\'60\' viewBox=\'0 0 60 60\'%3E%3Ccircle cx=\'30\' cy=\'30\' r=\'4\' fill=\'%233b82f6\' opacity=\'0.5\'/%3E%3Ccircle cx=\'10\' cy=\'10\' r=\'3\' fill=\'%2360a5fa\' opacity=\'0.3\'/%3E%3Ccircle cx=\'50\' cy=\'50\' r=\'3\' fill=\'%2360a5fa\' opacity=\'0.3\'/%3E%3Cline x1=\'10\' y1=\'10\' x2=\'30\' y2=\'30\' stroke=\'%233b82f6\' stroke-width=\'1\' opacity=\'0.2\'/%3E%3Cline x1=\'30\' y1=\'30\' x2=\'50\' y2=\'50\' stroke=\'%233b82f6\' stroke-width=\'1\' opacity=\'0.2\'/%3E%3C/svg%3E")' }}></div>
-
-              {/* Glowing aura */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-gradient-to-r from-blue-500/20 via-cyan-500/20 to-indigo-500/20 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-700"></div>
-
-              {/* Floating molecules animation */}
-              <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                {/* H2O molecule representation */}
-                <div className="absolute top-[15%] right-[20%] animate-[bounce_4s_ease-in-out_infinite]">
-                  <div className="relative">
-                    <div className="w-8 h-8 bg-gradient-to-br from-red-400 to-red-600 rounded-full shadow-[0_0_15px_rgba(239,68,68,0.6)]"></div>
-                    <div className="absolute -left-4 top-2 w-5 h-5 bg-gradient-to-br from-blue-300 to-blue-500 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>
-                    <div className="absolute -right-4 top-2 w-5 h-5 bg-gradient-to-br from-blue-300 to-blue-500 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>
-                  </div>
-                </div>
-                {/* CO2 molecule */}
-                <div className="absolute bottom-[25%] left-[15%] animate-[bounce_5s_ease-in-out_infinite_1s]">
-                  <div className="flex items-center gap-1">
-                    <div className="w-5 h-5 bg-gradient-to-br from-red-400 to-red-600 rounded-full opacity-80"></div>
-                    <div className="w-7 h-7 bg-gradient-to-br from-gray-600 to-gray-800 rounded-full"></div>
-                    <div className="w-5 h-5 bg-gradient-to-br from-red-400 to-red-600 rounded-full opacity-80"></div>
-                  </div>
-                </div>
-                {/* CH4 molecule */}
-                <div className="absolute top-[40%] left-[25%] animate-[bounce_3.5s_ease-in-out_infinite_0.5s]">
-                  <div className="relative">
-                    <div className="w-6 h-6 bg-gradient-to-br from-gray-500 to-gray-700 rounded-full"></div>
-                    <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-blue-400 rounded-full opacity-70"></div>
-                    <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-blue-400 rounded-full opacity-70"></div>
-                    <div className="absolute top-1/2 -left-2 -translate-y-1/2 w-3 h-3 bg-blue-400 rounded-full opacity-70"></div>
-                    <div className="absolute top-1/2 -right-2 -translate-y-1/2 w-3 h-3 bg-blue-400 rounded-full opacity-70"></div>
-                  </div>
+              <div className="p-4">
+                <h4 className="font-bold text-slate-800 text-sm mb-1">Cấu phân tử hữu cơ</h4>
+                <p className="text-slate-500 text-xs mb-3 leading-relaxed">Tương tác 3D với các phân tử hữu cơ phổ biến từ lớp 11 đến 12</p>
+                <div className="flex items-center justify-between text-xs text-slate-400">
+                  <span className="flex items-center gap-1"><Star size={11} className="fill-yellow-400 text-yellow-400" />4.9</span>
+                  <Link to="/library" className="text-blue-500 font-semibold hover:underline">Xem ngay →</Link>
                 </div>
               </div>
-
-              {/* Icon */}
-              <div className="absolute top-6 left-6 p-3 bg-blue-500/20 backdrop-blur-xl rounded-xl border border-blue-400/30 group-hover:bg-blue-500/30 group-hover:scale-110 transition-all duration-300 z-10">
-                <FlaskConical className="text-blue-200 w-7 h-7" />
+            </div>
+            {/* Card 3 */}
+            <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border border-slate-100/80">
+              <div className="h-44 bg-linear-to-br from-amber-50 to-orange-50 relative flex items-center justify-center">
+                <div className="grid grid-cols-5 gap-1 p-4 opacity-80">
+                  {["H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne"].map((e, i) => (
+                    <div key={i} className="w-9 h-9 bg-amber-400/20 border border-amber-300 rounded text-[10px] font-bold text-amber-700 flex items-center justify-center">{e}</div>
+                  ))}
+                </div>
+                <span className="absolute top-3 left-3 px-2.5 py-1 bg-amber-500 text-white text-[10px] font-bold rounded-md">3D</span>
               </div>
-
-              {/* Grade badges */}
-              <div className="absolute top-6 right-6 flex gap-2 z-10">
-                <span className="px-3 py-1.5 bg-emerald-500/20 backdrop-blur-xl rounded-full border border-emerald-400/30 text-emerald-200 text-xs font-semibold">
-                  THCS 6-9
-                </span>
-                <span className="px-3 py-1.5 bg-amber-500/20 backdrop-blur-xl rounded-full border border-amber-400/30 text-amber-200 text-xs font-semibold">
-                  THPT 10-12
-                </span>
+              <div className="p-4">
+                <h4 className="font-bold text-slate-800 text-sm mb-1">Điện phân dung dịch</h4>
+                <p className="text-slate-500 text-xs mb-3 leading-relaxed">Mô phỏng điện phân với điện cực và dung dịch khác nhau</p>
+                <div className="flex items-center justify-between text-xs text-slate-400">
+                  <span className="flex items-center gap-1"><Star size={11} className="fill-yellow-400 text-yellow-400" />4.7</span>
+                  <Link to="/labtest" className="text-blue-500 font-semibold hover:underline">Xem ngay →</Link>
+                </div>
               </div>
-
-              {/* Bottom Content */}
-              <div className="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-slate-950/95 via-blue-950/70 to-transparent z-10">
-                <p className="text-blue-300/90 text-sm font-semibold uppercase tracking-widest mb-2">Kiến thức toàn diện từ lớp 6-12</p>
-                <h4 className="text-2xl md:text-3xl font-bold text-white mb-3">Thư viện Hóa học</h4>
-                <p className="text-blue-200/70 text-sm mb-4 max-w-md">Hệ thống kiến thức đầy đủ, mô phỏng 3D và phản ứng hóa học trực quan</p>
-                <span className="text-blue-200/90 text-sm font-medium flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  Khám phá ngay <ArrowRight size={18} className="group-hover:translate-x-2 transition-transform" />
-                </span>
-              </div>
-            </Link>
-
+            </div>
           </div>
 
-          <div className="mt-8 text-center md:hidden">
-            <Link to="/library" className="inline-flex items-center gap-2 text-blue-600 font-bold uppercase text-sm tracking-wider">
-              Xem tất cả <ArrowRight size={20} />
+          <div className="text-center mt-10">
+            <Link to="/labtest" className="inline-flex items-center gap-2 bg-blue-900 hover:opacity-95 text-white font-semibold px-8 py-3.5 rounded-xl text-sm transition-all shadow-md shadow-blue-500/25 hover:-translate-y-0.5">
+              Khám phá toàn bộ thư viện thí nghiệm <ArrowRight size={16} />
             </Link>
           </div>
         </div>
       </section>
 
-      {/* --- 5. CTA SECTION --- */}
-      <section className="py-24 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[#0B3B69] z-0"></div>
-        {/* Background Patterns */}
-        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:20px_20px]"></div>
+      {/* ══════════════════════════════════════════
+          5. CTA SECTION
+      ══════════════════════════════════════════ */}
+      <section className="py-20 relative overflow-hidden bg-sky-50">
+        <div className="pointer-events-none absolute bottom-8 left-6 md:bottom-12 md:left-18 lg:bottom-12 lg:left-48 hidden md:block">
+          <img src={Mascot9} alt="" className="w-32 md:w-44 lg:w-64 h-auto object-contain opacity-80 lg:scale-125" />
+        </div>
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <div className="w-[500px] h-[300px] rounded-full bg-blue-200/20 blur-3xl" />
+        </div>
 
-        <div className="container mx-auto px-6 relative z-10 text-center">
-          <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-6">
-            Sẵn sàng cho kỷ nguyên giáo dục mới?
-          </h2>
-          <p className="text-blue-100 text-xl max-w-2xl mx-auto mb-12">
-            Tham gia cùng hàng nghìn giáo viên và học sinh đang đổi mới cách học hóa học mỗi ngày với ChemXLab.
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-            <Link
-              to="/register"
-              className="w-full sm:w-auto px-10 py-4 bg-white text-[#0B3B69] font-bold rounded-full hover:bg-blue-50 transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1"
-            >
-              Đăng ký tài khoản miễn phí
-            </Link>
+        <div className="container mx-auto px-6 relative z-10">
+          <div className="max-w-xl mx-auto text-center space-y-5">
+            <h2 className="text-3xl md:text-4xl font-extrabold text-[#1e2a4a]">
+              Sẵn Sàng Khám Phá Thế Giới <span className="text-sky-600">Hóa Học?</span>
+            </h2>
+            <p className="text-slate-500">Tham gia cùng hàng nghìn giáo viên và học sinh. Bắt đầu miễn phí ngay hôm nay!</p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+              <Link to="/register" className="flex items-center gap-2 bg-sky-600 hover:bg-sky-600 text-white font-semibold px-8 py-3 rounded-full text-sm transition-all shadow-md shadow-blue-500/25 hover:-translate-y-0.5">
+                Khám phá miễn phí <ArrowRight size={16} />
+              </Link>
+              <Link to="/about" className="flex items-center gap-2 text-blue-900 hover:text-blue-900 font-medium border border-blue-900 hover:bg-[#c9ccff] px-8 py-3 rounded-full text-sm bg-transparent transition-all">
+                Dùng thử
+              </Link>
+            </div>
           </div>
         </div>
       </section>
+
     </div>
   );
 };

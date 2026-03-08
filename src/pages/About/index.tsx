@@ -43,7 +43,7 @@ const AboutPage = () => {
 
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-slate-900 mb-6 leading-tight">
                 Chào mừng đến với{" "}
-                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">
+                <span className="block text-transparent bg-clip-text bg-linear-to-r from-blue-600 to-cyan-500">
                   ChemXLab
                 </span>
               </h1>
@@ -74,11 +74,11 @@ const AboutPage = () => {
             {/* Right Column: TVC Video */}
             <div className="w-full lg:w-1/2 relative group">
               {/* Cinematic background glow for video */}
-              <div className="absolute -inset-4 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-3xl blur-2xl opacity-20 group-hover:opacity-30 transition-opacity"></div>
+              <div className="absolute -inset-4 bg-linear-to-r from-blue-400 to-cyan-400 rounded-3xl blur-2xl opacity-20 group-hover:opacity-30 transition-opacity"></div>
 
               <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-blue-900/10 border-4 border-white aspect-[1.72/1] bg-white transform hover:scale-[1.02] transition-transform duration-500">
                 <iframe
-                  src="https://www.youtube.com/embed/9m_JT0zb88w?autoplay=1&playlist=9m_JT0zb88w&loop=1&vq=hd1080&controls=1&rel=0&modestbranding=1"
+                  src="https://drive.google.com/file/d/10PFmUjz2zfMB-_7yz0JI2squBfbytGCM/preview"
                   title="ChemXLab TVC"
                   allow="autoplay; encrypted-media"
                   allowFullScreen
