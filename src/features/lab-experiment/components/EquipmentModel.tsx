@@ -16,6 +16,9 @@ import {
 import type { TubeContent } from "../services/experimentStore";
 import { useExperimentStore } from "../services/experimentStore";
 import type { DroppedItem } from "../types/equipment";
+import { H2GasEmitter } from "./H2GasEmitter";
+import { CondensationDroplets } from "./CondensationDroplets";
+import { SmokeEmitter } from "./SmokeEmitter";
 
 // ─── Hằng số snap ────────────────────────────────────────────────────────────
 const SNAP_OFFSET_Y = 0.5;
@@ -896,8 +899,8 @@ export const EquipmentModel = ({
                     />
                   );
                 })}
-                {/* 4. H2 Gas Vapor (white smoke) for Zn + HCl reaction */}
-                {znReactionActive && (() => {
+                {/* 4. H2 Gas Vapor (white smoke) + Condensation for Zn + HCl reaction */}
+                {(znReactionActive || znDissolved) && (() => {
                   // Compute actual liquid surface Y for H2 smoke start position
                   const LIQUID_R = TUBE_INNER_R * 0.96;
                   const MAX_CYL_H = TUBE_TOP_Y - TUBE_BOTTOM_Y - TUBE_MARGIN - LIQUID_R;
@@ -905,12 +908,21 @@ export const EquipmentModel = ({
                   const liquidBodyBaseY = TUBE_BOTTOM_Y + solidOffset + LIQUID_R;
                   const liquidSurfY = liquidBodyBaseY + fillFrac * MAX_CYL_H - 0.003;
                   return (
-                    <H2GasEmitter
-                      liquidSurfaceY={liquidSurfY}
-                      tubeTopY={TUBE_TOP_Y}
-                      tubeR={TUBE_INNER_R}
-                      active={!znDissolved || hasActiveBubbles}
-                    />
+                    <>
+                      <H2GasEmitter
+                        liquidSurfaceY={liquidSurfY}
+                        tubeTopY={TUBE_TOP_Y}
+                        tubeR={TUBE_INNER_R}
+                        active={znReactionActive && (!znDissolved || hasActiveBubbles)}
+                      />
+                      <CondensationDroplets
+                        tubeTopY={TUBE_TOP_Y}
+                        tubeBottomY={TUBE_BOTTOM_Y}
+                        tubeR={TUBE_INNER_R}
+                        liquidSurfaceY={liquidSurfY}
+                        active={znReactionActive && (!znDissolved || hasActiveBubbles)}
+                      />
+                    </>
                   );
                 })()}
               </>
@@ -2451,395 +2463,6 @@ const ZnPelletMesh = ({ ox, oz, bottomY, onDissolvedChange }: {
         roughness={0.3}
       />
     </mesh>
-  );
-};
-
-// ─── H2GasEmitter: White smoke/vapor for H2 gas from Zn + HCl reaction ────────
-const H2_GAS_COUNT = 150;
-const H2_MAX_SCALE = 0.0022;
-const H2_UP_SPEED = 0.025;
-const H2_DELAY = 1.5; // Reduced from 3.0 seconds delay before H2 appears
-
-const _h2Dummy = new THREE.Object3D();
-
-interface H2Particle {
-  x: number; y: number; z: number;
-  phase: number;
-  speedMult: number;
-  age: number;
-  maxAge: number;
-  rotX: number; rotY: number; rotZ: number;
-  rotSpeedX: number; rotSpeedY: number;
-}
-
-const H2GasEmitter = ({ liquidSurfaceY, tubeTopY, tubeR, active = true }: {
-  liquidSurfaceY: number;
-  tubeTopY: number;
-  tubeR: number;
-  active?: boolean;
-}) => {
-  const meshRef = useRef<THREE.InstancedMesh>(null);
-  const matRef = useRef<THREE.MeshBasicMaterial>(null);
-  const mountTimeRef = useRef<number | null>(null);
-
-  const particles = useMemo<H2Particle[]>(() => {
-    const arr: H2Particle[] = [];
-    for (let i = 0; i < H2_GAS_COUNT; i++) {
-      const maxA = 2.0 + Math.random() * 2.0;
-      arr.push({
-        x: 0, y: -999, z: 0,
-        phase: Math.random() * Math.PI * 2,
-        speedMult: 0.6 + Math.random() * 0.8,
-        age: Math.random() * maxA, // staggered initial age so they respawn gradually
-        maxAge: maxA,
-        rotX: Math.random() * Math.PI * 2,
-        rotY: Math.random() * Math.PI * 2,
-        rotZ: Math.random() * Math.PI * 2,
-        rotSpeedX: (Math.random() - 0.5) * 0.3,
-        rotSpeedY: (Math.random() - 0.5) * 0.3,
-      });
-    }
-    return arr;
-  }, []);
-
-  const resetH2Particle = (p: H2Particle, startY: number) => {
-    const theta = Math.random() * Math.PI * 2;
-    const r = Math.random() * tubeR * 0.7;
-    p.x = Math.cos(theta) * r;
-    p.y = startY;
-    p.z = Math.sin(theta) * r;
-    p.phase = Math.random() * Math.PI * 2;
-    p.speedMult = 0.6 + Math.random() * 0.8;
-    p.age = 0;
-    p.maxAge = 2.0 + Math.random() * 2.0;
-    p.rotSpeedX = (Math.random() - 0.5) * 0.3;
-    p.rotSpeedY = (Math.random() - 0.5) * 0.3;
-  };
-
-  useFrame((state, delta) => {
-    if (!meshRef.current || !matRef.current) return;
-
-    const dt = Math.min(delta, 0.05);
-    const t = state.clock.elapsedTime;
-
-    // Track mount time for 3s delay
-    if (mountTimeRef.current === null) mountTimeRef.current = t;
-    const elapsed = t - mountTimeRef.current;
-
-    // Don't show anything for first 3 seconds
-    if (elapsed < H2_DELAY) {
-      if (meshRef.current.visible) meshRef.current.visible = false;
-      return;
-    }
-    if (!meshRef.current.visible) meshRef.current.visible = true;
-
-    // Opacity ramps up from 0 to 0.15 over 2 seconds after delay
-    const fadeIn = Math.min(1, (elapsed - H2_DELAY) / 2.0);
-    // Fade out when zinc is fully dissolved (active = false)
-    const fadeOutTarget = active ? 1.0 : 0.0;
-    const currentOpacity = matRef.current.opacity;
-    const targetOpacity = fadeIn * 0.15 * fadeOutTarget;
-    matRef.current.opacity = THREE.MathUtils.lerp(currentOpacity, targetOpacity, dt * 3);
-
-    // Stop respawning when inactive and opacity is very low
-    if (!active && matRef.current.opacity < 0.005) {
-      meshRef.current.visible = false;
-      return;
-    }
-    // Also skip respawning dead particles when inactive
-    const shouldRespawn = active;
-
-    // Height range for particles: from liquid surface — allow smoke to rise above tube mouth
-    const maxHeight = (tubeTopY - liquidSurfaceY) * 1.5;
-
-    for (let i = 0; i < H2_GAS_COUNT; i++) {
-      const p = particles[i];
-
-      p.age += dt;
-      if (p.age >= p.maxAge) {
-        if (shouldRespawn) {
-          resetH2Particle(p, 0);
-        } else {
-          // Don't respawn — hide this particle
-          _h2Dummy.scale.setScalar(0);
-          _h2Dummy.updateMatrix();
-          meshRef.current.setMatrixAt(i, _h2Dummy.matrix);
-          continue;
-        }
-      }
-
-      const lifePct = p.age / p.maxAge;
-
-      // Rise up — but cap at tube mouth height
-      const upV = H2_UP_SPEED * p.speedMult * (1.0 - 0.4 * lifePct);
-      p.y += upV * dt;
-      if (p.y > maxHeight) p.y = maxHeight;
-
-      // Horizontal drift
-      const convectAmp = 0.0006;
-      p.x += Math.sin(t * 1.5 + p.phase) * convectAmp * dt;
-      p.z += Math.cos(t * 1.2 + p.phase + 1.3) * convectAmp * dt;
-
-      // Clamp inside tube radius
-      const rr = p.x * p.x + p.z * p.z;
-      const innerR = tubeR - 0.001;
-      if (rr > innerR * innerR) {
-        const inv = innerR / Math.sqrt(rr);
-        p.x *= inv;
-        p.z *= inv;
-      }
-
-      // Scale lifecycle: grow → hold → fade
-      let scalePct: number;
-      if (lifePct < 0.15) {
-        const tt = lifePct / 0.15;
-        scalePct = tt * tt * (3 - 2 * tt);
-      } else if (lifePct < 0.65) {
-        scalePct = 1.0;
-      } else {
-        const tt = (lifePct - 0.65) / 0.35;
-        scalePct = 1.0 - tt * tt * (3 - 2 * tt);
-      }
-      const s = H2_MAX_SCALE * scalePct;
-
-      // Tumble
-      p.rotX += p.rotSpeedX * dt;
-      p.rotY += p.rotSpeedY * dt;
-
-      _h2Dummy.position.set(p.x, p.y, p.z);
-      _h2Dummy.rotation.set(p.rotX, p.rotY, p.rotZ);
-      _h2Dummy.scale.setScalar(s);
-      _h2Dummy.updateMatrix();
-      meshRef.current.setMatrixAt(i, _h2Dummy.matrix);
-    }
-
-    meshRef.current.instanceMatrix.needsUpdate = true;
-  });
-
-  return (
-    <instancedMesh
-      ref={meshRef}
-      args={[undefined, undefined, H2_GAS_COUNT]}
-      position={[0, liquidSurfaceY, 0]}
-      raycast={() => null}
-      frustumCulled={false}
-      visible={false}
-    >
-      <dodecahedronGeometry args={[1, 0]} />
-      <meshBasicMaterial
-        ref={matRef}
-        color="#ffffff"
-        transparent
-        opacity={0}
-        depthWrite={false}
-      />
-    </instancedMesh>
-  );
-};
-
-// ─── SmokeEmitter: Mô phỏng khói phản ứng hóa nhiệt ─────────────────────────
-// Tối ưu hiệu năng tuyệt đối bằng InstancedMesh + mutation in-place, không allocation trong useFrame.
-
-const SMOKE_COUNT = 300;
-const SMOKE_BASE_R = 0.005;      // Bán kính nguồn sinh khói (vòng nguồn nhỏ ở đáy)
-const SMOKE_MAX_SCALE = 0.0023;
-const SMOKE_UP_SPEED = 0.022;    // Bay chậm
-const SMOKE_MAX_AGE_BASE = 3.5;  // 
-
-// Pre-allocate a stable dummy object at module level (never re-created)
-const _smokeDummy = new THREE.Object3D();
-
-interface SmokeParticle {
-  x: number; y: number; z: number;   // world-space position (local to group)
-  phase: number;                       // initial phase offset for sin/cos drift (radians)
-  speedMult: number;                   // individual up-speed multiplier [0.7, 1.3]
-  age: number;                         // current age (seconds)
-  maxAge: number;                      // lifetime (seconds)
-  rotX: number; rotY: number; rotZ: number; // random orientation for dodecahedron
-  rotSpeedX: number; rotSpeedY: number;     // gentle tumble speed
-}
-
-const SmokeEmitter = ({ active, isFinished, totalGrams, tubeId }: { active: boolean; isFinished: boolean; totalGrams: number; tubeId: string }) => {
-  const meshRef = useRef<THREE.InstancedMesh>(null);
-  const matRef = useRef<THREE.MeshBasicMaterial>(null);
-
-  const reactionProgress = useExperimentStore((s) => s.reactionProgress.get(tubeId) || 0);
-  const stopTimeRef = useRef<number | null>(null);
-
-  // ── Stable particle array — allocated once ──────────────────────────────────
-  const particles = useMemo<SmokeParticle[]>(() => {
-    const arr: SmokeParticle[] = [];
-    for (let i = 0; i < SMOKE_COUNT; i++) {
-      const theta = Math.random() * Math.PI * 2;
-      const r = Math.random() * SMOKE_BASE_R;
-      const maxAge = SMOKE_MAX_AGE_BASE * (0.75 + Math.random() * 0.5);
-      arr.push({
-        x: Math.cos(theta) * r,
-        y: Math.random() * SMOKE_UP_SPEED * maxAge, // stagger initial heights
-        z: Math.sin(theta) * r,
-        phase: Math.random() * Math.PI * 2,
-        speedMult: 0.7 + Math.random() * 0.6,
-        age: Math.random() * maxAge,                // stagger ages so no "burst" on mount
-        maxAge,
-        rotX: Math.random() * Math.PI * 2,
-        rotY: Math.random() * Math.PI * 2,
-        rotZ: Math.random() * Math.PI * 2,
-        rotSpeedX: (Math.random() - 0.5) * 0.4,
-        rotSpeedY: (Math.random() - 0.5) * 0.4,
-      });
-    }
-    return arr;
-  }, []);
-
-  // ── Helper: reset a particle to origin ─────────────────────────────────────
-  const resetParticle = (p: SmokeParticle) => {
-    const theta = Math.random() * Math.PI * 2;
-    const r = Math.random() * SMOKE_BASE_R;
-    p.x = Math.cos(theta) * r;
-    p.y = 0;
-    p.z = Math.sin(theta) * r;
-    p.phase = Math.random() * Math.PI * 2;
-    p.speedMult = 0.7 + Math.random() * 0.6;
-    p.age = 0;
-    p.maxAge = SMOKE_MAX_AGE_BASE * (0.75 + Math.random() * 0.5);
-    p.rotSpeedX = (Math.random() - 0.5) * 0.4;
-    p.rotSpeedY = (Math.random() - 0.5) * 0.4;
-  };
-
-  useFrame((state, delta) => {
-    if (!meshRef.current || !matRef.current) return;
-
-    // ── 1. Opacity / Fade logic ──────────────────────────────────────────────
-    let baseOpacity = 0;
-    if (reactionProgress > 0.33 || isFinished) {
-      // Fade-in: 10s → 15s (progress 0.33 → 0.5)
-      const progressVal = isFinished ? 1.0 : reactionProgress;
-      const fadeIn = Math.min(1.0, (progressVal - 0.33) / 0.17);
-      baseOpacity = fadeIn * 0.22;
-    }
-
-    const shouldFade = !active || reactionProgress >= 1.0 || isFinished;
-    let fadeFactor = 1.0;
-    if (shouldFade) {
-      if (stopTimeRef.current === null) stopTimeRef.current = state.clock.elapsedTime;
-      const elapsed = state.clock.elapsedTime - stopTimeRef.current;
-      // 5-second linger with power-1.3 easing for gradual tail
-      fadeFactor = Math.max(0, 1 - Math.pow(elapsed / 5.0, 1.3));
-    } else {
-      stopTimeRef.current = null;
-    }
-
-    const finalOpacity = baseOpacity * fadeFactor;
-    matRef.current.opacity = finalOpacity;
-
-    if (finalOpacity <= 0.002) {
-      meshRef.current.visible = false;
-      return;
-    }
-    meshRef.current.visible = true;
-
-    // ── 2. Local-space tube bounds ───────────────────────────────────────────
-    const startY = 0.026 + totalGrams * 0.0028;
-    const mouthY = TUBE_TOP_Y - startY; // height of tube mouth in local space
-    const tubeR = TUBE_INNER_R - 0.001;
-
-    const dt = Math.min(delta, 0.05); // clamp delta to avoid physics explosion on tab switch
-    const t = state.clock.elapsedTime;
-
-    // ── 3. Update every particle — zero allocation ───────────────────────────
-    for (let i = 0; i < SMOKE_COUNT; i++) {
-      const p = particles[i];
-
-      p.age += dt;
-      if (p.age >= p.maxAge) {
-        // Dead → reset, but only respawn if smoke is still active/lingering
-        if (fadeFactor < 0.05) {
-          // Almost gone: freeze particle so it fades invisibly
-          _smokeDummy.scale.setScalar(0);
-          _smokeDummy.updateMatrix();
-          meshRef.current.setMatrixAt(i, _smokeDummy.matrix);
-          continue;
-        }
-        resetParticle(p);
-      }
-
-      const lifePct = p.age / p.maxAge; // 0 → 1
-
-      // ── 3a. Vertical velocity: fast at birth (热气流), decelerates (giảm nhiệt)
-      //   v(y) = SPEED * speedMult * (1 - 0.6 * lifePct)  [decelerating]
-      const upV = SMOKE_UP_SPEED * p.speedMult * (1.0 - 0.6 * lifePct) * fadeFactor;
-      p.y += upV * dt;
-
-      // ── 3b. Horizontal convection (Phễu & Đối lưu):
-      //   Drift sử dụng sin/cos với pha offset theo từng hạt,
-      //   biên độ mở rộng theo chiều cao (khói thoát ra ngoài khi lên cao).
-      const heightAboveMouth = Math.max(0, p.y - mouthY);
-      // Giảm mạnh độ tỏa rộng (expansion) để khói "nằm trong ống" (luồng khói thẳng đứng)
-      const convectAmp = 0.0008 + heightAboveMouth * 0.005;
-      p.x += Math.sin(t * 1.1 + p.phase) * convectAmp * dt;
-      p.z += Math.cos(t * 0.9 + p.phase + 1.3) * convectAmp * dt;
-
-      // ── 3c. Tube constraint: clamp inside inner radius while below mouth ──
-      if (p.y < mouthY) {
-        const rr = p.x * p.x + p.z * p.z;
-        if (rr > tubeR * tubeR) {
-          const inv = tubeR / Math.sqrt(rr);
-          p.x *= inv;
-          p.z *= inv;
-        }
-      }
-
-      // ── 3d. Lifecycle scale curve ────────────────────────────────────────
-      //   Phase 1 (0%–20%): grow fast   → smoothstep 0→1
-      //   Phase 2 (20%–70%): hold full  → scale = 1
-      //   Phase 3 (70%–100%): taper out → smoothstep 1→0  (tránh cắt cụt)
-      let scalePct: number;
-      if (lifePct < 0.20) {
-        const tt = lifePct / 0.20;
-        scalePct = tt * tt * (3 - 2 * tt); // smoothstep up
-      } else if (lifePct < 0.70) {
-        scalePct = 1.0;
-      } else {
-        const tt = (lifePct - 0.70) / 0.30;
-        scalePct = 1.0 - tt * tt * (3 - 2 * tt); // smoothstep down
-      }
-      const s = SMOKE_MAX_SCALE * scalePct;
-
-      // ── 3e. Gentle tumble ──────────────────────────────────────────────────
-      p.rotX += p.rotSpeedX * dt;
-      p.rotY += p.rotSpeedY * dt;
-
-      // ── 3f. Write instance matrix ──────────────────────────────────────────
-      _smokeDummy.position.set(p.x, p.y, p.z);
-      _smokeDummy.rotation.set(p.rotX, p.rotY, p.rotZ);
-      _smokeDummy.scale.setScalar(s);
-      _smokeDummy.updateMatrix();
-      meshRef.current.setMatrixAt(i, _smokeDummy.matrix);
-    }
-
-    meshRef.current.instanceMatrix.needsUpdate = true;
-  });
-
-  const startY = 0.026 + totalGrams * 0.0028;
-
-  return (
-    <instancedMesh
-      ref={meshRef}
-      args={[undefined, undefined, SMOKE_COUNT]}
-      position={[0, startY, 0]}
-      raycast={() => null}
-      frustumCulled={false}
-    >
-      {/* Dodecahedron: 12 mặt ngũ giác → cảm giác khối cuộn tròn khi xoay */}
-      <dodecahedronGeometry args={[1, 0]} />
-      <meshBasicMaterial
-        ref={matRef}
-        color="#fff9c4" // Màu trắng vàng (kem) theo yêu cầu
-        transparent
-        opacity={0}
-        depthWrite={false}
-      />
-    </instancedMesh>
   );
 };
 
