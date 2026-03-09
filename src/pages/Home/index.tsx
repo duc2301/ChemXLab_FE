@@ -1,5 +1,6 @@
 import { ArrowRight, FlaskConical, Play, Star, Users } from "lucide-react";
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 
 import Mascot7 from "../../shared/assets/mascot/7.png";
 import Mascot8 from "../../shared/assets/mascot/8.png";
@@ -129,17 +130,29 @@ const HomePage = () => {
         <div className="container mx-auto px-6">
 
           {/* Section header */}
-          <div className="text-center mb-16 space-y-2">
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-16 space-y-2"
+          >
             <p className="text-blue-500 font-semibold text-xs uppercase tracking-[0.2em]">Dễ dàng và thuận lợi</p>
             <h2 className="text-3xl md:text-4xl font-extrabold text-[#1e2a4a]">Cách thức hoạt động</h2>
             <p className="text-slate-500 max-w-md mx-auto text-sm">Chỉ 3 bước đơn giản, không cần cài đặt gì cả</p>
-          </div>
+          </motion.div>
 
           <div className="space-y-20">
             {/* Step 01 */}
-            <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
-              <div className="w-full lg:w-1/2 space-y-4">
-                <span className="text-5xl sm:text-[72px] font-black text-blue-100/80 leading-none select-none block">01</span>
+            <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16 overflow-hidden">
+              <motion.div
+                initial={{ opacity: 0, x: -50 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ duration: 0.6, delay: 0.1 }}
+                className="w-full lg:w-1/2 space-y-4"
+              >
+                <span className="text-5xl sm:text-[72px] font-black text-sky-300 leading-none select-none block">01</span>
                 <h3 className="text-2xl font-bold text-[#1e2a4a] -mt-5">Chọn thí nghiệm từ thư viện</h3>
                 <p className="text-slate-500 leading-relaxed text-sm">
                   Truy cập kho hàng <strong className="text-slate-700">500+ bài thí nghiệm</strong> được phân loại theo lớp học và chủ đề. Tìm phản ứng phù hợp, đơn giản chỉ với vài cú chạm.
@@ -149,8 +162,15 @@ const HomePage = () => {
                   <span className="px-3 py-1 bg-purple-100 text-violet-600 text-xs font-semibold rounded-full ">Lớp 10 - 11</span>
                   <span className="px-3 py-1 bg-rose-100 text-rose-600 text-xs font-semibold rounded-full ">Lớp 12</span>
                 </div>
-              </div>
-              <div className="w-full lg:w-1/2 flex flex-col items-center gap-5">
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0, x: 50 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+                className="w-full lg:w-1/2 flex flex-col items-center gap-5"
+                style={{ background: "radial-gradient(ellipse at center, rgba(56,189,248,0.1) 10%, rgba(56,189,248,0.1) 25%, transparent 35%)" }}
+              >
                 <img src={Mascot7} alt="ChemXLab mascot" className="w-[260px] md:w-[320px] h-auto object-contain drop-shadow-xl hover:scale-105 transition-transform duration-500" />
                 <Link
                   to="/labtest"
@@ -159,19 +179,39 @@ const HomePage = () => {
                   Vào phòng thí nghiệm ngay
                   <ArrowRight size={16} />
                 </Link>
-              </div>
+              </motion.div>
             </div>
 
             {/* Step 02 */}
-            <div className="flex flex-col lg:flex-row-reverse items-center gap-10 lg:gap-16">
-              <div className="w-full lg:w-1/2 space-y-4">
-                <span className="text-5xl sm:text-[72px] font-black text-blue-100/80 leading-none select-none block">02</span>
+            <div className="flex flex-col lg:flex-row-reverse items-center gap-10 lg:gap-16 overflow-hidden">
+              <motion.div
+                initial={{ opacity: 0, x: 50 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ duration: 0.6, delay: 0.1 }}
+                className="w-full lg:w-1/2 space-y-4 relative"
+              >
+                <span className="text-5xl sm:text-[72px] font-black text-sky-300 leading-none select-none block">02</span>
                 <h3 className="text-2xl font-bold text-[#1e2a4a] -mt-5">Tương tác với mô hình 3D</h3>
                 <p className="text-slate-500 leading-relaxed text-sm">
                   Kéo, thả, xoay mô hình phân tử 3D. Quan sát phản ứng xảy ra ngay trong phòng thí nghiệm ảo như thật với hiệu ứng vật lý chính xác.
                 </p>
-              </div>
-              <div className="w-full lg:w-1/2 flex justify-center">
+                <div
+                  style={{
+                    background: "rgba(56,189,248,0.15)",
+                    borderRadius: "12% 88% 25% 75% / 80% 30% 70%",
+                    filter: "blur(17px)"
+                  }}
+                  className="absolute -bottom-8 right-12 w-[220px] h-[200px] pointer-events-none"
+                />
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0, x: -50 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+                className="w-full lg:w-1/2 flex justify-center"
+              >
                 <div className="w-full max-w-full rounded-2xl overflow-hidden shadow-xl border border-slate-100">
                   <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
                     <iframe
@@ -183,19 +223,39 @@ const HomePage = () => {
                     />
                   </div>
                 </div>
-              </div>
+              </motion.div>
             </div>
 
             {/* Step 03 */}
-            <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
-              <div className="w-full lg:w-1/2 space-y-4">
-                <span className="text-5xl sm:text-[72px] font-black text-blue-100/80 leading-none select-none block">03</span>
+            <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16 overflow-hidden">
+              <motion.div
+                initial={{ opacity: 0, x: -50 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ duration: 0.6, delay: 0.1 }}
+                className="w-full lg:w-1/2 space-y-4 relative"
+              >
+                <span className="text-5xl sm:text-[72px] font-black text-sky-300 leading-none select-none block">03</span>
                 <h3 className="text-2xl font-bold text-[#1e2a4a] -mt-5">Nhận kết quả và giải thích</h3>
                 <p className="text-slate-500 leading-relaxed text-sm">
                   Hệ thống tự động cung cấp chi tiết hiện tượng hóa học. Học sinh hiểu rõ nguyên lý sau mỗi phản ứng, giúp học môn hóa thật chắc.
                 </p>
-              </div>
-              <div className="w-full lg:w-1/2 flex justify-center">
+                <div
+                  style={{
+                    background: "rgba(56,189,248,0.15)",
+                    borderRadius: "12% 88% 25% 75% / 80% 30% 70%",
+                    filter: "blur(17px)"
+                  }}
+                  className="absolute -bottom-8 left-12 w-[220px] h-[200px] pointer-events-none"
+                />
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0, x: 50 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+                className="w-full lg:w-1/2 flex justify-center"
+              >
                 <div className="w-full max-w-full rounded-2xl overflow-hidden shadow-xl border border-slate-100">
                   <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
                     <iframe
@@ -207,7 +267,7 @@ const HomePage = () => {
                     />
                   </div>
                 </div>
-              </div>
+              </motion.div>
             </div>
           </div>
         </div>
@@ -218,17 +278,29 @@ const HomePage = () => {
       ══════════════════════════════════════════ */}
       <section className="py-20 bg-[#f7f8fa]">
         <div className="container mx-auto px-6">
-          <div className="text-center mb-3 space-y-2">
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-3 space-y-2"
+          >
             <p className="text-sky-500 font-semibold text-xs uppercase tracking-[0.2em]">Xem thêm nhiều hơn nữa</p>
             <h2 className="text-3xl md:text-4xl font-extrabold text-[#1e2a4a]">
               Thư viện thí nghiệm <span className="text-sky-600">không giới hạn</span>
             </h2>
             <p className="text-slate-500 text-sm max-w-md mx-auto">Không giới hạn bài thí nghiệm có thể học, được cập nhật liên tục.</p>
-          </div>
+          </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-10">
             {/* Card 1 */}
-            <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border border-slate-100/80">
+            <motion.div
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border border-slate-100/80"
+            >
               <div className="h-52 bg-linear-to-br from-violet-50 to-blue-50 relative flex items-center justify-center overflow-hidden">
                 <iframe src="https://drive.google.com/file/d/1HOiDW0xomJeXph71lW2iMhOQIF0ryHWr/preview" width="640" height="480"></iframe>
               </div>
@@ -240,9 +312,15 @@ const HomePage = () => {
                   <Link to="/labtest" className="text-blue-500 font-semibold hover:underline">Xem ngay →</Link>
                 </div>
               </div>
-            </div>
+            </motion.div>
             {/* Card 2 */}
-            <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border border-slate-100/80">
+            <motion.div
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border border-slate-100/80"
+            >
               <div className="h-44 bg-linear-to-br from-sky-50 to-cyan-50 relative flex items-center justify-center">
                 <img src={Mascot8} alt="mascot" className="h-32 object-contain drop-shadow" />
                 <span className="absolute top-3 left-3 px-2.5 py-1 bg-blue-600 text-white text-[10px] font-bold rounded-md">MỚI</span>
@@ -255,9 +333,15 @@ const HomePage = () => {
                   <Link to="/library" className="text-blue-500 font-semibold hover:underline">Xem ngay →</Link>
                 </div>
               </div>
-            </div>
+            </motion.div>
             {/* Card 3 */}
-            <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border border-slate-100/80">
+            <motion.div
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border border-slate-100/80"
+            >
               <div className="h-44 bg-linear-to-br from-amber-50 to-orange-50 relative flex items-center justify-center">
                 <div className="grid grid-cols-5 gap-1 p-4 opacity-80">
                   {["H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne"].map((e, i) => (
@@ -274,14 +358,20 @@ const HomePage = () => {
                   <Link to="/labtest" className="text-blue-500 font-semibold hover:underline">Xem ngay →</Link>
                 </div>
               </div>
-            </div>
+            </motion.div>
           </div>
 
-          <div className="text-center mt-10">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.4, delay: 0.5 }}
+            className="text-center mt-10"
+          >
             <Link to="/labtest" className="inline-flex items-center gap-2 bg-blue-900 hover:opacity-95 text-white font-semibold px-8 py-3.5 rounded-xl text-sm transition-all shadow-md shadow-blue-500/25 hover:-translate-y-0.5">
               Khám phá toàn bộ thư viện thí nghiệm <ArrowRight size={16} />
             </Link>
-          </div>
+          </motion.div>
         </div>
       </section>
 
@@ -297,7 +387,13 @@ const HomePage = () => {
         </div>
 
         <div className="container mx-auto px-6 relative z-10">
-          <div className="max-w-xl mx-auto text-center space-y-5">
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6 }}
+            className="max-w-xl mx-auto text-center space-y-5"
+          >
             <h2 className="text-3xl md:text-4xl font-extrabold text-[#1e2a4a]">
               Sẵn Sàng Khám Phá Thế Giới <span className="text-sky-600">Hóa Học?</span>
             </h2>
@@ -310,7 +406,7 @@ const HomePage = () => {
                 Dùng thử
               </Link>
             </div>
-          </div>
+          </motion.div>
         </div>
       </section>
 
