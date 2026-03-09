@@ -52,17 +52,17 @@ const Navbar = () => {
 
   return (
     <header
-      className={`fixed top-0 w-full z-[100] h-14 transition-all duration-300
+      className={`fixed top-0 w-full z-[100] h-16 transition-all duration-300
         ${scrolled
           ? "bg-white shadow-[0_2px_16px_rgba(0,0,0,0.08)]"
           : "bg-white"
         }`}
     >
-      <div className="container mx-auto px-6 h-full flex items-center justify-between">
+      <div className="container mx-auto px-8 h-full flex items-center justify-between">
 
         {/* LOGO */}
         <Link to="/" className="flex items-center gap-2 shrink-0">
-          <img src={logo} alt="ChemXLab" className="h-8 w-auto object-contain" />
+          <img src={logo} alt="ChemXLab" className="h-10 w-auto object-contain" />
         </Link>
 
         {/* DESKTOP NAV */}
