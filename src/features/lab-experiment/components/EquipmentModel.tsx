@@ -799,6 +799,12 @@ export const EquipmentModel = ({
             // Track zinc reaction elapsed time for shrink effect
             const znReactionActive = isHClPresent && solidItems.some(c => c.substanceId === EQUIPMENT_IDS.ZN_POWDER);
 
+            let color = SUBSTANCE_COLORS[liquidItems[0]?.substanceId] ?? "#a5f3fc";
+
+            if (liquidItems.find(it => it.substanceId === EQUIPMENT_IDS.BaSO4_PRECIPITATE) !== undefined) {
+              color = SUBSTANCE_COLORS[EQUIPMENT_IDS.BaSO4_PRECIPITATE]
+            }
+
             return (
               <>
                 {/* 1. Solid Zinc model rendering (internal) */}
@@ -863,7 +869,7 @@ export const EquipmentModel = ({
                 {liquidItems.length > 0 && (
                   <LiquidLayer
                     color={
-                      SUBSTANCE_COLORS[liquidItems[0].substanceId] ?? "#a5f3fc"
+                      color
                     }
                     totalLiquidMl={totalLiquidMl}
                     offsetAboveSolid={solidOffset}
@@ -1954,20 +1960,21 @@ const LiquidLayer = ({
   });
 
   // isVisible is now a useState above — triggers re-render when liquid first fills
+  const importantOpacity = color === SUBSTANCE_COLORS[EQUIPMENT_IDS.BaSO4_PRECIPITATE]
 
   return (
     <group>
       {/* Bottom hemisphere cap */}
       {isVisible && (
         <mesh ref={capRef} position={[0, TUBE_BOTTOM_Y + offsetAboveSolid + LIQUID_R, 0]} geometry={bottomGeo}>
-          <meshStandardMaterial color={color} transparent opacity={0.15} roughness={0.05} depthWrite={false} />
+          <meshStandardMaterial color={color} transparent opacity={importantOpacity ? 1 : 0.15} roughness={0.05} depthWrite={false} />
         </mesh>
       )}
 
       {/* Main cylinder body */}
       {isVisible && (
         <mesh ref={bodyRef} geometry={cylinderGeo}>
-          <meshStandardMaterial color={color} transparent opacity={0.15} roughness={0.05} depthWrite={false} />
+          <meshStandardMaterial color={color} transparent opacity={importantOpacity ? 1 : 0.15} roughness={0.05} depthWrite={false} />
         </mesh>
       )}
 
@@ -1995,12 +2002,12 @@ const LiquidLayer = ({
 
       {/* Falling drops */}
       <instancedMesh ref={dropMeshRef} args={[sphereGeo, undefined, LL_DROP_COUNT]} frustumCulled={false} raycast={() => null}>
-        <meshStandardMaterial color={color} transparent opacity={0.85} roughness={0.05} depthWrite={false} />
+        <meshStandardMaterial color={color} transparent opacity={importantOpacity ? 0 : 0.85} roughness={0.05} depthWrite={false} />
       </instancedMesh>
 
       {/* Splash particles */}
       <instancedMesh ref={splashMeshRef} args={[sphereGeo, undefined, LL_SPLASH_COUNT]} frustumCulled={false} raycast={() => null}>
-        <meshStandardMaterial color={color} transparent opacity={0.35} roughness={0} depthWrite={false} />
+        <meshStandardMaterial color={color} transparent opacity={importantOpacity ? 0 : 0.35} roughness={0} depthWrite={false} />
       </instancedMesh>
 
       {/* Gas bubbles */}
