@@ -19,6 +19,7 @@ import type { DroppedItem } from "../types/equipment";
 import { H2GasEmitter } from "./H2GasEmitter";
 import { CondensationDroplets } from "./CondensationDroplets";
 import { SmokeEmitter } from "./SmokeEmitter";
+import { SnowflakePrecipitate } from "./SnowflakePrecipitate";
 
 // ─── Hằng số snap ────────────────────────────────────────────────────────────
 const SNAP_OFFSET_Y = 0.5;
@@ -144,6 +145,7 @@ export const EquipmentModel = ({
   );
   const snapTargetId = useExperimentStore((s) => s.snapTargetId);
   const handleZnDissolved = useExperimentStore((s) => s.handleZnDissolved);
+  const onComplete = useExperimentStore((s) => s.triggerPrecipitation);
   const isAttracted =
     occupiedByMagnet.get(snappedToThermoIdRef?.current ?? "") &&
     freeFeAmount > 0;
@@ -218,22 +220,6 @@ export const EquipmentModel = ({
       occupiedThermometers.delete(droppedItem.id);
     };
   }, [isThermometer, droppedItem.id]);
-
-  useEffect(() => {
-    if (!isTestTube) return;
-
-    const currentContents = testTubeContents.get(droppedItem.id) ?? [];
-    const hasBaCl2 = currentContents.some(c => c.substanceId === EQUIPMENT_IDS.BaCl2_SOLUTION);
-    const hasNa2SO4 = currentContents.some(c => c.substanceId === EQUIPMENT_IDS.Na2SO4_SOLUTION);
-
-    if (hasBaCl2 && hasNa2SO4) {
-      // Delay 600ms để người dùng thấy dung dịch vừa đổ vào trước khi kết tủa xuất hiện
-      const timer = setTimeout(() => {
-        useExperimentStore.getState().triggerPrecipitation(droppedItem.id);
-      }, 20000);
-      return () => clearTimeout(timer);
-    }
-  }, [isTestTube, testTubeContents, droppedItem.id]);
 
   useEffect(() => {
     if (!isTestTube) return;
@@ -820,15 +806,23 @@ export const EquipmentModel = ({
                   const equip = getEquipmentById(item.substanceId);
                   if (!equip) return null;
 
-                  const angle = (idx * 137.5) * (Math.PI / 180);
-                  const dist = idx === 0 ? 0 : TUBE_INNER_R * 0.5 * Math.sqrt(idx / solidItems.length);
+                  const angle = idx * 137.5 * (Math.PI / 180);
+                  const dist =
+                    idx === 0
+                      ? 0
+                      : TUBE_INNER_R * 0.5 * Math.sqrt(idx / solidItems.length);
                   const ox = Math.cos(angle) * dist;
                   const oz = Math.sin(angle) * dist;
-                  if (item.substanceId === EQUIPMENT_IDS.ZN_POWDER && isHClPresent) {
+                  if (
+                    item.substanceId === EQUIPMENT_IDS.ZN_POWDER &&
+                    isHClPresent
+                  ) {
                     bubbleSources.push({ x: ox, z: oz });
                   }
 
-                  const isZnReacting = item.substanceId === EQUIPMENT_IDS.ZN_POWDER && isHClPresent;
+                  const isZnReacting =
+                    item.substanceId === EQUIPMENT_IDS.ZN_POWDER &&
+                    isHClPresent;
 
                   if (isZnReacting) {
                     // Replace GLB model with a simple mesh pellet at tube bottom
@@ -868,27 +862,46 @@ export const EquipmentModel = ({
                 {/* 2. Liquid fills above solid granules */}
                 {liquidItems.length > 0 && (
                   <LiquidLayer
-                    color={SUBSTANCE_COLORS[liquidItems[0].substanceId] ?? '#a5f3fc'}
+                    color={
+                      SUBSTANCE_COLORS[liquidItems[0].substanceId] ?? "#a5f3fc"
+                    }
                     totalLiquidMl={totalLiquidMl}
                     offsetAboveSolid={solidOffset}
-                    spawnInstant={liquidItems.every(c => c.instant)}
+                    spawnInstant={liquidItems.every((c) => c.instant)}
                     bubbleSources={bubbleSources}
                     znDissolved={znDissolved}
                     setHasActiveBubbles={setHasActiveBubbles}
+                    onComplete={() => onComplete(droppedItem.id)}
+                    isPrecipitate={
+                      liquidItems.find(
+                        (it) =>
+                          it.substanceId === EQUIPMENT_IDS.Na2SO4_SOLUTION,
+                      ) !== undefined &&
+                      liquidItems.find(
+                        (it) => it.substanceId === EQUIPMENT_IDS.BaCl2_SOLUTION,
+                      ) !== undefined
+                    }
                   />
                 )}
 
                 {/* 3. Powder floats on liquid surface or rests at the bottom */}
                 {powderItems.map((item, idx) => {
-                  const color = SUBSTANCE_COLORS[item.substanceId] ?? '#e5e7eb';
-                  const prevPowderAmt = powderItems.slice(0, idx).reduce((a, c) => a + c.amount, 0);
-                  const liquidEquivGrams = totalLiquidMl > 0 ? Math.round(liquidFillFraction * MAX_TUBE_LAYERS) : 0;
+                  const color = SUBSTANCE_COLORS[item.substanceId] ?? "#e5e7eb";
+                  const prevPowderAmt = powderItems
+                    .slice(0, idx)
+                    .reduce((a, c) => a + c.amount, 0);
+                  const liquidEquivGrams =
+                    totalLiquidMl > 0
+                      ? Math.round(liquidFillFraction * MAX_TUBE_LAYERS)
+                      : 0;
                   const solidEquivGrams = totalSolidAmt > 0 ? 1 : 0;
                   return (
                     <PowderLayer
                       key={`${stirredCount + unmixedContents.indexOf(item)}-${item.substanceId}`}
                       color={color}
-                      startGrams={liquidEquivGrams + solidEquivGrams + prevPowderAmt}
+                      startGrams={
+                        liquidEquivGrams + solidEquivGrams + prevPowderAmt
+                      }
                       amountGrams={item.amount}
                       reactionProgress={currentProgress}
                       coolingTime={coolingTime}
@@ -900,31 +913,44 @@ export const EquipmentModel = ({
                   );
                 })}
                 {/* 4. H2 Gas Vapor (white smoke) + Condensation for Zn + HCl reaction */}
-                {(znReactionActive || znDissolved) && (() => {
-                  // Compute actual liquid surface Y for H2 smoke start position
-                  const LIQUID_R = TUBE_INNER_R * 0.96;
-                  const MAX_CYL_H = TUBE_TOP_Y - TUBE_BOTTOM_Y - TUBE_MARGIN - LIQUID_R;
-                  const fillFrac = Math.min(1, totalLiquidMl / MAX_TUBE_LAYERS);
-                  const liquidBodyBaseY = TUBE_BOTTOM_Y + solidOffset + LIQUID_R;
-                  const liquidSurfY = liquidBodyBaseY + fillFrac * MAX_CYL_H - 0.003;
-                  return (
-                    <>
-                      <H2GasEmitter
-                        liquidSurfaceY={liquidSurfY}
-                        tubeTopY={TUBE_TOP_Y}
-                        tubeR={TUBE_INNER_R}
-                        active={znReactionActive && (!znDissolved || hasActiveBubbles)}
-                      />
-                      <CondensationDroplets
-                        tubeTopY={TUBE_TOP_Y}
-                        tubeBottomY={TUBE_BOTTOM_Y}
-                        tubeR={TUBE_INNER_R}
-                        liquidSurfaceY={liquidSurfY}
-                        active={znReactionActive && (!znDissolved || hasActiveBubbles)}
-                      />
-                    </>
-                  );
-                })()}
+                {(znReactionActive || znDissolved) &&
+                  (() => {
+                    // Compute actual liquid surface Y for H2 smoke start position
+                    const LIQUID_R = TUBE_INNER_R * 0.96;
+                    const MAX_CYL_H =
+                      TUBE_TOP_Y - TUBE_BOTTOM_Y - TUBE_MARGIN - LIQUID_R;
+                    const fillFrac = Math.min(
+                      1,
+                      totalLiquidMl / MAX_TUBE_LAYERS,
+                    );
+                    const liquidBodyBaseY =
+                      TUBE_BOTTOM_Y + solidOffset + LIQUID_R;
+                    const liquidSurfY =
+                      liquidBodyBaseY + fillFrac * MAX_CYL_H - 0.003;
+                    return (
+                      <>
+                        <H2GasEmitter
+                          liquidSurfaceY={liquidSurfY}
+                          tubeTopY={TUBE_TOP_Y}
+                          tubeR={TUBE_INNER_R}
+                          active={
+                            znReactionActive &&
+                            (!znDissolved || hasActiveBubbles)
+                          }
+                        />
+                        <CondensationDroplets
+                          tubeTopY={TUBE_TOP_Y}
+                          tubeBottomY={TUBE_BOTTOM_Y}
+                          tubeR={TUBE_INNER_R}
+                          liquidSurfaceY={liquidSurfY}
+                          active={
+                            znReactionActive &&
+                            (!znDissolved || hasActiveBubbles)
+                          }
+                        />
+                      </>
+                    );
+                  })()}
               </>
             );
           })()}
@@ -1438,6 +1464,8 @@ const LiquidLayer = ({
   bubbleSources = [],
   znDissolved = false,
   setHasActiveBubbles,
+  isPrecipitate = false,
+  onComplete
 }: {
   color: string;
   totalLiquidMl: number;
@@ -1446,6 +1474,8 @@ const LiquidLayer = ({
   bubbleSources?: { x: number; z: number }[];
   znDissolved?: boolean;
   setHasActiveBubbles?: (active: boolean) => void;
+  isPrecipitate?: boolean;
+  onComplete?: () => any;
 }) => {
   const LIQUID_R = TUBE_INNER_R * 0.96;
   const MAX_CYLINDER_H = TUBE_TOP_Y - TUBE_BOTTOM_Y - TUBE_MARGIN - LIQUID_R;
@@ -1986,6 +2016,14 @@ const LiquidLayer = ({
           depthWrite={false}
         />
       </instancedMesh>
+
+      {isPrecipitate && onComplete && <SnowflakePrecipitate 
+        tubeR={0.006}
+        tubeBottomY={TUBE_BOTTOM_Y + 0.002}
+        liquidSurfaceY={TUBE_BOTTOM_Y + 0.002 + targetFill / 10}
+        active={isPrecipitate}
+        onComplete={() => onComplete()}
+      />}
     </group>
   );
 };

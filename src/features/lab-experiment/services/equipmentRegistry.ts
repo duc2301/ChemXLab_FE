@@ -236,7 +236,7 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     physicalState: 'solution',
   },
   {
-    id: 'Na2SO4-solution',
+    id: 'aNa2SO4-solution',
     name: 'Natri Sunfat (Na₂SO₄)',
     category: 'substances',
     modelPath: '/models/Na2SO4.glb',
@@ -301,7 +301,7 @@ export const EQUIPMENT_IDS = {
   FES_POWDER: "FeS-powder",
   ZN_POWDER: "Zn-powder",
   HCL_SOLUTION: "HCL-solution",
-  Na2SO4_SOLUTION: "Na2SO4-solution",
+  Na2SO4_SOLUTION: "aNa2SO4-solution",
   BaCl2_SOLUTION: "BaCl2-solution",
   BaSO4_PRECIPITATE: "BaSO4-precipitate",
   NACL_SOLUTION: "NaCl-solution",
@@ -444,10 +444,10 @@ export const SUBSTANCE_COLORS: Record<string, string> = {
   "FeS-powder": "#2d2d2d", // đen/xám đậm (Sắt(II) sulfide)
   "Zn-powder": "#818cf8", // xám xanh (Kẽm)
   "HCL-solution": "#a5f3fc", // xanh cực nhạt (Axit Clohydric)
-  "Na2SO4-solution": "#f0f9ff", // Trắng xanh nhạt (Natri Sulfat)
+  "aNa2SO4-solution": "#f0f9ff", // Trắng xanh nhạt (Natri Sulfat)
   "BaCl2-solution": "#f1f5f9",  // Trắng xám nhạt (Bari Clorua)
   "BaSO4-precipitate": "#ffffff", // Trắng tinh khiết
-  "NaCl-solution": "#f0f9ff",     // Trong suốt/trắng xanh nhạt
+  "NaCl-solution": "#ffffff",     // Trong suốt/trắng xanh nhạt
   "ZnCl2-solution": "#e0f2fe",    // Trong suốt/xanh trời cực nhạt
 };
 
