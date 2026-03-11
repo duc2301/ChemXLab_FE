@@ -227,6 +227,7 @@ export const useExperimentStore = create<ExperimentStore>((set, get) => ({
         finalContents.push({
           substanceId: EQUIPMENT_IDS.FE_POWDER,
           amount: fe - reactedFe,
+          instant: true, // Appear in place, no falling animation
         });
       }
 
@@ -235,6 +236,7 @@ export const useExperimentStore = create<ExperimentStore>((set, get) => ({
         finalContents.push({
           substanceId: EQUIPMENT_IDS.S_POWDER,
           amount: s - reactedS,
+          instant: true, // Appear in place, no falling animation
         });
       }
 

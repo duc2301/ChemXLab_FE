@@ -20,6 +20,7 @@ import { H2GasEmitter } from "./H2GasEmitter";
 import { CondensationDroplets } from "./CondensationDroplets";
 import { SmokeEmitter } from "./SmokeEmitter";
 import { SnowflakePrecipitate } from "./SnowflakePrecipitate";
+import { FeSCondensation } from "./FeSCondensation";
 
 // ─── Hằng số snap ────────────────────────────────────────────────────────────
 const SNAP_OFFSET_Y = 0.5;
@@ -191,6 +192,7 @@ export const EquipmentModel = ({
 
   const contents = testTubeContents.get(droppedItem.id) ?? [];
   const hasFinishedReaction = contents.some(c => c.substanceId === EQUIPMENT_IDS.FES_POWDER);
+  const isFeSReaction = hasFinishedReaction || (contents.some(c => c.substanceId === EQUIPMENT_IDS.FE_POWDER) && contents.some(c => c.substanceId === EQUIPMENT_IDS.S_POWDER));
 
   const isTestTube = droppedItem.equipmentId === EQUIPMENT_IDS.TEST_TUBE;
   const isThermometer = droppedItem.equipmentId === EQUIPMENT_IDS.THERMOMETER;
@@ -961,6 +963,17 @@ export const EquipmentModel = ({
             );
           })()}
         </group>
+
+        {/* Lớp bám khói đen vàng (FeS) */}
+        {isTestTube && isFeSReaction && (currentProgress > 0.16 || hasFinishedReaction) && (
+          <FeSCondensation
+            tubeR={TUBE_INNER_R}
+            tubeBottomY={TUBE_BOTTOM_Y - 0.0005}
+            liquidSurfaceY={TUBE_BOTTOM_Y + totalGrams * LAYER_H_CONST}
+            reactionProgress={currentProgress}
+            isFinished={hasFinishedReaction || currentProgress >= 1.0}
+          />
+        )}
 
         {/* Lớp khói đen */}
         {isTestTube && (currentProgress > 0.33 || hasFinishedReaction) && (
@@ -2024,7 +2037,7 @@ const LiquidLayer = ({
         />
       </instancedMesh>
 
-      {isPrecipitate && onComplete && <SnowflakePrecipitate 
+      {isPrecipitate && onComplete && <SnowflakePrecipitate
         tubeR={0.006}
         tubeBottomY={TUBE_BOTTOM_Y + 0.002}
         liquidSurfaceY={TUBE_BOTTOM_Y + 0.002 + targetFill / 10}
@@ -2253,7 +2266,7 @@ const PowderLayer = ({
     <instancedMesh
       ref={meshRef}
       args={[undefined, undefined, grains.length]}
-      frustumCulled={true} // Bật lại để tối ưu GPU
+      frustumCulled={false}
     >
       <sphereGeometry args={[STIR_GRAIN_R, 3, 3]}>
         {" "}
@@ -2459,7 +2472,7 @@ const StirredLayer = ({
   });
 
   return (
-    <instancedMesh ref={meshRef} args={[undefined, undefined, grainRef.current?.length || 0]} frustumCulled={true}>
+    <instancedMesh ref={meshRef} args={[undefined, undefined, grainRef.current?.length || 0]} frustumCulled={false}>
       <sphereGeometry args={[STIR_GRAIN_R, 3, 3]}>
         <instancedBufferAttribute attach="attributes-aRandom" args={[aRandomData, 1]} />
         <instancedBufferAttribute attach="attributes-aColor" args={[aColorData, 3]} />
