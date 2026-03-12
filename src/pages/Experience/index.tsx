@@ -1,16 +1,16 @@
 import { Spin } from "antd";
-import { ArrowRight, Check, Crown, Sparkles, Star, Zap } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Check, Minus, Plus, Star } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Package } from "../../entities/Package";
 import type { Payment } from "../../entities/Payment";
 import { getAllPackages } from "../../features/Package";
 import { createPayment } from "../../features/Payment";
-import Mascot4 from "../../shared/assets/mascot/4.png";
 
 const ExperiencePage = () => {
   const [packages, setPackages] = useState<Package[]>([]);
   const [loading, setLoading] = useState(true);
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   const navigate = useNavigate();
 
@@ -36,75 +36,64 @@ const ExperiencePage = () => {
     }
   };
 
-  // Sort packages by price and exclude enterprise
   const standardPackages = [...packages]
     .filter((p) => p.name !== "DIAMOND")
     .sort((a, b) => a.price - b.price);
-  const enterprisePackage = packages.find((p) => p.name === "DIAMOND");
 
   const formatPrice = (price: number) => {
-    if (price === 0) return "Miễn phí";
+    if (price === 0) return "0đ";
     return new Intl.NumberFormat("vi-VN").format(price) + "đ";
   };
 
-  // Get icon for each plan
-  const getPlanIcon = (name: string) => {
-    switch (name.toUpperCase()) {
-      case "FREE":
-        return <Zap className="w-6 h-6" />;
-      case "SMART LAB":
-        return <Star className="w-6 h-6" />;
-      case "GENIUS LAB":
-        return <Crown className="w-6 h-6" />;
-      default:
-        return <Sparkles className="w-6 h-6" />;
-    }
-  };
-
-  // Determine if this is the recommended plan
   const isRecommended = (name: string) => {
     return name.toUpperCase() === "SMART LAB";
   };
 
+  const getPlanLabel = (name: string) => {
+    switch (name.toUpperCase()) {
+      case "FREE": return "Gói cơ bản";
+      case "SMART LAB": return "Phổ biến nhất";
+      case "GENIUS LAB": return "Chuyên nghiệp";
+      default: return name;
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-blue-950 to-slate-900">
-      {/* Hero Section */}
-      <section className="pt-24 pb-16 px-6 relative">
-        <div className="max-w-4xl mx-auto text-center relative z-10 flex flex-col items-center">
+    <div className="min-h-screen bg-white font-sans text-slate-900">
 
-          <div className="flex flex-col md:flex-row items-center justify-center gap-2 mb-8 relative group cursor-pointer hover:scale-110 transition-transform duration-500">
-            {/* Mascot 4 */}
-            <div className="w-[180px] z-20">
-              <img src={Mascot4} alt="Mascot Hóa học cầm loa" className="w-full h-auto drop-shadow-[0_0_30px_rgba(6,182,212,0.3)] transition-all duration-500" />
-            </div>
-
-            {/* Speech Bubble / CTA Banner */}
-            <div className="relative bg-[#0F172A] rounded-full px-6 py-3 border border-[#1E293B] text-cyan-400 font-medium text-sm flex items-center gap-2 shadow-[0_0_15px_rgba(6,182,212,0.2)] z-10 md:-ml-8 mt-4 md:mt-0 md:-mt-[95px] md:-translate-y-15">
-              {/* Pseudo-element for speech bubble tail */}
-              <div className="absolute w-4 h-4 bg-[#0F172A] border-l border-b border-[#1E293B] transform rotate-45 -left-[7px] top-1/2 -translate-y-1/2 hidden md:block"></div>
-              <Sparkles className="w-4 h-4 text-cyan-400" />
-              <span className="text-cyan-400">Bắt đầu miễn phí, nâng cấp bất cứ lúc nào</span>
-            </div>
+      {/* ═══════════════════════════════════════
+          HERO SECTION
+      ═══════════════════════════════════════ */}
+      <section
+        className="pt-28 pb-14 lg:pt-36 lg:pb-16 relative overflow-hidden"
+        style={{ background: "radial-gradient(ellipse at center, rgba(56,189,248,0.12) 0%, rgba(56,189,248,0.06) 40%, rgba(240,244,250,0.5) 70%, white 100%)" }}
+      >
+        <div className="max-w-2xl mx-auto text-center space-y-5 relative z-10 px-6">
+          <div className="inline-flex items-center gap-2 bg-white border border-blue-100 text-sky-600 text-xs font-semibold px-4 py-1.5 rounded-full shadow-sm">
+            ● BẢNG GIÁ
           </div>
 
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight relative z-20">
-            Chọn gói phù hợp với
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400"> nhu cầu của bạn</span>
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-[#1e2a4a] leading-[1.15] tracking-tight">
+            Chọn gói phù hợp{" "}
+            <br className="hidden md:block" />
+            với <span className="text-sky-600">mục tiêu của bạn</span>
           </h1>
-          <p className="text-lg md:text-xl text-blue-200/80 max-w-2xl mx-auto">
-            Trải nghiệm phòng thí nghiệm hóa học ảo với công nghệ mô phỏng 3D tiên tiến.
-            An toàn, hiệu quả và không giới hạn.
+
+          <p className="text-[15px] text-slate-500 max-w-lg mx-auto leading-relaxed font-medium">
+            Chọn gói phù hợp với nhu cầu và mường tượng năng suất học tập cùng ChemXLab
           </p>
         </div>
       </section>
 
-      {/* Pricing Cards */}
-      <section className="pb-20 px-6">
-        <div className="max-w-6xl mx-auto">
+      {/* ═══════════════════════════════════════
+          PRICING CARDS
+      ═══════════════════════════════════════ */}
+      <section className="pb-16 px-6">
+        <div className="max-w-5xl mx-auto">
           {loading ? (
             <div className="flex flex-col justify-center items-center h-64 gap-4">
               <Spin size="large" />
-              <div className="text-blue-300">Đang tải dữ liệu...</div>
+              <div className="text-slate-400">Đang tải dữ liệu...</div>
             </div>
           ) : (
             <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
@@ -113,135 +102,120 @@ const ExperiencePage = () => {
                 return (
                   <div
                     key={plan.id}
-                    className={`relative rounded-2xl p-8 flex flex-col transition-all duration-300 hover:scale-105 ${recommended
-                      ? "bg-gradient-to-br from-cyan-500 to-blue-600 text-white scale-105 shadow-2xl shadow-cyan-500/30 z-10 border-2 border-cyan-400/50"
-                      : "bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 hover:border-cyan-500/50 hover:shadow-xl hover:shadow-cyan-500/10"
+                    className={`relative rounded-2xl p-7 flex flex-col transition-all duration-300 hover:-translate-y-1 ${recommended
+                      ? "bg-white border-2 border-sky-500 shadow-xl shadow-sky-200/40 scale-[1.03] z-10"
+                      : "bg-white border border-slate-200 shadow-sm hover:shadow-md"
                       }`}
                   >
-                    {/* Recommended Badge */}
+                    {/* Badge */}
                     {recommended && (
-                      <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                        <div className="bg-gradient-to-r from-amber-400 to-orange-400 text-slate-900 px-4 py-1.5 rounded-full text-xs font-bold shadow-lg flex items-center gap-1.5">
-                          <Star className="w-3.5 h-3.5 fill-current" />
+                      <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
+                        <div className="bg-sky-600 text-white px-4 py-1 rounded-full text-xs font-bold shadow-md flex items-center gap-1.5">
+                          <Star className="w-3 h-3 fill-current" />
                           Phổ biến nhất
                         </div>
                       </div>
                     )}
 
-                    {/* Plan Header */}
-                    <div className="mb-6">
-                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${recommended
-                        ? "bg-white/20 text-white"
-                        : "bg-cyan-500/20 text-cyan-400"
-                        }`}>
-                        {getPlanIcon(plan.name)}
-                      </div>
-                      <h3 className={`text-xl font-bold mb-2 ${recommended ? "text-white" : "text-white"}`}>
-                        {plan.name}
-                      </h3>
-                      <p className={`text-sm ${recommended ? "text-cyan-100" : "text-blue-300/70"}`}>
-                        {plan.durationDays > 0 ? `${plan.durationDays} ngày sử dụng` : "Dùng thử không giới hạn"}
-                      </p>
+                    {/* Plan Label */}
+                    <div className="text-xs font-semibold text-sky-600 uppercase tracking-wider mb-1">
+                      {getPlanLabel(plan.name)}
                     </div>
 
+                    {/* Plan Name */}
+                    <h3 className="text-lg font-bold text-[#1e2a4a] mb-1">{plan.name}</h3>
+
                     {/* Price */}
-                    <div className="mb-6">
+                    <div className="mb-5">
                       <div className="flex items-baseline gap-1">
-                        <span className={`text-4xl font-bold ${recommended
-                          ? "text-white"
-                          : "text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400"
-                          }`}>
+                        <span className="text-4xl font-extrabold text-[#1e2a4a]">
                           {formatPrice(plan.price)}
                         </span>
                         {plan.price > 0 && (
-                          <span className={`text-sm ${recommended ? "text-cyan-100" : "text-blue-300/70"}`}>
-                            /gói
-                          </span>
+                          <span className="text-sm text-slate-400 font-medium">/gói</span>
                         )}
                       </div>
+                      <p className="text-xs text-slate-400 mt-1">
+                        {plan.durationDays > 0 ? `${plan.durationDays} ngày sử dụng` : "Miễn phí vĩnh viễn"}
+                      </p>
                     </div>
-
-                    {/* Features */}
-                    <ul className="space-y-3 mb-8 flex-grow">
-                      {plan.features.map((feature, j) => (
-                        <li key={j} className="flex items-start gap-3">
-                          <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${recommended ? "bg-white/20" : "bg-cyan-500/20"
-                            }`}>
-                            <Check className={`w-3 h-3 ${recommended ? "text-white" : "text-cyan-400"}`} />
-                          </div>
-                          <span className={`text-sm ${recommended ? "text-cyan-50" : "text-blue-200/80"}`}>
-                            {feature}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
 
                     {/* CTA Button */}
                     <button
                       onClick={() => handleBuyPackage(plan.id)}
-                      className={`w-full py-3.5 rounded-xl font-semibold transition-all ${plan.name === "FREE"
-                        ? "bg-transparent border cursor-disabled border-cyan-500 text-cyan-400 hover:bg-cyan-500/10 cursor-not-allowed"
+                      className={`w-full py-3 rounded-xl font-semibold text-sm transition-all mb-6 ${plan.name === "FREE"
+                        ? "bg-slate-100 text-slate-500 cursor-not-allowed"
                         : recommended
-                          ? "bg-white text-blue-600 hover:bg-cyan-50 shadow-lg"
-                          : "bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:from-cyan-400 hover:to-blue-400 shadow-lg shadow-cyan-500/20"
+                          ? "bg-sky-600 hover:bg-sky-700 text-white shadow-md shadow-sky-300/30"
+                          : "bg-[#1e2a4a] hover:bg-[#162040] text-white shadow-md"
                         }`}
                     >
-                      {plan.price === 0 ? "Trải nghiệm miễn phí" : "Chọn gói này"}
+                      {plan.price === 0 ? "Gói hiện tại" : "Chọn gói này →"}
                     </button>
+
+                    {/* Features */}
+                    <ul className="space-y-2.5 grow">
+                      {plan.features.map((feature, j) => (
+                        <li key={j} className="flex items-start gap-2.5">
+                          <div className="w-5 h-5 rounded-full bg-sky-50 flex items-center justify-center shrink-0 mt-0.5">
+                            <Check className="w-3 h-3 text-sky-600" />
+                          </div>
+                          <span className="text-sm text-slate-600">{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 );
               })}
             </div>
           )}
-
-          {/* Enterprise Section */}
-          {enterprisePackage && (
-            <div className="mt-12 bg-gradient-to-r from-slate-800/80 to-slate-800/60 backdrop-blur-xl rounded-2xl p-8 md:p-12 border border-amber-500/30">
-              <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-                <div className="text-center md:text-left">
-                  <div className="inline-flex items-center gap-2 bg-amber-500/20 text-amber-400 px-3 py-1 rounded-full text-sm font-medium mb-4 border border-amber-500/30">
-                    <Crown className="w-4 h-4" />
-                    Dành cho doanh nghiệp
-                  </div>
-                  <h3 className="text-2xl md:text-3xl font-bold text-white mb-3">
-                    {enterprisePackage.name}
-                  </h3>
-                  <p className="text-blue-200/70 max-w-lg">
-                    Giải pháp toàn diện cho trường học và doanh nghiệp.
-                    Tùy chỉnh theo nhu cầu, hỗ trợ VIP và triển khai riêng.
-                  </p>
-                </div>
-                <button
-                  onClick={() => navigate("/contact")}
-                  className="bg-gradient-to-r from-amber-400 to-orange-400 text-slate-900 px-8 py-4 rounded-xl font-bold hover:from-amber-300 hover:to-orange-300 transition-all flex items-center gap-2 whitespace-nowrap shadow-lg shadow-amber-500/20"
-                >
-                  Liên hệ tư vấn
-                  <ArrowRight className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       </section>
 
-      {/* Features Comparison */}
-      <section className="py-20 px-6">
+      {/* ═══════════════════════════════════════
+          TRUST BADGES / STATS
+      ═══════════════════════════════════════ */}
+      <section className="py-12 bg-white px-6">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold text-center text-white mb-4">
-            So sánh tính năng
-          </h2>
-          <p className="text-blue-200/70 text-center mb-12 max-w-2xl mx-auto">
-            Xem chi tiết các tính năng được hỗ trợ trong mỗi gói dịch vụ
-          </p>
+          <p className="text-center text-sm text-slate-400 font-semibold mb-8 uppercase tracking-wider">Được tin dùng bởi</p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-8 sm:gap-16">
+            {[
+              { value: "200+", label: "Trường học" },
+              { value: "2,000+", label: "Giáo viên" },
+              { value: "50,000+", label: "Học sinh" },
+              { value: "4.9/5", label: "Đánh giá" },
+            ].map((s, i) => (
+              <div key={i} className="text-center">
+                <div className="text-2xl font-extrabold text-sky-600">{s.value}</div>
+                <div className="text-xs text-slate-500 font-medium mt-1">{s.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
-          <div className="bg-slate-800/60 backdrop-blur-xl rounded-2xl overflow-hidden border border-slate-700/50">
+      {/* ═══════════════════════════════════════
+          FEATURES COMPARISON TABLE
+      ═══════════════════════════════════════ */}
+      <section className="py-16 px-6 bg-[#f7f8fa]">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-4 space-y-2">
+            <h2 className="text-3xl md:text-4xl font-extrabold text-[#1e2a4a]">
+              So sánh chi tiết tính năng
+            </h2>
+            <p className="text-slate-500 text-sm max-w-md mx-auto">
+              Xem chi tiết và lựa chọn gói phù hợp nhất cho nhu cầu của bạn.
+            </p>
+          </div>
+
+          <div className="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm mt-10">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-slate-700/50">
-                  <th className="text-left py-4 px-6 font-semibold text-white">Tính năng</th>
+                <tr className="border-b border-slate-100">
+                  <th className="text-left py-4 px-6 font-semibold text-[#1e2a4a] text-sm">Tính năng</th>
                   {standardPackages.map((plan) => (
                     <th key={plan.id} className="py-4 px-4 text-center">
-                      <span className={`text-sm font-semibold ${isRecommended(plan.name) ? "text-cyan-400" : "text-blue-300"}`}>
+                      <span className={`text-sm font-bold ${isRecommended(plan.name) ? "text-sky-600" : "text-[#1e2a4a]"}`}>
                         {plan.name}
                       </span>
                     </th>
@@ -254,23 +228,23 @@ const ExperiencePage = () => {
                   { feature: "Bảng tuần hoàn tương tác", values: [true, true, true] },
                   { feature: "Tạo thí nghiệm mới", values: ["1/ngày", "10/ngày", "Không giới hạn"] },
                   { feature: "AI Chatbox hỗ trợ", values: ["Cơ bản", "Nâng cao", "Toàn diện"] },
-                  { feature: "Lưu trữ dữ liệu", values: ["100MB", "5GB", "50GB"] },
+                  { feature: "Lưu trữ dữ liệu", values: ["100MB", "5GB", "50GB/aloha"] },
                   { feature: "Hỗ trợ VR/AR", values: [false, true, true] },
                   { feature: "Xuất báo cáo PDF", values: [false, true, true] },
                   { feature: "Hỗ trợ ưu tiên", values: [false, false, true] },
                 ].map((row, i) => (
-                  <tr key={i} className="border-b border-slate-700/30 last:border-0 hover:bg-slate-700/20 transition-colors">
-                    <td className="py-4 px-6 text-sm text-blue-100">{row.feature}</td>
+                  <tr key={i} className="border-b border-slate-50 last:border-0 hover:bg-sky-50/30 transition-colors">
+                    <td className="py-3.5 px-6 text-sm text-slate-600">{row.feature}</td>
                     {row.values.map((value, j) => (
-                      <td key={j} className="py-4 px-4 text-center">
+                      <td key={j} className="py-3.5 px-4 text-center">
                         {typeof value === "boolean" ? (
                           value ? (
-                            <Check className="w-5 h-5 text-cyan-400 mx-auto" />
+                            <Check className="w-5 h-5 text-sky-600 mx-auto" />
                           ) : (
-                            <span className="text-slate-500">—</span>
+                            <span className="text-slate-300">—</span>
                           )
                         ) : (
-                          <span className="text-sm text-blue-200/80">{value}</span>
+                          <span className="text-sm text-slate-600 font-medium">{value}</span>
                         )}
                       </td>
                     ))}
@@ -282,56 +256,82 @@ const ExperiencePage = () => {
         </div>
       </section>
 
-      {/* FAQ Section */}
-      <section className="py-20 px-6">
+      {/* ═══════════════════════════════════════
+          FAQ SECTION
+      ═══════════════════════════════════════ */}
+      <section className="py-20 px-6 bg-white">
         <div className="max-w-3xl mx-auto">
-          <h2 className="text-3xl font-bold text-center text-white mb-12">
-            Câu hỏi thường gặp
-          </h2>
+          <div className="text-center mb-12 space-y-2">
+            <h2 className="text-3xl md:text-4xl font-extrabold text-[#1e2a4a]">
+              Câu hỏi thường gặp
+            </h2>
+          </div>
 
-          <div className="space-y-4">
+          <div className="space-y-3">
             {[
               {
-                q: "Tôi có thể dùng thử miễn phí không?",
-                a: "Có! Gói FREE hoàn toàn miễn phí và không yêu cầu thẻ tín dụng. Bạn có thể nâng cấp bất cứ lúc nào."
+                q: "ChemXLab là gì",
+                a: "ChemXLab là nền tảng phòng thí nghiệm ảo \"tất cả trong một\", được thiết kế để đơn giản hóa các bài thực hành, tự động hóa báo cáo, theo dõi tiến độ học tập theo thời gian thực và đảm bảo một môi trường học tập an toàn cho học sinh cũng như trường học ở mọi quy mô."
               },
               {
-                q: "Chính sách hoàn tiền như thế nào?",
-                a: "Chúng tôi có chính sách hoàn tiền trong 7 ngày đầu tiên nếu bạn không hài lòng với dịch vụ."
+                q: "ChemXLab hoạt động như thế nào?",
+                a: "ChemXLab sử dụng công nghệ mô phỏng 3D tiên tiến để tái tạo các thí nghiệm hóa học. Bạn chỉ cần chọn thí nghiệm, tương tác với mô hình và nhận kết quả giải thích chi tiết."
               },
               {
-                q: "Tôi có thể hủy đăng ký bất cứ lúc nào không?",
-                a: "Có, bạn có thể hủy bất cứ lúc nào. Gói của bạn vẫn hoạt động đến hết kỳ thanh toán hiện tại."
+                q: "Dữ liệu trên ChemXLab có được bảo mật an toàn không?",
+                a: "Có, chúng tôi sử dụng mã hóa SSL và tuân thủ các tiêu chuẩn bảo mật quốc tế để đảm bảo dữ liệu của bạn luôn an toàn."
               },
               {
-                q: "Có thể nâng cấp gói giữa chừng không?",
-                a: "Hoàn toàn có thể! Chi phí sẽ được tính toán lại dựa trên thời gian còn lại của gói hiện tại."
+                q: "ChemXLab có thể tích hợp với các phần mềm học tập khác không?",
+                a: "Có, ChemXLab hỗ trợ tích hợp với nhiều hệ thống quản lý học tập (LMS) phổ biến thông qua API."
+              },
+              {
+                q: "ChemXLab hỗ trợ những phương thức thanh toán nào?",
+                a: "Chúng tôi hỗ trợ thanh toán qua thẻ tín dụng/ghi nợ, ví điện tử (MoMo, ZaloPay) và chuyển khoản ngân hàng."
+              },
+              {
+                q: "ChemXLab phù hợp với quy mô trường học như thế nào?",
+                a: "ChemXLab được thiết kế linh hoạt cho mọi quy mô — từ cá nhân tự học đến trường học hàng ngàn học sinh, với các gói dịch vụ phù hợp."
               },
             ].map((faq, i) => (
-              <div key={i} className="bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 rounded-xl p-6 hover:border-cyan-500/50 transition-colors">
-                <h3 className="font-semibold text-white mb-2">{faq.q}</h3>
-                <p className="text-blue-200/70 text-sm">{faq.a}</p>
-              </div>
+              <FaqItem key={i} question={faq.q} answer={faq.a} isOpen={openFaq === i} onToggle={() => setOpenFaq(openFaq === i ? null : i)} />
             ))}
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 px-6">
-        <div className="max-w-3xl mx-auto text-center bg-gradient-to-r from-cyan-500/20 to-blue-500/20 backdrop-blur-xl rounded-2xl p-12 border border-cyan-500/30">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            Sẵn sàng bắt đầu hành trình?
-          </h2>
-          <p className="text-blue-200/80 text-lg mb-8">
-            Đăng ký ngay để trải nghiệm phòng thí nghiệm hóa học ảo miễn phí
-          </p>
-          <button className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white px-8 py-4 rounded-xl font-bold hover:from-cyan-400 hover:to-blue-400 transition-all inline-flex items-center gap-2 shadow-xl shadow-cyan-500/25">
-            Bắt đầu miễn phí
-            <ArrowRight className="w-5 h-5" />
-          </button>
+
+    </div>
+  );
+};
+
+// FAQ Item component with smooth expand/collapse animation
+const FaqItem = ({ question, answer, isOpen, onToggle }: { question: string; answer: string; isOpen: boolean; onToggle: () => void }) => {
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  return (
+    <div className={`bg-white border rounded-xl overflow-hidden transition-colors duration-200 ${isOpen ? "border-sky-200" : "border-slate-200 hover:border-slate-300"}`}>
+      <button
+        onClick={onToggle}
+        className="w-full flex items-center justify-between px-6 py-5 text-left group"
+      >
+        <h3 className="font-semibold text-[#1e2a4a] text-[15px] pr-4">{question}</h3>
+        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-colors duration-200 ${isOpen ? "bg-[#1e2a4a] text-white" : "bg-slate-100 text-slate-500 group-hover:bg-slate-200"}`}>
+          {isOpen ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
         </div>
-      </section>
+      </button>
+      <div
+        ref={contentRef}
+        className="transition-all duration-300 ease-in-out overflow-hidden"
+        style={{
+          maxHeight: isOpen ? contentRef.current?.scrollHeight ? contentRef.current.scrollHeight + 20 + "px" : "500px" : "0px",
+          opacity: isOpen ? 1 : 0,
+        }}
+      >
+        <div className="px-6 pb-5">
+          <p className="text-slate-500 text-sm leading-relaxed">{answer}</p>
+        </div>
+      </div>
     </div>
   );
 };
