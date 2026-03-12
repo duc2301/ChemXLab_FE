@@ -1,89 +1,184 @@
-import {
-  ArrowRight,
-  Beaker,
-  BookOpen,
-  CheckCircle2,
-  FlaskConical,
-  Globe,
-  GraduationCap,
-  Heart,
-  Lightbulb,
-  Rocket,
-  Sparkles,
-  Star,
-  Target,
-  Users,
-  Zap,
-} from "lucide-react";
-import { Link } from "react-router-dom";
+import { Globe, Shield, Sparkles, Zap } from "lucide-react";
+
+import labImage from "../../shared/assets/about/lab.png";
+import team1 from "../../shared/assets/about/team1.png";
+import team2 from "../../shared/assets/about/team2.png";
+import team3 from "../../shared/assets/about/team3.png";
+import timeline1 from "../../shared/assets/about/timeline1.png";
+import timeline2 from "../../shared/assets/about/timeline2.png";
 
 const AboutPage = () => {
   return (
     <div className="min-h-screen bg-white font-sans text-slate-900">
-      {/* Integrated Hero & TVC Section */}
-      <section className="relative pt-24 pb-20 overflow-hidden bg-white">
-        {/* Decorative Background Elements */}
-        <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
-          <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-blue-50 rounded-full blur-3xl opacity-60"></div>
-          <div className="absolute bottom-[10%] left-[-5%] w-[500px] h-[500px] bg-cyan-50 rounded-full blur-3xl opacity-50"></div>
-          {/* Subtle floating circles */}
-          <div className="absolute top-1/4 left-1/4 w-4 h-4 bg-blue-200 rounded-full animate-pulse"></div>
-          <div className="absolute bottom-1/3 right-1/4 w-6 h-6 bg-cyan-200 rounded-full animate-pulse delay-700"></div>
+
+      {/* ═══════════════════════════════════════
+          HERO SECTION
+      ═══════════════════════════════════════ */}
+      <section
+        className="pt-28 pb-14 lg:pt-36 lg:pb-16 relative overflow-hidden"
+        style={{ background: "radial-gradient(ellipse at center, rgba(56,189,248,0.10) 0%, rgba(56,189,248,0.04) 40%, white 70%)" }}
+      >
+        <div className="max-w-2xl mx-auto text-center space-y-4 relative z-10 px-6">
+          <div className="inline-flex items-center gap-2 bg-white border border-blue-100 text-sky-600 text-xs font-semibold px-4 py-1.5 rounded-full shadow-sm">
+            ● Giới thiệu
+          </div>
+
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-[#1e2a4a] leading-[1.15] tracking-tight">
+            Về ChemXLab
+          </h1>
+
+          <p className="text-[15px] text-slate-500 max-w-lg mx-auto leading-relaxed font-medium">
+            Khám phá câu chuyện, sứ mệnh và đội ngũ đằng sau nền tảng thí nghiệm hóa học ảo hàng đầu Việt Nam.
+          </p>
         </div>
+      </section>
 
-        <div className="container mx-auto px-6 relative z-10">
-          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
-
-            {/* Left Column: Text Content */}
-            <div className="w-full lg:w-1/2 text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full text-sm font-semibold mb-6">
-                <Sparkles className="w-4 h-4" />
-                Nền tảng giáo dục Hóa học hàng đầu Việt Nam
-              </div>
-
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-slate-900 mb-6 leading-tight">
-                Chào mừng đến với{" "}
-                <span className="block text-transparent bg-clip-text bg-linear-to-r from-blue-600 to-cyan-500">
-                  ChemXLab
-                </span>
-              </h1>
-
-              <p className="text-lg text-slate-600 max-w-2xl mx-auto lg:mx-0 leading-relaxed mb-10">
-                ChemXLab là nền tảng tiên phong ứng dụng công nghệ thực tế ảo và mô phỏng 3D vào giáo dục Hóa học.
-                Chúng tôi trực quan hóa kiến thức, biến những công thức khô khan thành trải nghiệm sinh động.
-              </p>
-
-              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
-                <Link
-                  to="/labtest"
-                  className="w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-blue-600/30 hover:shadow-xl flex items-center justify-center gap-2 group"
-                >
-                  <FlaskConical className="w-5 h-5 group-hover:rotate-12 transition-transform" />
-                  Trải nghiệm ngay
-                </Link>
-                <Link
-                  to="/library"
-                  className="w-full sm:w-auto px-8 py-4 bg-white hover:bg-slate-50 text-slate-700 border-2 border-slate-200 font-bold rounded-xl transition-all flex items-center justify-center gap-2"
-                >
-                  Khám phá thư viện
-                  <ArrowRight className="w-5 h-5" />
-                </Link>
+      {/* ═══════════════════════════════════════
+          ABOUT FEATURE SECTION
+      ═══════════════════════════════════════ */}
+      <section className="py-16 px-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            {/* Image */}
+            <div className="relative">
+              <div className="rounded-2xl overflow-hidden border border-slate-200 shadow-lg">
+                <img
+                  src={labImage}
+                  alt="ChemXLab Lab"
+                  className="w-full h-auto object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    target.parentElement!.innerHTML = `
+                      <div class="aspect-[4/3] bg-gradient-to-br from-sky-100 to-sky-50 flex items-center justify-center">
+                        <div class="text-center text-sky-400">
+                          <svg class="w-16 h-16 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                          <p class="text-sm font-medium">Phòng thí nghiệm ảo 3D</p>
+                        </div>
+                      </div>
+                    `;
+                  }}
+                />
               </div>
             </div>
 
-            {/* Right Column: TVC Video */}
-            <div className="w-full lg:w-1/2 relative group">
-              {/* Cinematic background glow for video */}
-              <div className="absolute -inset-4 bg-linear-to-r from-blue-400 to-cyan-400 rounded-3xl blur-2xl opacity-20 group-hover:opacity-30 transition-opacity"></div>
+            {/* Text Content */}
+            <div className="space-y-5">
+              <h2 className="text-2xl md:text-3xl font-extrabold text-[#1e2a4a] leading-tight">
+                Nền tảng thực hành hóa học ảo{" "}
+                <span className="text-sky-600">hàng đầu Việt Nam</span>
+              </h2>
 
-              <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-blue-900/10 border-4 border-white aspect-[1.72/1] bg-white transform hover:scale-[1.02] transition-transform duration-500">
-                <iframe
-                  src="https://drive.google.com/file/d/10PFmUjz2zfMB-_7yz0JI2squBfbytGCM/preview"
-                  title="ChemXLab TVC"
-                  allow="autoplay; encrypted-media"
-                  allowFullScreen
-                  className="absolute inset-0 w-full h-full scale-[1.04]"
-                  style={{ border: 0 }}
+              <p className="text-slate-500 text-sm leading-relaxed">
+                ChemXLab được phát triển bởi đội ngũ đam mê công nghệ và giáo dục, mang đến trải nghiệm thí nghiệm hóa học 3D an toàn và hiệu quả cho học sinh và giáo viên trên toàn quốc.
+              </p>
+
+              {/* Mini stats */}
+              <div className="grid grid-cols-2 gap-4 pt-2">
+                {[
+                  { icon: <Zap className="w-5 h-5" />, label: "Nhanh chóng", color: "text-sky-600 bg-sky-50" },
+                  { icon: <Shield className="w-5 h-5" />, label: "An toàn", color: "text-emerald-600 bg-emerald-50" },
+                  { icon: <Globe className="w-5 h-5" />, label: "Trực tuyến", color: "text-violet-600 bg-violet-50" },
+                  { icon: <Sparkles className="w-5 h-5" />, label: "Sáng tạo", color: "text-amber-600 bg-amber-50" },
+                ].map((item, i) => (
+                  <div key={i} className="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-100">
+                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${item.color}`}>
+                      {item.icon}
+                    </div>
+                    <span className="text-sm font-semibold text-[#1e2a4a]">{item.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════
+          TIMELINE SECTION
+      ═══════════════════════════════════════ */}
+      <section className="py-20 px-6 bg-[#f7f8fa]">
+        <div className="max-w-5xl mx-auto">
+          {/* Header */}
+          <div className="text-center mb-14 space-y-3 relative">
+            <h2 className="text-3xl md:text-4xl font-extrabold text-[#1e2a4a]">
+              Hành trình phát triển
+            </h2>
+            <p className="text-slate-500 text-sm max-w-md mx-auto">
+              Từ ý tưởng ban đầu đến nền tảng được hàng nghìn học sinh tin dùng
+            </p>
+            {/* Dot */}
+            <div className="absolute top-0 right-4 md:right-8 w-3 h-3 rounded-full bg-sky-200"></div>
+          </div>
+
+          {/* Timeline Items */}
+          <div className="space-y-10">
+
+            {/* Item 1: Text left + Image right */}
+            <div className="grid md:grid-cols-2 gap-6 items-stretch">
+              <div className="bg-[#EDF3FA] rounded-2xl p-7 flex flex-col justify-center">
+                <p className="text-sky-600 font-bold italic text-sm mb-1">Tháng 3/2022</p>
+                <h3 className="text-lg font-extrabold text-[#1e2a4a] mb-3">Ý tưởng ra đời</h3>
+                <p className="text-slate-500 text-sm leading-relaxed">
+                  Nhóm sáng lập gồm 3 giáo viên hóa học và 2 kỹ sư phần mềm bắt đầu nghiên cứu khả năng xây dựng phòng lab ảo 3D.
+                </p>
+              </div>
+              <div className="rounded-2xl overflow-hidden">
+                <img
+                  src={timeline1}
+                  alt="Ý tưởng ra đời"
+                  className="w-full h-full object-cover rounded-2xl"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    target.parentElement!.innerHTML = `<div class="h-full min-h-[200px] bg-gradient-to-br from-sky-100 to-sky-50 flex items-center justify-center text-sky-400 text-sm font-medium rounded-2xl">Hình ảnh</div>`;
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Item 2: Image left + Text right */}
+            <div className="grid md:grid-cols-2 gap-6 items-stretch">
+              <div className="rounded-2xl overflow-hidden">
+                <img
+                  src={timeline2}
+                  alt="Phiên bản Beta"
+                  className="w-full h-full object-cover rounded-2xl"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    target.parentElement!.innerHTML = `<div class="h-full min-h-[200px] bg-gradient-to-br from-slate-100 to-slate-50 flex items-center justify-center text-slate-400 text-sm font-medium rounded-2xl">Hình ảnh</div>`;
+                  }}
+                />
+              </div>
+              <div className="bg-[#EDF3FA] rounded-2xl p-7 flex flex-col justify-center">
+                <p className="text-sky-600 font-bold italic text-sm mb-1">Tháng 9/2022</p>
+                <h3 className="text-lg font-extrabold text-[#1e2a4a] mb-3">Phiên bản Beta</h3>
+                <p className="text-slate-500 text-sm leading-relaxed">
+                  Ra mắt phiên bản thử nghiệm đầu tiên với 15 thí nghiệm cơ bản. 500 học sinh từ 5 trường tham gia thử nghiệm.
+                </p>
+              </div>
+            </div>
+
+            {/* Item 3: Text left + Image right */}
+            <div className="grid md:grid-cols-2 gap-6 items-stretch">
+              <div className="bg-[#EDF3FA] rounded-2xl p-7 flex flex-col justify-center">
+                <p className="text-sky-600 font-bold italic text-sm mb-1">Tháng 3/2023</p>
+                <h3 className="text-lg font-extrabold text-[#1e2a4a] mb-3">Chính thức ra mắt</h3>
+                <p className="text-slate-500 text-sm leading-relaxed">
+                  ChemXLab 1.0 chính thức với 50+ thí nghiệm, AI trợ giảng, và hệ thống đánh giá tự động. Hợp tác với 30 trường.
+                </p>
+              </div>
+              <div className="rounded-2xl overflow-hidden">
+                <img
+                  src={labImage}
+                  alt="Chính thức ra mắt"
+                  className="w-full h-full object-cover rounded-2xl"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    target.parentElement!.innerHTML = `<div class="h-full min-h-[200px] bg-gradient-to-br from-emerald-100 to-emerald-50 flex items-center justify-center text-emerald-400 text-sm font-medium rounded-2xl">Hình ảnh</div>`;
+                  }}
                 />
               </div>
             </div>
@@ -92,224 +187,136 @@ const AboutPage = () => {
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-12 border-y border-slate-100 bg-white">
-        <div className="container mx-auto px-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+      {/* ═══════════════════════════════════════
+          STATS STRIP
+      ═══════════════════════════════════════ */}
+      <section className="py-14 bg-white px-6">
+        <div className="max-w-5xl mx-auto">
+          <div className="flex flex-col md:flex-row items-center justify-center divide-y md:divide-y-0 md:divide-x divide-slate-200">
             {[
-              { number: "10,000+", label: "Học sinh sử dụng", icon: <Users className="w-5 h-5" /> },
-              { number: "500+", label: "Thí nghiệm mô phỏng", icon: <Beaker className="w-5 h-5" /> },
-              { number: "50+", label: "Trường học tin dùng", icon: <GraduationCap className="w-5 h-5" /> },
-              { number: "4.9/5", label: "Đánh giá trung bình", icon: <Star className="w-5 h-5" /> },
+              {
+                value: "50,000+",
+                label: "HỌC SINH SỬ DỤNG",
+                icon: (
+                  <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+                  </svg>
+                ),
+              },
+              {
+                value: "80+",
+                label: "THÍ NGHIỆM 3D",
+                icon: (
+                  <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                  </svg>
+                ),
+              },
+              {
+                value: "2,000+",
+                label: "GIÁO VIÊN TIN DÙNG",
+                icon: (
+                  <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5" />
+                  </svg>
+                ),
+              },
+              {
+                value: "150+",
+                label: "TRƯỜNG ĐỐI TÁC",
+                icon: (
+                  <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3.75h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008z" />
+                  </svg>
+                ),
+              },
             ].map((stat, i) => (
-              <div key={i} className="group">
-                <div className="flex items-center justify-center gap-2 text-blue-600 mb-2">
+              <div key={i} className="flex-1 text-center py-6 md:py-0 px-6">
+                <div className="text-sky-600 flex justify-center mb-3">
                   {stat.icon}
                 </div>
-                <div className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-1 group-hover:text-blue-600 transition-colors">
-                  {stat.number}
-                </div>
-                <div className="text-sm font-medium text-slate-500">{stat.label}</div>
+                <div className="text-3xl md:text-4xl font-extrabold text-[#1e2a4a] mb-1">{stat.value}</div>
+                <div className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">{stat.label}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Mission, Vision, Values */}
-      <section className="py-20 bg-slate-50">
-        <div className="container mx-auto px-6">
-          <div className="text-center mb-14">
-            <h2 className="text-blue-600 font-bold tracking-widest uppercase text-sm mb-3">
-              Giá trị cốt lõi
+      {/* ═══════════════════════════════════════
+          TEAM SECTION
+      ═══════════════════════════════════════ */}
+      <section className="py-20 px-6 bg-[#f7f8fa]">
+        <div className="max-w-5xl mx-auto">
+          {/* Header */}
+          <div className="text-center mb-4 space-y-2">
+            <p className="text-sky-500 font-semibold text-xs uppercase tracking-[0.2em]">Đội ngũ</p>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-[#1e2a4a]">
+              Gặp gỡ chuyên gia của chúng tôi
             </h2>
-            <h3 className="text-3xl md:text-4xl font-extrabold text-slate-900">
-              Sứ mệnh & Tầm nhìn
-            </h3>
+            <p className="text-slate-500 text-sm max-w-md mx-auto">
+              Các sáng lập viên giàu chuyên gia giáo dục và công nghệ cùng chung tay tạo nên ChemXLab.
+            </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          {/* Team Cards */}
+          <div className="grid md:grid-cols-3 gap-6 mt-10">
             {[
               {
-                icon: <Target className="w-7 h-7" />,
-                title: "Sứ mệnh",
-                desc: "Phổ cập kiến thức Hóa học thông qua công nghệ tiên tiến, giúp mọi học sinh tiếp cận khoa học một cách trực quan và thú vị nhất.",
-                color: "bg-blue-100 text-blue-600",
-                borderColor: "hover:border-blue-300",
+                name: "Nguyễn Minh Tuấn",
+                role: "Co-Founder & CEO",
+                desc: "10+ năm kinh nghiệm trong lĩnh vực EdTech, đam mê đổi mới giáo dục.",
+                img: team1,
               },
               {
-                icon: <Globe className="w-7 h-7" />,
-                title: "Tầm nhìn",
-                desc: "Trở thành nền tảng giáo dục STEM hàng đầu Đông Nam Á, xây dựng thế hệ nhà khoa học yêu thích khám phá và sáng tạo.",
-                color: "bg-cyan-100 text-cyan-600",
-                borderColor: "hover:border-cyan-300",
+                name: "Trần Thu Hà",
+                role: "Head of Product",
+                desc: "Chuyên gia thiết kế trải nghiệm người dùng với background hóa học.",
+                img: team2,
               },
               {
-                icon: <Heart className="w-7 h-7" />,
-                title: "Giá trị",
-                desc: "Sáng tạo không ngừng, Chính xác trong từng chi tiết, và Đam mê truyền cảm hứng học tập cho mọi người.",
-                color: "bg-emerald-100 text-emerald-600",
-                borderColor: "hover:border-emerald-300",
+                name: "Lê Văn Hùng",
+                role: "CTO",
+                desc: "Kiến trúc sư phần mềm với 8+ năm xây dựng hệ thống công nghệ giáo dục.",
+                img: team3,
               },
-            ].map((item, i) => (
+            ].map((person, i) => (
               <div
                 key={i}
-                className={`bg-white rounded-2xl p-8 border-2 border-slate-100 ${item.borderColor} shadow-sm hover:shadow-xl transition-all duration-300 group`}
+                className="bg-white rounded-2xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300"
               >
-                <div className={`w-14 h-14 rounded-xl ${item.color} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
-                  {item.icon}
+                {/* Avatar */}
+                <div className="aspect-[4/3] bg-slate-100 relative overflow-hidden">
+                  <img
+                    src={person.img}
+                    alt={person.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                      target.parentElement!.innerHTML = `
+                        <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-sky-50 to-slate-100">
+                          <div class="w-20 h-20 rounded-full bg-slate-200 flex items-center justify-center">
+                            <svg class="w-10 h-10 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                          </div>
+                        </div>
+                      `;
+                    }}
+                  />
                 </div>
-                <h4 className="text-xl font-bold text-slate-900 mb-3">{item.title}</h4>
-                <p className="text-slate-600 leading-relaxed">{item.desc}</p>
+
+                {/* Info */}
+                <div className="p-5">
+                  <h3 className="text-base font-bold text-[#1e2a4a]">{person.name}</h3>
+                  <p className="text-sky-600 text-xs font-semibold mb-2">{person.role}</p>
+                  <p className="text-slate-500 text-sm leading-relaxed">{person.desc}</p>
+                </div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Why Choose Us - Bento Grid */}
-      <section className="py-20 bg-white">
-        <div className="container mx-auto px-6">
-          <div className="text-center mb-14">
-            <h2 className="text-blue-600 font-bold tracking-widest uppercase text-sm mb-3">
-              Tại sao chọn ChemXLab?
-            </h2>
-            <h3 className="text-3xl md:text-4xl font-extrabold text-slate-900">
-              Trải nghiệm học tập khác biệt
-            </h3>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
-            {/* Large Card - Dark accent */}
-            <div className="md:col-span-2 bg-[#0F172A] rounded-3xl p-8 text-white relative overflow-hidden group">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl"></div>
-              <div className="relative z-10">
-                <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center mb-6 backdrop-blur border border-blue-400/30">
-                  <Rocket className="w-6 h-6 text-blue-300" />
-                </div>
-                <h4 className="text-2xl font-bold mb-3">Học qua trải nghiệm thực tế</h4>
-                <p className="text-slate-300 leading-relaxed max-w-lg">
-                  Không còn học thuộc lòng khô khan! ChemXLab cho phép học sinh tự tay thực hiện thí nghiệm,
-                  quan sát phản ứng và hiểu sâu bản chất hóa học thông qua mô phỏng 3D sinh động.
-                </p>
-              </div>
-              <Beaker className="absolute -bottom-10 -right-10 w-48 h-48 text-blue-500/10 group-hover:text-blue-500/20 transition-colors" />
-            </div>
-
-            {/* Small Cards - White */}
-            <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm hover:shadow-xl transition-all group">
-              <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600 mb-6">
-                <CheckCircle2 className="w-6 h-6" />
-              </div>
-              <h4 className="text-xl font-bold text-slate-900 mb-2">An toàn 100%</h4>
-              <p className="text-slate-600">Không lo hóa chất độc hại hay tai nạn phòng thí nghiệm</p>
-            </div>
-
-            <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm hover:shadow-xl transition-all group">
-              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 mb-6">
-                <Lightbulb className="w-6 h-6" />
-              </div>
-              <h4 className="text-xl font-bold text-slate-900 mb-2">AI Thông minh</h4>
-              <p className="text-slate-600">Trợ lý AI hỗ trợ giải đáp thắc mắc 24/7</p>
-            </div>
-
-            <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm hover:shadow-xl transition-all group">
-              <div className="w-12 h-12 bg-cyan-100 rounded-xl flex items-center justify-center text-cyan-600 mb-6">
-                <BookOpen className="w-6 h-6" />
-              </div>
-              <h4 className="text-xl font-bold text-slate-900 mb-2">Theo chương trình</h4>
-              <p className="text-slate-600">Nội dung phù hợp chương trình THCS & THPT Việt Nam</p>
-            </div>
-
-            <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm hover:shadow-xl transition-all group">
-              <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center text-amber-600 mb-6">
-                <Zap className="w-6 h-6" />
-              </div>
-              <h4 className="text-xl font-bold text-slate-900 mb-2">Phản hồi tức thì</h4>
-              <p className="text-slate-600">Kết quả thí nghiệm hiển thị realtime</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Team Section */}
-      <section className="py-20 bg-slate-50">
-        <div className="container mx-auto px-6">
-          <div className="max-w-5xl mx-auto">
-            <div className="bg-white rounded-3xl p-8 md:p-12 shadow-lg border border-slate-100">
-              <div className="grid md:grid-cols-2 gap-12 items-center">
-                <div>
-                  <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-semibold mb-4">
-                    <Users className="w-4 h-4" />
-                    Đội ngũ của chúng tôi
-                  </div>
-                  <h3 className="text-3xl font-extrabold text-slate-900 mb-6">
-                    Những con người đam mê giáo dục
-                  </h3>
-                  <p className="text-slate-600 text-lg mb-8 leading-relaxed">
-                    Đội ngũ ChemXLab bao gồm các chuyên gia hóa học, giáo viên giàu kinh nghiệm và
-                    kỹ sư công nghệ tài năng. Chúng tôi chia sẻ chung một đam mê:
-                    <strong> biến việc học Hóa học thành hành trình khám phá thú vị.</strong>
-                  </p>
-                  <Link
-                    to="/support"
-                    className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-all shadow-lg shadow-blue-600/30"
-                  >
-                    Liên hệ với chúng tôi
-                    <ArrowRight className="w-5 h-5" />
-                  </Link>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  {[
-                    { role: "Chuyên gia Hóa học", color: "bg-blue-50 border-blue-200" },
-                    { role: "Giáo viên THPT", color: "bg-cyan-50 border-cyan-200" },
-                    { role: "Kỹ sư 3D", color: "bg-emerald-50 border-emerald-200" },
-                    { role: "AI Engineer", color: "bg-amber-50 border-amber-200" },
-                  ].map((member, i) => (
-                    <div
-                      key={i}
-                      className={`aspect-square ${member.color} rounded-2xl flex flex-col items-center justify-center border-2 hover:scale-105 transition-all p-4`}
-                    >
-                      <Users className="w-10 h-10 text-slate-400 mb-3" />
-                      <span className="text-sm font-semibold text-slate-700 text-center">{member.role}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section - Dark accent */}
-      <section className="py-20 bg-[#0F172A] relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/20 rounded-full blur-[120px]"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-cyan-500/10 rounded-full blur-[100px]"></div>
-
-        <div className="container mx-auto px-6 relative z-10 text-center">
-          <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-6">
-            Sẵn sàng bắt đầu hành trình?
-          </h2>
-          <p className="text-slate-300 text-lg max-w-2xl mx-auto mb-10">
-            Tham gia cùng hàng nghìn học sinh đang khám phá thế giới Hóa học một cách trực quan và thú vị mỗi ngày.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link
-              to="/register"
-              className="w-full sm:w-auto px-10 py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition-all shadow-[0_0_20px_rgba(37,99,235,0.4)] hover:shadow-[0_0_30px_rgba(37,99,235,0.6)]"
-            >
-              Đăng ký miễn phí
-            </Link>
-            <Link
-              to="/experience"
-              className="w-full sm:w-auto px-10 py-4 border border-slate-600 text-white font-bold rounded-xl hover:bg-slate-800 transition-all"
-            >
-              Xem các gói dịch vụ
-            </Link>
-          </div>
-        </div>
-      </section>
     </div>
   );
 };

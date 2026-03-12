@@ -4,17 +4,11 @@ import { motion } from "framer-motion";
 
 import Mascot7 from "../../shared/assets/mascot/7.png";
 import Mascot8 from "../../shared/assets/mascot/8.png";
-import Mascot9 from "../../shared/assets/mascot/9.png";
 
 const HomePage = () => {
   return (
     <div className="min-h-screen bg-white font-sans text-slate-900 overflow-x-hidden">
 
-      {/* ══════════════════════════════════════════
-          1. HERO SECTION  
-          Centered text, mascot overlaid right,
-          soft lavender-blue background glow
-      ══════════════════════════════════════════ */}
       <section className="relative pt-28 pb-14 lg:pt-36 lg:pb-20 overflow-hidden bg-white">
 
         <div className="container mx-auto px-6 relative z-10">
@@ -368,44 +362,9 @@ const HomePage = () => {
             transition={{ duration: 0.4, delay: 0.5 }}
             className="text-center mt-10"
           >
-            <Link to="/labtest" className="inline-flex items-center gap-2 bg-blue-900 hover:opacity-95 text-white font-semibold px-8 py-3.5 rounded-xl text-sm transition-all shadow-md shadow-blue-500/25 hover:-translate-y-0.5">
+            <Link to="/labtest" className="inline-flex items-center gap-2 bg-blue-950 hover:opacity-95 text-white font-semibold px-8 py-3.5 rounded-xl text-sm transition-all shadow-md shadow-blue-500/25 hover:-translate-y-0.5">
               Khám phá toàn bộ thư viện thí nghiệm <ArrowRight size={16} />
             </Link>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════════
-          5. CTA SECTION
-      ══════════════════════════════════════════ */}
-      <section className="py-20 relative overflow-hidden bg-sky-50">
-        <div className="pointer-events-none absolute bottom-8 left-6 md:bottom-12 md:left-18 lg:bottom-12 lg:left-48 hidden md:block">
-          <img src={Mascot9} alt="" className="w-32 md:w-44 lg:w-64 h-auto object-contain opacity-80 lg:scale-125" />
-        </div>
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div className="w-[500px] h-[300px] rounded-full bg-blue-200/20 blur-3xl" />
-        </div>
-
-        <div className="container mx-auto px-6 relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.6 }}
-            className="max-w-xl mx-auto text-center space-y-5"
-          >
-            <h2 className="text-3xl md:text-4xl font-extrabold text-[#1e2a4a]">
-              Sẵn Sàng Khám Phá Thế Giới <span className="text-sky-600">Hóa Học?</span>
-            </h2>
-            <p className="text-slate-500">Tham gia cùng hàng nghìn giáo viên và học sinh. Bắt đầu miễn phí ngay hôm nay!</p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-              <Link to="/register" className="flex items-center gap-2 bg-sky-600 hover:bg-sky-600 text-white font-semibold px-8 py-3 rounded-full text-sm transition-all shadow-md shadow-blue-500/25 hover:-translate-y-0.5">
-                Khám phá miễn phí <ArrowRight size={16} />
-              </Link>
-              <Link to="/about" className="flex items-center gap-2 text-blue-900 hover:text-blue-900 font-medium border border-blue-900 hover:bg-[#c9ccff] px-8 py-3 rounded-full text-sm bg-transparent transition-all">
-                Dùng thử
-              </Link>
-            </div>
           </motion.div>
         </div>
       </section>

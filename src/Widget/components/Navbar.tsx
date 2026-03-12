@@ -1,4 +1,4 @@
-import { Menu, User, X } from "lucide-react";
+import { ChartArea, LogOut, Menu, User, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Logout } from "../../features/Auth";
@@ -11,10 +11,10 @@ interface NavItem {
 
 const NAV_DATA: NavItem[] = [
   { name: "Sản phẩm", path: "/products" },
-  { name: "ChemXLab AI", path: "/chatbot" },
   { name: "Giới thiệu", path: "/about" },
   { name: "Thư viện", path: "/library" },
   { name: "Bảng giá", path: "/experience" },
+  { name: "ChemX AI", path: "/chatbot" },
 ];
 
 const Navbar = () => {
@@ -22,6 +22,8 @@ const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState<boolean>(false);
   const [scrolled, setScrolled] = useState<boolean>(false);
+  const navItemRefs = useRef<(HTMLAnchorElement | null)[]>([]);
+  const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0, opacity: 0 });
 
   const navigate = useNavigate();
   const userDropdownRef = useRef<HTMLDivElement>(null);
@@ -50,15 +52,40 @@ const Navbar = () => {
 
   const isActive = (path: string) => location.pathname === path;
 
+  useEffect(() => {
+    const updateIndicator = () => {
+      const activeIndex = NAV_DATA.findIndex(item => location.pathname === item.path);
+      if (activeIndex !== -1 && navItemRefs.current[activeIndex]) {
+        const el = navItemRefs.current[activeIndex];
+        setIndicatorStyle({
+          left: el.offsetLeft,
+          width: el.offsetWidth,
+          opacity: 1,
+        });
+      } else {
+        setIndicatorStyle(prev => ({ ...prev, opacity: 0 }));
+      }
+    };
+
+    // Use a small timeout to allow layout to settle before calculating width/left, e.g., on first load
+    const timeoutId = setTimeout(updateIndicator, 50);
+    window.addEventListener("resize", updateIndicator);
+
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener("resize", updateIndicator);
+    };
+  }, [location.pathname]);
+
   return (
     <header
-      className={`fixed top-0 w-full z-[100] h-16 transition-all duration-300
+      className={`fixed top-4 left-1/2 -translate-x-1/2 w-[95%] max-w-6xl z-100 h-16 transition-all duration-300 rounded-full
         ${scrolled
-          ? "bg-white shadow-[0_2px_16px_rgba(0,0,0,0.08)]"
-          : "bg-white"
+          ? "bg-white/95 backdrop-blur-md shadow-[0_8px_30px_rgb(0,0,0,0.08)]"
+          : "bg-white shadow-[0_4px_20px_rgb(0,0,0,0.04)]"
         }`}
     >
-      <div className="container mx-auto px-8 h-full flex items-center justify-between">
+      <div className="w-full px-8 h-full flex items-center justify-between">
 
         {/* LOGO */}
         <Link to="/" className="flex items-center gap-2 shrink-0">
@@ -66,38 +93,58 @@ const Navbar = () => {
         </Link>
 
         {/* DESKTOP NAV */}
-        <nav className="hidden md:flex items-center justify-center flex-1 mx-8 gap-7">
-          {NAV_DATA.map((item) => {
+        <nav className="relative hidden md:flex items-center justify-center flex-1 mx-8 gap-7">
+          {/* Animated Sliding Underline */}
+          <span
+            className="absolute -bottom-1 h-[2.5px] bg-sky-700 rounded-full transition-all duration-300 ease-out z-10"
+            style={{ left: indicatorStyle.left, width: indicatorStyle.width, opacity: indicatorStyle.opacity }}
+          />
+
+          {NAV_DATA.map((item, index) => {
             const active = isActive(item.path);
+            const isAi = item.name === "ChemX AI";
             return (
               <Link
                 key={item.name}
                 to={item.path}
-                className={`relative text-sm font-medium transition-colors
-                  ${active ? "text-blue-600" : "text-slate-600 hover:text-blue-600"}`}
+                ref={(el) => { navItemRefs.current[index] = el; }}
+                className={`group flex items-center relative text-sm transition-colors font-medium
+                  ${active ? "text-sky-700" : "text-slate-600 hover:text-sky-700"}
+                `}
               >
-                {item.name}
-                {active && (
-                  <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-blue-600 rounded-full" />
+                {isAi && (
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`w-[18px] h-[18px] mr-1.5 transition-transform group-hover:scale-110 ${active ? 'text-[#0ea5e9]' : 'text-[#3d8ad9]'}`}>
+                    <path d="M11 3C11 7.418 7.418 11 3 11C7.418 11 11 14.582 11 19C11 14.582 14.582 11 19 11C14.582 11 11 7.418 11 3Z" />
+                    <circle cx="4" cy="19" r="1.5" />
+                    <path d="M19 3V7M17 5H21" />
+                  </svg>
                 )}
+                {item.name}
               </Link>
             );
           })}
         </nav>
 
         {/* RIGHT ACTIONS */}
-        <div className="hidden md:flex items-center gap-3 shrink-0">
+        <div className="hidden md:flex items-center gap-6 shrink-0">
           {!token ? (
             <>
               <Link
                 to="/login"
-                className="text-sm font-semibold bg-linear-to-r from-sky-700 to-sky-600 hover:from-sky-800 hover:to-sky-700 text-white px-5 py-2 rounded-full transition-all shadow-sm"
+                className="text-sm font-bold text-slate-500 hover:text-sky-700 transition-colors"
+              >
+                Đăng nhập
+              </Link>
+              <Link
+                to="/register"
+                className="text-sm font-semibold bg-[#3d8ad9] hover:bg-[#2e77bf] text-white px-6 py-2.5 rounded-full transition-all shadow-sm"
               >
                 Bắt đầu ngay
               </Link>
             </>
           ) : (
             <div className="relative" ref={userDropdownRef}>
+              {/* Avatar Button */}
               <button
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                 className="flex items-center justify-center w-9 h-9 rounded-full hover:bg-slate-100 transition-colors"
@@ -111,22 +158,55 @@ const Navbar = () => {
                 )}
               </button>
 
+              {/* Dropdown Menu */}
               {isUserMenuOpen && (
-                <div className="absolute right-0 mt-3 w-64 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50 text-slate-800">
-                  <div className="px-4 py-3 border-b border-gray-100">
-                    <p className="text-sm font-bold text-gray-900 truncate">{userEmail || "User"}</p>
-                    <p className="text-xs text-green-600 font-medium flex items-center gap-1 mt-0.5">
-                      <span className="w-2 h-2 bg-green-500 rounded-full" /> Trực tuyến
-                    </p>
+                <div className="absolute right-0 md:right-0 mt-3.5 w-[270px] bg-white rounded-lg shadow-lg border border-gray-200 py-2 px-2 z-50">
+                  {/* User Info Header */}
+                  <div className="px-4 py-3 border-b border-gray-100 ">
+                    <div className="flex items-center space-x-3 ">
+                      {userImageUrl ? (
+                        <img src={userImageUrl} alt="User" className="w-9 h-9 rounded-full object-cover border-2 border-blue-100" />
+                      ) : (
+                        <div className="w-9 h-9 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
+                          <User size={18} />
+                        </div>
+                      )}
+                      <div className="font-medium text-sm text-slate-700 truncate">{userEmail}!</div>
+                    </div>
                   </div>
-                  <div className="py-1">
-                    <Link to="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600">Hồ sơ cá nhân</Link>
+
+                  {/* Menu Items */}
+                  <div className="py-1 mt-1">
                     {localStorage.getItem("Role") === "ADMIN" && (
-                      <Link to="/admin" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-indigo-600">Trang Admin</Link>
+                      <Link
+                        to="/admin"
+                        className="flex items-center w-full px-4 py-2 text-sm text-slate-700 hover:bg-gray-100 transition-colors duration-150 rounded-lg mb-1"
+                      >
+                        <ChartArea className="w-4 h-4 mr-3 " />
+                        Admin
+                      </Link>
                     )}
-                    <div className="border-t border-gray-100 my-1" />
-                    <button onClick={() => { Logout(); navigate("/login"); }} className="block w-full text-left px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50">Đăng xuất</button>
+
+                    <Link
+                      to="/profile"
+                      className="flex items-center w-full px-4 py-2 text-sm text-slate-700 hover:bg-gray-100 transition-colors duration-150 rounded-lg mb-1"
+                    >
+                      <User className="w-4 h-4 mr-3 " />
+                      Hồ sơ cá nhân
+                    </Link>
                   </div>
+
+                  {/* Divider */}
+                  <div className="border-t border-gray-100 mb-1 mt-1"></div>
+
+                  {/* Logout */}
+                  <button
+                    onClick={() => { Logout(); navigate("/login"); }}
+                    className="flex items-center w-full px-4 py-2 text-sm hover:bg-red-50 text-red-600 transition-colors duration-150 rounded-lg"
+                  >
+                    <LogOut className="w-4 h-4 mr-3" />
+                    Đăng xuất
+                  </button>
                 </div>
               )}
             </div>
@@ -144,23 +224,36 @@ const Navbar = () => {
 
       {/* MOBILE MENU */}
       {isMobileMenuOpen && (
-        <div className="md:hidden absolute top-14 left-0 w-full bg-white border-t border-gray-100 shadow-lg py-4 flex flex-col items-center space-y-2">
-          {NAV_DATA.map((item) => (
-            <Link
-              key={item.name}
-              to={item.path}
-              className={`text-sm font-medium px-4 py-2.5 rounded-lg w-4/5 text-center
-                ${isActive(item.path) ? "text-blue-600 bg-blue-50" : "text-slate-700 hover:bg-slate-50"}`}
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              {item.name}
-            </Link>
-          ))}
+        <div className="md:hidden absolute top-[72px] left-0 w-full bg-white rounded-2xl border border-gray-100 shadow-xl py-4 flex flex-col items-center space-y-2">
+          {NAV_DATA.map((item) => {
+            const active = isActive(item.path);
+            const isAi = item.name === "ChemX AI";
+            return (
+              <Link
+                key={item.name}
+                to={item.path}
+                className={`flex items-center justify-center gap-2 text-sm px-4 py-2.5 rounded-lg w-4/5 text-center
+                  ${isAi ? "font-normal" : "font-medium"}
+                  ${active ? "text-sky-700 bg-[#f0f9ff]" : "text-slate-700 hover:bg-slate-50"}
+                `}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                {isAi && (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`w-[18px] h-[18px] ${active ? 'text-[#0ea5e9]' : 'text-[#3d8ad9]'}`}>
+                    <path d="M11 3C11 7.418 7.418 11 3 11C7.418 11 11 14.582 11 19C11 14.582 14.582 11 19 11C14.582 11 11 7.418 11 3Z" />
+                    <circle cx="4" cy="19" r="1.5" />
+                    <path d="M19 3V7M17 5H21" />
+                  </svg>
+                )}
+                {item.name}
+              </Link>
+            );
+          })}
           <div className="w-16 h-px bg-gray-100 my-1" />
           {token ? (
             <div className="flex flex-col items-center gap-3">
-              <Link to="/profile" className="text-slate-700 font-medium hover:text-blue-600 text-sm">Hồ sơ</Link>
-              <button onClick={() => { Logout(); navigate("/login"); }} className="text-red-500 font-bold text-sm">Đăng xuất</button>
+              <Link to="/profile" className="text-slate-700 font-medium hover:text-sky-700 text-sm">Hồ sơ</Link>
+              <button onClick={() => { Logout(); navigate("/login"); }} className="text-rose-400 font-bold text-sm">Đăng xuất</button>
             </div>
           ) : (
             <div className="flex flex-col gap-3 w-4/5">
