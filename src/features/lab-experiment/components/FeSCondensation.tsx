@@ -38,7 +38,7 @@ export const FeSCondensation = ({ tubeR, tubeBottomY, liquidSurfaceY, reactionPr
     // Calculate film dimensions
     const EXTRA_HEIGHT = 0.08; // Reduced for lower max film
     const FILM_MAX_HEIGHT = (liquidSurfaceY - tubeBottomY) + EXTRA_HEIGHT;
-    const FILM_RADIUS = tubeR * 0.98; // Hug the wall closely
+    const FILM_RADIUS = tubeR * 0.999; // Tighter fit (0.98 -> 0.998)
 
     // Adhesion starts at 1R above tube bottom (where hemisphere meets cylinder)
     const ADHESION_START_Y = tubeBottomY + tubeR;
@@ -141,8 +141,8 @@ export const FeSCondensation = ({ tubeR, tubeBottomY, liquidSurfaceY, reactionPr
         filmRef.current.visible = true;
         dropletsRef.current.visible = true;
         // Make the film overall much thinner and more transparent
-        (filmRef.current.material as THREE.MeshPhysicalMaterial).opacity = overallOpacity * 0.65;
-        (dropletsRef.current.material as THREE.MeshPhysicalMaterial).opacity = overallOpacity * 0.65;
+        (filmRef.current.material as THREE.MeshPhysicalMaterial).opacity = overallOpacity * 0.85;
+        (dropletsRef.current.material as THREE.MeshPhysicalMaterial).opacity = overallOpacity * 0.85;
 
         const dt = Math.min(delta, 0.05);
         if (isFinished) {
@@ -219,20 +219,26 @@ export const FeSCondensation = ({ tubeR, tubeBottomY, liquidSurfaceY, reactionPr
             } else {
                 const distToEdge = localEdgeY - orig.y;
                 if (distToEdge < 0.01) {
-                    radiusOffset = -0.0005 * Math.pow(1.0 - (distToEdge / 0.01), 2);
+                    radiusOffset = -0.0004 * Math.pow(1.0 - (distToEdge / 0.01), 2);
                 }
-                radiusOffset += Math.sin(orig.y * 300 - t * 3 + angle * 8) * 0.0001;
+                // Removed radial sine noise to keep it flat against the wall
             }
 
             // Tube hemisphere mapping logic
             const curveStartY = tubeBottomY + tubeR;
-            let currentR = tubeR * 0.98;
+            let currentR = FILM_RADIUS;
 
-            if (newY < curveStartY && newY >= tubeBottomY) {
-                const dy = curveStartY - newY;
-                currentR = Math.sqrt(Math.max(0, Math.pow(tubeR * 0.98, 2) - Math.pow(dy, 2)));
+            if (newY < curveStartY) {
+                const dy = Math.max(0, Math.min(tubeR, curveStartY - newY));
+                // Use normalized hemisphere formula for perfect smoothness and continuity
+                // This scales FILM_RADIUS down to 0 over the distance tubeR
+                currentR = FILM_RADIUS * Math.sqrt(Math.max(0, 1 - Math.pow(dy / tubeR, 2)));
             }
-            if (newY < tubeBottomY) newY = tubeBottomY;
+
+            if (newY < tubeBottomY) {
+                newY = tubeBottomY;
+                currentR = 0.0001; // Pinch to a point — seals the bottom
+            }
 
             const newRadius = Math.max(0.00001, currentR + radiusOffset);
             positions.setXYZ(i, Math.cos(angle) * newRadius, newY, Math.sin(angle) * newRadius);
