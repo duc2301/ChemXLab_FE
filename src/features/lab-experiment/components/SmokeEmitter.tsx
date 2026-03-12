@@ -10,11 +10,11 @@ const TUBE_INNER_R = 0.008;
 // ─── SmokeEmitter: Mô phỏng khói phản ứng hóa nhiệt ─────────────────────────
 // Tối ưu hiệu năng tuyệt đối bằng InstancedMesh + mutation in-place, không allocation trong useFrame.
 
-const SMOKE_COUNT = 300;
-const SMOKE_BASE_R = 0.005;      // Bán kính nguồn sinh khói (vòng nguồn nhỏ ở đáy)
-const SMOKE_MAX_SCALE = 0.0023;
+const SMOKE_COUNT = 450;          // More particles for denser smoke
+const SMOKE_BASE_R = 0.003;      // Smaller spawn radius to keep away from walls
+const SMOKE_MAX_SCALE = 0.0028;  // Larger particles for thicker look
 const SMOKE_UP_SPEED = 0.022;    // Bay chậm
-const SMOKE_MAX_AGE_BASE = 3.5;  // 
+const SMOKE_MAX_AGE_BASE = 5;  // Bay cao nè :d
 
 // Pre-allocate a stable dummy object at module level (never re-created)
 const _smokeDummy = new THREE.Object3D();
@@ -45,11 +45,11 @@ export const SmokeEmitter = ({ active, isFinished, totalGrams, tubeId }: { activ
             const maxAge = SMOKE_MAX_AGE_BASE * (0.75 + Math.random() * 0.5);
             arr.push({
                 x: Math.cos(theta) * r,
-                y: Math.random() * SMOKE_UP_SPEED * maxAge, // stagger initial heights
+                y: 0, // Start all particles at the bottom surface initially
                 z: Math.sin(theta) * r,
                 phase: Math.random() * Math.PI * 2,
                 speedMult: 0.7 + Math.random() * 0.6,
-                age: Math.random() * maxAge,                // stagger ages so no "burst" on mount
+                age: 0, // Start at age 0 so they rise up organically
                 maxAge,
                 rotX: Math.random() * Math.PI * 2,
                 rotY: Math.random() * Math.PI * 2,
@@ -85,7 +85,7 @@ export const SmokeEmitter = ({ active, isFinished, totalGrams, tubeId }: { activ
             // Fade-in: 10s → 15s (progress 0.33 → 0.5)
             const progressVal = isFinished ? 1.0 : reactionProgress;
             const fadeIn = Math.min(1.0, (progressVal - 0.33) / 0.17);
-            baseOpacity = fadeIn * 0.22;
+            baseOpacity = fadeIn * 0.38; // Much more visible/opaque
         }
 
         const shouldFade = !active || reactionProgress >= 1.0 || isFinished;
@@ -111,7 +111,7 @@ export const SmokeEmitter = ({ active, isFinished, totalGrams, tubeId }: { activ
         // ── 2. Local-space tube bounds ───────────────────────────────────────────
         const startY = 0.026 + totalGrams * 0.0028;
         const mouthY = TUBE_TOP_Y - startY; // height of tube mouth in local space
-        const tubeR = TUBE_INNER_R - 0.001;
+        const tubeR = TUBE_INNER_R - 0.002; // Tighter constraint to avoid wall penetration
 
         const dt = Math.min(delta, 0.05); // clamp delta to avoid physics explosion on tab switch
         const t = state.clock.elapsedTime;
@@ -144,12 +144,14 @@ export const SmokeEmitter = ({ active, isFinished, totalGrams, tubeId }: { activ
             //   Drift sử dụng sin/cos với pha offset theo từng hạt,
             //   biên độ mở rộng theo chiều cao (khói thoát ra ngoài khi lên cao).
             const heightAboveMouth = Math.max(0, p.y - mouthY);
-            // Giảm mạnh độ tỏa rộng (expansion) để khói "nằm trong ống" (luồng khói thẳng đứng)
-            const convectAmp = 0.0008 + heightAboveMouth * 0.005;
+            // Very small horizontal drift inside tube, slightly more above mouth
+            const convectAmp = p.y < mouthY
+                ? 0.0003 // Minimal drift inside tube
+                : 0.0006 + heightAboveMouth * 0.004; // Slightly more above mouth
             p.x += Math.sin(t * 1.1 + p.phase) * convectAmp * dt;
             p.z += Math.cos(t * 0.9 + p.phase + 1.3) * convectAmp * dt;
 
-            // ── 3c. Tube constraint: clamp inside inner radius while below mouth ──
+            // ── 3c. Tube constraint: ALWAYS clamp inside inner radius while below mouth ──
             if (p.y < mouthY) {
                 const rr = p.x * p.x + p.z * p.z;
                 if (rr > tubeR * tubeR) {
@@ -204,7 +206,7 @@ export const SmokeEmitter = ({ active, isFinished, totalGrams, tubeId }: { activ
             <dodecahedronGeometry args={[1, 0]} />
             <meshBasicMaterial
                 ref={matRef}
-                color="#fff9c4" // Màu trắng vàng (kem) theo yêu cầu
+                color="#facc15" // Pure yellow for Fe/S smoke
                 transparent
                 opacity={0}
                 depthWrite={false}
