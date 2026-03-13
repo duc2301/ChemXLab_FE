@@ -126,7 +126,7 @@ export const FeSCondensation = ({ tubeR, tubeBottomY, liquidSurfaceY, reactionPr
     const targetEdgeY = getTargetEdgeY(reactionProgress, finishedTime);
     const edgeYRef = useRef(tubeBottomY);
 
-    useFrame((state, delta) => {
+    useFrame((_state, delta) => {
         if (!filmRef.current || !filmGeoRef.current || !dropletsRef.current) return;
 
         // Appear immediately (no fade-in duration)
