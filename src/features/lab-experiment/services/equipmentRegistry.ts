@@ -465,6 +465,17 @@ export const GUIDED_EXPERIMENTS: GuidedExperiment[] = [
       { id: EQUIPMENT_IDS.Na2SO4_SOLUTION, position: [1, 1.5, 0], rotation: [0, 0, 0] },
     ],
   },
+  {
+    id: 'BaCl2_HCL',
+    name: 'Thí nghiệm phản ứng giữa BaCl₂ và HCl',
+    description: 'Thí nghiệm phản ứng giữa BaCl₂ và HCl không xảy ra.',
+    equipment: [
+      { id: EQUIPMENT_IDS.TEST_TUBE, position: [-0.5, 1.5, 0], rotation: [0, 0, 0] },
+      { id: EQUIPMENT_IDS.THERMOMETER, position: [0, 1.5, 0], rotation: [0, 0, 0] },
+      { id: EQUIPMENT_IDS.BaCl2_SOLUTION, position: [0.5, 1.5, 0], rotation: [0, 0, 0] },
+      { id: EQUIPMENT_IDS.HCL_SOLUTION, position: [1, 1.5, 0], rotation: [0, 0, 0] },
+    ],
+  },
 ];
 
 /** Màu hiển thị tương ứng với từng chất bột */

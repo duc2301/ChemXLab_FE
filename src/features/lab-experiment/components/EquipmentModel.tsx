@@ -21,6 +21,7 @@ import { CondensationDroplets } from "./CondensationDroplets";
 import { SmokeEmitter } from "./SmokeEmitter";
 import { SnowflakePrecipitate } from "./SnowflakePrecipitate";
 import { FeSCondensation } from "./FeSCondensation";
+import { ReactionInfoHClBaCl2 } from "./ReactionInfoHClBaCl2";
 
 // ─── Hằng số snap ────────────────────────────────────────────────────────────
 const SNAP_OFFSET_Y = 0.5;
@@ -1239,6 +1240,18 @@ export const EquipmentModel = ({
             </div>
           </Html>
         );
+      })()}
+
+      {(() => {
+        const hasHCl = unmixedContents.some(c => c.substanceId === EQUIPMENT_IDS.HCL_SOLUTION);
+        const hasBaCl2 = contents.some(c => c.substanceId === EQUIPMENT_IDS.BaCl2_SOLUTION);
+
+        // Chỉ hiện khi đã có mặt cả 2 chất
+        if (!isTestTube || !hasHCl || !hasBaCl2) {
+          return null
+        }
+
+        return <ReactionInfoHClBaCl2 />
       })()}
     </RigidBody>
   );
