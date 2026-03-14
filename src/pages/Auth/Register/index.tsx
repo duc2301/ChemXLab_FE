@@ -359,7 +359,7 @@ const RegisterPage = () => {
                 </button>
 
                 <div className="mt-4">
-                  <button onClick={() => googleLogin()} className="w-full bg-white/[0.03] border border-transparent rounded-2xl py-3 flex items-center justify-center gap-3 hover:bg-white/10 transition-all font-bold text-xs">
+                  <button onClick={() => googleLogin()} disabled={isGoogleLoading} className="w-full bg-white/[0.03] border border-transparent rounded-2xl py-3 flex items-center justify-center gap-3 hover:bg-white/10 transition-all font-bold text-xs">
                     <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-4 h-4" alt="Google" /> Tiếp tục với Google
                   </button>
                 </div>

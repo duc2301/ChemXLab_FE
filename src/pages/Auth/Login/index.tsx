@@ -1,6 +1,6 @@
 import { useGoogleLogin } from "@react-oauth/google";
 import { message } from "antd";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import type { LoginForm } from "../../../entities/Auth";
