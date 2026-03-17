@@ -1136,6 +1136,31 @@ export const EquipmentModel = ({
         </Html>
       )}
 
+      {/* Nhãn hiển thị tên cho các chất rắn (như Zn) khi nằm trên bàn */}
+      {equipment?.category === 'substances' && equipment?.physicalState === 'solid' && !isDragging && !isSnapped && (
+        <Html
+          position={[0, 0.08, 0]}
+          center
+          pointerEvents="none"
+          style={{ userSelect: "none" }}
+          occlude
+        >
+          <div style={{
+            background: "rgba(15,20,30,0.8)",
+            border: `1px solid ${SUBSTANCE_COLORS[equipment.id] || "#fff"}`,
+            borderRadius: "4px",
+            padding: "2px 6px",
+            color: "#fff",
+            fontSize: "10px",
+            fontFamily: "sans-serif",
+            whiteSpace: "nowrap",
+            boxShadow: "0 2px 4px rgba(0,0,0,0.3)",
+          }}>
+            {equipment.name}
+          </div>
+        </Html>
+      )}
+
       {(() => {
         if (!isTestTube) return null;
         const hasHCl = contents.some(c => c.substanceId === EQUIPMENT_IDS.HCL_SOLUTION);
