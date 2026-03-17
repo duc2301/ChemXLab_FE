@@ -29,7 +29,7 @@ interface SmokeParticle {
     rotSpeedX: number; rotSpeedY: number;     // gentle tumble speed
 }
 
-export const SmokeEmitter = ({ active, isFinished, totalGrams, tubeId }: { active: boolean; isFinished: boolean; totalGrams: number; tubeId: string }) => {
+export const SmokeEmitter = ({ active, isFinished, totalGrams, tubeId, color = "#ffe787" }: { active: boolean; isFinished: boolean; totalGrams: number; tubeId: string; color?: string }) => {
     const meshRef = useRef<THREE.InstancedMesh>(null);
     const matRef = useRef<THREE.MeshBasicMaterial>(null);
 
@@ -206,7 +206,7 @@ export const SmokeEmitter = ({ active, isFinished, totalGrams, tubeId }: { activ
             <dodecahedronGeometry args={[1, 0]} />
             <meshBasicMaterial
                 ref={matRef}
-                color="#facc15" // Pure yellow for Fe/S smoke
+                color={color} // Màu khói động
                 transparent
                 opacity={0}
                 depthWrite={false}

@@ -36,7 +36,7 @@ export const FeSCondensation = ({ tubeR, tubeBottomY, liquidSurfaceY, reactionPr
     const [finishedTime, setFinishedTime] = useState(0);
 
     // Calculate film dimensions
-    const EXTRA_HEIGHT = 0.08; // Reduced for lower max film
+    const EXTRA_HEIGHT = 0.045; // Reduced for lower max film
     const FILM_MAX_HEIGHT = (liquidSurfaceY - tubeBottomY) + EXTRA_HEIGHT;
     const FILM_RADIUS = tubeR * 0.999; // Tighter fit (0.98 -> 0.998)
 

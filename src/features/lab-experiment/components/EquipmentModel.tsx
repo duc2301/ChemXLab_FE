@@ -278,6 +278,10 @@ export const EquipmentModel = ({
           state.updateReactionProgress(droppedItem.id, 0.5 / 30); // 30 seconds to complete
         } else {
           state.finishReaction(droppedItem.id, EQUIPMENT_IDS.FES_POWDER);
+          // Auto turn off the alcohol lamp after 30s of heating
+          if (state.alcoholLampStatus.get(lampId)) {
+            state.toggleAlcoholLamp(lampId);
+          }
         }
       }
     }, 500);
@@ -976,13 +980,14 @@ export const EquipmentModel = ({
           />
         )}
 
-        {/* Lớp khói đen */}
+        {/* Lớp khói vàng */}
         {isTestTube && (currentProgress > 0.33 || hasFinishedReaction) && (
           <SmokeEmitter
             active={isHeating}
             isFinished={hasFinishedReaction || currentProgress >= 1.0}
             totalGrams={totalGrams}
             tubeId={droppedItem.id}
+            color="#ffe787"
           />
         )}
       </group>
