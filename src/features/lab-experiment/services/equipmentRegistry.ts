@@ -217,7 +217,7 @@ export const EQUIPMENT_REGISTRY: EquipmentItem[] = [
     dimensions: { width: 0.1, height: 0.001, depth: 0.1 },
     description: 'Viên kẽm',
     rotation: { x: 0, y: 0, z: 0 },
-    scale: 5,
+    scale: 6,
     physicalState: 'solid',
     isExtractable: false,
   },
