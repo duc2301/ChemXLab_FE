@@ -2081,7 +2081,7 @@ const LiquidLayer = ({
       </instancedMesh>
 
       {isPrecipitate && onComplete && <SnowflakePrecipitate
-        tubeR={0.006}
+        tubeR={0.0075}
         tubeBottomY={TUBE_BOTTOM_Y + 0.002}
         liquidSurfaceY={TUBE_BOTTOM_Y + 0.002 + targetFill / 10}
         active={isPrecipitate}

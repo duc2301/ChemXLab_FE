@@ -33,7 +33,7 @@ export const SnowflakePrecipitate = ({
       // Hạt ở càng cao (y lớn) thì delay càng ngắn -> xuất hiện trước
       // Hạt ở càng thấp (y nhỏ) thì delay càng dài -> xuất hiện sau
       const normalizedY = (y - tubeBottomY) / height; // 0 (đáy) -> 1 (mặt)
-      const appearanceDelay = (1 - normalizedY) * 8; // Lan tỏa trong 8 giây đầu
+      const appearanceDelay = (1 - normalizedY) * 3; // Lan tỏa trong 8 giây đầu
 
       temp.push({
         x,
@@ -51,7 +51,7 @@ export const SnowflakePrecipitate = ({
     if (active) {
       const timer = setTimeout(() => {
         if (onComplete) onComplete();
-      }, 10000);
+      }, 3000);
       return () => clearTimeout(timer);
     }
   }, [active, onComplete]);
