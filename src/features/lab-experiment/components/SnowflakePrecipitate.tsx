@@ -64,7 +64,7 @@ export const SnowflakePrecipitate = ({
     if (active) {
       const timer = setTimeout(() => {
         if (onComplete) onComplete();
-      }, 3000);
+      }, 3500);
       return () => clearTimeout(timer);
     }
   }, [active, onComplete]);
@@ -74,9 +74,11 @@ export const SnowflakePrecipitate = ({
 
     if (startTime.current === 0) startTime.current = state.clock.elapsedTime;
     const elapsed = state.clock.elapsedTime - startTime.current;
+    const delayTime = 0.65;
+    const delay = elapsed < delayTime;
 
-    materialRef.current.uniforms.uTime.value = elapsed;
-    materialRef.current.uniforms.uActive.value = 1.0;
+    materialRef.current.uniforms.uTime.value = delay ? 0 : elapsed - delayTime;
+    materialRef.current.uniforms.uActive.value = delay ? 0: 1.0;
   });
 
   return (
