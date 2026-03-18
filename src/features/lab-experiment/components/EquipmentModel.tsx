@@ -1220,9 +1220,11 @@ export const EquipmentModel = ({
       {(() => {
         if (!isTestTube) return null;
         const hasBaSO4 = contents.some(c => c.substanceId === EQUIPMENT_IDS.BaSO4_PRECIPITATE);
+        const hasBaCl2 = contents.some(c => c.substanceId === EQUIPMENT_IDS.BaCl2_SOLUTION);
+        const hasNa2SO4 = contents.some(c => c.substanceId === EQUIPMENT_IDS.Na2SO4_SOLUTION);
 
         // Chỉ hiện khi đã có sản phẩm hoặc đang có mặt cả 2 chất
-        if (!hasBaSO4) return null;
+        if (!hasBaSO4 && !(hasBaCl2 && hasNa2SO4)) return null;
 
         const baso4Amt = contents.filter(c => c.substanceId === EQUIPMENT_IDS.BaSO4_PRECIPITATE).reduce((a, c) => a + c.amount, 0);
 
@@ -1553,6 +1555,7 @@ const LiquidLayer = ({
   const logicFillTarget = useRef(spawnInstant ? targetFill : 0);
   const lastDropT = useRef(-99);
   const lastHitT = useRef(-99);
+  const surfaceYRef = useRef(0);
   const [isVisible, setIsVisible] = useState(spawnInstant && targetFill > 0);
 
   // Pre-allocate particle data (never re-created)
@@ -1614,6 +1617,7 @@ const LiquidLayer = ({
 
     // Current liquid surface Y (local space)
     const surfaceY = bodyBaseY + h;
+    surfaceYRef.current = surfaceY
 
     const isBubbling = bubbleSources.length > 0 && h > 0.005;
 
@@ -2082,10 +2086,12 @@ const LiquidLayer = ({
 
       {isPrecipitate && onComplete && <SnowflakePrecipitate
         tubeR={0.008}
-        tubeBottomY={TUBE_BOTTOM_Y + 0.006}
-        liquidSurfaceY={TUBE_BOTTOM_Y + 0.002 + targetFill / 10}
+        tubeBottomY={TUBE_BOTTOM_Y}
+        surfaceYRef={surfaceYRef}
         active={isPrecipitate}
         onComplete={() => onComplete()}
+        color={"#fafafa"}
+        opacity={1}
       />}
     </group>
   );
