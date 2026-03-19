@@ -2166,13 +2166,13 @@ const LiquidLayer = ({
       </instancedMesh>
 
       {isPrecipitate && onComplete && <SnowflakePrecipitate
-        tubeR={0.008}
+        tubeR={LIQUID_R - 0.0002}
         tubeBottomY={TUBE_BOTTOM_Y}
         surfaceYRef={surfaceYRef}
         active={isPrecipitate}
         onComplete={() => onComplete()}
-        color={"#fafafa"}
-        opacity={1}
+        color={"#f4f4f4"}
+        opacity={1.2}
       />}
     </group>
   );
