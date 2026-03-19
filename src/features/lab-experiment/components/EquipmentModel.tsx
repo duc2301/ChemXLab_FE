@@ -1541,6 +1541,23 @@ const LiquidLayer = ({
     ({ x: 0, y: 0, z: 0, vy: 0, vx: 0, vz: 0, scale: 0, age: 0, maxAge: 2, sourceIdx: -1, active: false, type: 'riser' as const, wobblePhase: 0 })), []);
   const bubbleStartT = useRef<number | null>(null);
 
+  // ── Track incremental pours for consistent drop sizes ───────────────────
+  const prevTargetFillRef = useRef(targetFill);
+  const currentPourVDeltaRef = useRef(targetFill / LL_DROP_COUNT);
+  const currentPourDropScaleRef = useRef(0.06);
+
+  // If target fill jumped up (new pour), calculate params for THIS increment
+  if (targetFill > prevTargetFillRef.current + 0.001) {
+    const delta = targetFill - prevTargetFillRef.current;
+    currentPourVDeltaRef.current = delta / LL_DROP_COUNT;
+    const volAdded = delta * MAX_TUBE_LAYERS;
+    const volPerDrop = volAdded / LL_DROP_COUNT;
+    currentPourDropScaleRef.current = Math.max(0.06, Math.min(0.22, volPerDrop / 7.5));
+    prevTargetFillRef.current = targetFill;
+  } else if (targetFill < prevTargetFillRef.current - 0.001) {
+    prevTargetFillRef.current = targetFill;
+  }
+
   // ── Surface geometry: ring with writable positions ─────────────────────────
   const surfGeo = useMemo(() => {
     return new THREE.RingGeometry(0.0001, LIQUID_R, LL_SURF_SEG, LL_SURF_RINGS);
@@ -1691,9 +1708,6 @@ const LiquidLayer = ({
     }
 
     // ── Spawn falling drops (only while pouring) ─────────────────────────────
-    // Always exactly 10 drops, each carries 1/10 of totalLiquidMl
-    const volumePerDrop = totalLiquidMl / LL_DROP_COUNT;
-    const dropScaleFactor = Math.max(0.08, Math.min(0.35, volumePerDrop / 5)); // scale 0.08..0.35 based on volume
     if (isPouring && t - lastDropT.current > 0.15) {
       const di = drops.findIndex(d => !d.active);
       if (di !== -1) {
@@ -1703,9 +1717,9 @@ const LiquidLayer = ({
         d.z = (Math.random() - 0.5) * TUBE_INNER_R * 0.5;
         d.y = TUBE_TOP_Y + 0.1;
         d.vy = -0.05;
-        d.scale = TUBE_INNER_R * dropScaleFactor;
-        // Each drop adds 1/10 of total fill
-        d.vDelta = targetFill / LL_DROP_COUNT;
+        d.scale = TUBE_INNER_R * currentPourDropScaleRef.current;
+        // Increment fill based on the specific volume of THIS pour
+        d.vDelta = currentPourVDeltaRef.current;
         lastDropT.current = t;
       }
     }
@@ -1980,8 +1994,8 @@ const LiquidLayer = ({
 
     // ── Ripple surface deformation ────────────────────────────────────────────
     if (surfRef.current && surfGeo) {
-      surfRef.current.position.y = surfaceY;
-
+      // Small Y offset (0.00005) to prevent Z-fighting with the cylinder rim
+      surfRef.current.position.y = surfaceY + 0.00005;
       // Scale the surface mesh to match the actual tube cross-section at this height.
       // When inside the hemispherical bowl (totalH < LIQUID_R), shrink x/z to fit.
       if (totalH < LIQUID_R) {
@@ -2036,7 +2050,8 @@ const LiquidLayer = ({
 
         // Tremor effect during bubbling (only while zinc is still dissolving)
         if (isBubbling && !znDissolved) {
-          const tremor = Math.sin(t * 40 + vx * 200 + vy * 200) * 0.0004;
+          // Reduced frequency and amplitude for a smoother look at close zoom
+          const tremor = Math.sin(t * 30 + vx * 80 + vy * 80) * 0.00018;
           totalZ += tremor;
         }
 
@@ -2078,13 +2093,13 @@ const LiquidLayer = ({
         >
           <meshPhysicalMaterial
             color={color}
-            transparent
-            opacity={0.8}
+            transparent={!importantOpacity}
+            opacity={importantOpacity ? 1 : 0.3}
             roughness={0.1}
             metalness={0.1}
-            transmission={0.4}
-            thickness={2}
-            ior={1.45}
+            transmission={importantOpacity ? 0 : 0.1}
+            thickness={1}
+            ior={1.33}
             reflectivity={0.5}
           />
         </mesh>
