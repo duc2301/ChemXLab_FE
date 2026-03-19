@@ -374,8 +374,8 @@ export interface GuidedExperiment {
 export const GUIDED_EXPERIMENTS: GuidedExperiment[] = [
   {
     id: 'Fe_S',
-    name: 'Điều chế Fe + S → FeS',
-    description: 'description',
+    name: '[Bài 2] Thí nghiệm về biến đổi hóa học (Fe + S → FeS)',
+    description: 'Hoạt động: Thí nghiệm về biến đổi hóa học – Bài 2: Phản ứng hóa học (SGK KHTN 8 – Kết nối tri thức)',
     equipment: [
       { id: EQUIPMENT_IDS.MAGNET, position: [-1, 1.5, 0], rotation: [0, Math.PI / 2, 0] },
       { id: EQUIPMENT_IDS.ALCOHOL_LAMP, position: [-0.5, 1.5, 0], rotation: [0, 0, 0] },
@@ -386,8 +386,8 @@ export const GUIDED_EXPERIMENTS: GuidedExperiment[] = [
     ],
     guide: {
       title: 'Thí nghiệm về biến đổi hoá học',
-      subtitle: 'Điều chế Sắt(II) sunfua (FeS)',
-      reference: 'SGK Khoa học tự nhiên 8 – Kết nối tri thức – Bài 2',
+      subtitle: 'Phản ứng giữa Sắt (Fe) và Lưu huỳnh (S)',
+      reference: 'SGK KHTN 8 – Kết nối tri thức – Bài 2: Phản ứng hóa học',
       equation: 'Fe (rắn) + S (rắn) → FeS (rắn)',
       objective: 'Quan sát hiện tượng phản ứng hoá học giữa sắt và lưu huỳnh, nhận biết sự hình thành chất mới thông qua các dấu hiệu.',
       materials: [
@@ -444,8 +444,8 @@ export const GUIDED_EXPERIMENTS: GuidedExperiment[] = [
   },
   {
     id: 'HCl_Zn',
-    name: 'Điều chế Axit Clohidric (HCl) + Kẽm (Zn)',
-    description: 'description',
+    name: '[Bài 2] Nhận biết chất mới tạo thành – Zn + HCl',
+    description: 'Hoạt động: Nhận biết có chất mới tạo thành – Bài 2: Phản ứng hóa học (SGK KHTN 8 – Kết nối tri thức)',
     equipment: [
       { id: EQUIPMENT_IDS.TEST_TUBE, position: [-0.75, 1.5, 0], rotation: [0, 0, 0] },
       { id: EQUIPMENT_IDS.THERMOMETER, position: [-0.25, 1.5, 0], rotation: [0, 0, 0] },
@@ -453,11 +453,11 @@ export const GUIDED_EXPERIMENTS: GuidedExperiment[] = [
       { id: EQUIPMENT_IDS.ZN_POWDER, position: [0.75, 1.5, 0], rotation: [0, 0, 0] },
     ],
     guide: {
-      title: 'Thí nghiệm: Axit Clohidric (HCl) + Kẽm (Zn)',
-      subtitle: 'Phản ứng tạo ra khí Hidro (H₂)',
-      reference: 'SGK Khoa học tự nhiên 8 – Kết nối tri thức',
+      title: 'Nhận biết có chất mới tạo thành',
+      subtitle: 'Phản ứng giữa Kẽm (Zn) và Axit Clohidric (HCl)',
+      reference: 'SGK KHTN 8 – Kết nối tri thức – Bài 2: Phản ứng hóa học',
       equation: 'Zn + 2HCl → ZnCl₂ + H₂↑',
-      objective: 'Quan sát phản ứng giữa kim loại và axit, nhận biết sự thoát khí Hidro.',
+      objective: 'Quan sát phản ứng giữa kim loại và axit, nhận biết sự tạo thành chất mới thông qua hiện tượng sủi bọt khí Hidro (H₂).',
       materials: [
         'Dung dịch Axit Clohidric (HCl)',
         'Kẽm viên (hoặc kẽm bột)',
@@ -494,7 +494,7 @@ export const GUIDED_EXPERIMENTS: GuidedExperiment[] = [
       safetyNotes: [
         'Axit HCl có tính ăn mòn, tránh để dính vào da hoặc mắt.',
         'Khí Hidro tạo thành dễ cháy nổ khi trộn với không khí theo tỉ lệ nhất định.',
-        'Cẩn thận khi thao tác with các dụng cụ thủy tinh.',
+        'Cẩn thận khi thao tác với các dụng cụ thủy tinh.',
       ],
       notes: [
         'Nếu dùng kẽm viên, phản ứng sẽ diễn ra chậm hơn và bọt khí sủi đều hơn so với kẽm bột.',
@@ -503,68 +503,9 @@ export const GUIDED_EXPERIMENTS: GuidedExperiment[] = [
     },
   },
   {
-    id: 'BaCl2_Na2SO4',
-    name: 'Định luật bảo toàn khối lượng (BaCl2 + Na2SO4)',
-    description: 'Thí nghiệm phản ứng giữa BaCl₂ và Na₂SO₄ để chứng minh tổng khối lượng không đổi.',
-    equipment: [
-      { id: EQUIPMENT_IDS.TEST_TUBE, position: [-0.4, 1.6, 0], rotation: [0, 0, 0] },
-      { id: EQUIPMENT_IDS.BaCl2_SOLUTION, position: [-0.8, 1.5, 0], rotation: [0, 0, 0] },
-      { id: EQUIPMENT_IDS.Na2SO4_SOLUTION, position: [0.8, 1.5, 0], rotation: [0, 0, 0] },
-      { id: EQUIPMENT_IDS.THERMOMETER, position: [0, 1.5, -0.4], rotation: [0, 0, 0] },
-    ],
-    guide: {
-      title: 'Định luật bảo toàn khối lượng',
-      subtitle: 'Phản ứng giữa BaCl₂ và Na₂SO₄',
-      reference: 'SGK Khoa học tự nhiên 8 – Kết nối tri thức',
-      equation: 'BaCl₂ + Na₂SO₄ → BaSO₄↓ + 2NaCl',
-      objective: 'Quan sát phản ứng tạo kết tủa trắng và tìm hiểu về định luật bảo toàn khối lượng.',
-      materials: [
-        'Dung dịch Bari Clorua (BaCl₂)',
-        'Dung dịch Natri Sunfat (Na₂SO₄)',
-        'Ống nghiệm',
-        'Giá thí nghiệm',
-      ],
-      steps: [
-        {
-          title: 'Bước 1: Chuẩn bị ống nghiệm',
-          content: 'Kéo ống nghiệm vào giá kẹp trên bàn thí nghiệm.',
-          tip: 'Ống nghiệm sẽ tự động khớp vào vị trí kẹp.',
-        },
-        {
-          title: 'Bước 2: Đổ dung dịch BaCl₂',
-          content: 'Cầm lọ BaCl₂ đổ vào ống nghiệm đến khoảng 1/3 ống.',
-          tip: 'Dung dịch BaCl₂ có màu trong suốt.',
-        },
-        {
-          title: 'Bước 3: Đổ dung dịch Na₂SO₄',
-          content: 'Kéo lọ Na₂SO₄ lại gần miệng ống nghiệm và đổ vào.',
-          tip: 'Quan sát hiện tượng kết tủa trắng (BaSO₄) xuất hiện ngay lập tức.',
-        },
-        {
-          title: 'Bước 4: Quan sát hiện tượng',
-          content: 'Quan sát sự xuất hiện của chất rắn màu trắng (kết tủa) không tan trong dung dịch.',
-          tip: 'Sản phẩm tạo thành là Bari Sunfat (BaSO₄) và Natri Clorua (NaCl).',
-        },
-      ],
-      observations: [
-        { question: 'Có xuất hiện bọt khí hay kết tủa sau khi trộn hai dung dịch không?', answer: 'Có kết tủa trắng (BaSO₄) xuất hiện.' },
-        { question: 'Hiện tượng này chứng tỏ điều gì?', answer: 'Chứng tỏ đã có phản ứng hóa học xảy ra tạo thành chất mới không tan.' },
-      ],
-      safetyNotes: [
-        'BaCl₂ là hóa chất độc, tuyệt đối không được nếm hoặc hít ngửi trực tiếp.',
-        'Tránh để hóa chất tiếp xúc trực tiếp với da.',
-        'Sau thí nghiệm, đổ dung dịch thải vào đúng nơi quy định.',
-      ],
-      notes: [
-        'Kết tủa BaSO₄ rất bền và không tan trong các axit thông thường.',
-        'Phản ứng này là phản ứng trao đổi đặc trưng dùng để nhận biết ion sunfat (SO₄²⁻).',
-      ],
-    },
-  },
-  {
     id: 'BaCl2_HCL',
-    name: 'Thí nghiệm phản ứng giữa BaCl₂ và HCl',
-    description: 'Thí nghiệm phản ứng giữa BaCl₂ và HCl không xảy ra.',
+    name: '[Bài 2] Nhận biết chất mới tạo thành – BaCl₂ + HCl',
+    description: 'Hoạt động: Nhận biết có chất mới tạo thành – Bài 2: Phản ứng hóa học (SGK KHTN 8 – Kết nối tri thức)',
     equipment: [
       { id: EQUIPMENT_IDS.TEST_TUBE, position: [-0.75, 1.5, 0], rotation: [0, 0, 0] },
       { id: EQUIPMENT_IDS.THERMOMETER, position: [-0.25, 1.5, 0], rotation: [0, 0, 0] },
@@ -572,11 +513,11 @@ export const GUIDED_EXPERIMENTS: GuidedExperiment[] = [
       { id: EQUIPMENT_IDS.BaCl2_SOLUTION, position: [0.75, 1.5, 0], rotation: [0, 0, 0] },
     ],
     guide: {
-      title: 'Thí nghiệm: Axit Clohidric (HCl) + Bari Clorua (BaCl₂)',
-      subtitle: 'Quan sát sự trộn lẫn dung dịch (Không phản ứng)',
-      reference: 'SGK Khoa học tự nhiên 8 – Kết nối tri thức',
+      title: 'Nhận biết có chất mới tạo thành',
+      subtitle: 'Trộn dung dịch HCl và BaCl₂ (Không xảy ra phản ứng)',
+      reference: 'SGK KHTN 8 – Kết nối tri thức – Bài 2: Phản ứng hóa học',
       equation: 'HCl + BaCl₂ → Không phản ứng (No reaction)',
-      objective: 'Quan sát hiện tượng khi không có phản ứng hóa học xảy ra giữa axit và muối.',
+      objective: 'Quan sát và so sánh hiện tượng khi trộn hai dung dịch mà không xảy ra phản ứng hóa học, từ đó nhận biết dấu hiệu có hoặc không có chất mới tạo thành.',
       materials: [
         'Dung dịch Axit Clohidric (HCl)',
         'Dung dịch Bari Clorua (BaCl₂)',
@@ -617,6 +558,65 @@ export const GUIDED_EXPERIMENTS: GuidedExperiment[] = [
       notes: [
         'Thí nghiệm này nhằm minh họa điều kiện để phản ứng trao đổi xảy ra (phải có kết tủa, khí hoặc chất điện li yếu).',
         'Cả HCl và BaCl₂ đều tan tốt và chứa ion Cl⁻ nên không có hiện tượng gì lạ khi trộn.',
+      ],
+    },
+  },
+  {
+    id: 'BaCl2_Na2SO4',
+    name: '[Bài 5] Định luật bảo toàn khối lượng (BaCl₂ + Na₂SO₄)',
+    description: 'Hoạt động: Định luật bảo toàn khối lượng – Bài 5: Định luật bảo toàn khối lượng và phương trình hóa học (SGK KHTN 8 – Kết nối tri thức)',
+    equipment: [
+      { id: EQUIPMENT_IDS.TEST_TUBE, position: [-0.4, 1.6, 0], rotation: [0, 0, 0] },
+      { id: EQUIPMENT_IDS.BaCl2_SOLUTION, position: [-0.8, 1.5, 0], rotation: [0, 0, 0] },
+      { id: EQUIPMENT_IDS.Na2SO4_SOLUTION, position: [0.8, 1.5, 0], rotation: [0, 0, 0] },
+      { id: EQUIPMENT_IDS.THERMOMETER, position: [0, 1.5, -0.4], rotation: [0, 0, 0] },
+    ],
+    guide: {
+      title: 'Định luật bảo toàn khối lượng',
+      subtitle: 'Phản ứng giữa BaCl₂ và Na₂SO₄ – Chứng minh tổng khối lượng không đổi',
+      reference: 'SGK KHTN 8 – Kết nối tri thức – Bài 5: Định luật bảo toàn khối lượng và phương trình hóa học',
+      equation: 'BaCl₂ + Na₂SO₄ → BaSO₄↓ + 2NaCl',
+      objective: 'Thực hiện phản ứng tạo kết tủa trắng BaSO₄, từ đó chứng minh định luật bảo toàn khối lượng: tổng khối lượng các chất tham gia bằng tổng khối lượng các sản phẩm.',
+      materials: [
+        'Dung dịch Bari Clorua (BaCl₂)',
+        'Dung dịch Natri Sunfat (Na₂SO₄)',
+        'Ống nghiệm',
+        'Giá thí nghiệm',
+      ],
+      steps: [
+        {
+          title: 'Bước 1: Chuẩn bị ống nghiệm',
+          content: 'Kéo ống nghiệm vào giá kẹp trên bàn thí nghiệm.',
+          tip: 'Ống nghiệm sẽ tự động khớp vào vị trí kẹp.',
+        },
+        {
+          title: 'Bước 2: Đổ dung dịch BaCl₂',
+          content: 'Cầm lọ BaCl₂ đổ vào ống nghiệm đến khoảng 1/3 ống.',
+          tip: 'Dung dịch BaCl₂ có màu trong suốt.',
+        },
+        {
+          title: 'Bước 3: Đổ dung dịch Na₂SO₄',
+          content: 'Kéo lọ Na₂SO₄ lại gần miệng ống nghiệm và đổ vào.',
+          tip: 'Quan sát hiện tượng kết tủa trắng (BaSO₄) xuất hiện ngay lập tức.',
+        },
+        {
+          title: 'Bước 4: Quan sát hiện tượng',
+          content: 'Quan sát sự xuất hiện của chất rắn màu trắng (kết tủa) không tan trong dung dịch.',
+          tip: 'Sản phẩm tạo thành là Bari Sunfat (BaSO₄) và Natri Clorua (NaCl).',
+        },
+      ],
+      observations: [
+        { question: 'Có xuất hiện bọt khí hay kết tủa sau khi trộn hai dung dịch không?', answer: 'Có kết tủa trắng (BaSO₄) xuất hiện.' },
+        { question: 'Hiện tượng này chứng tỏ điều gì?', answer: 'Chứng tỏ đã có phản ứng hóa học xảy ra tạo thành chất mới không tan.' },
+      ],
+      safetyNotes: [
+        'BaCl₂ là hóa chất độc, tuyệt đối không được nếm hoặc hít ngửi trực tiếp.',
+        'Tránh để hóa chất tiếp xúc trực tiếp với da.',
+        'Sau thí nghiệm, đổ dung dịch thải vào đúng nơi quy định.',
+      ],
+      notes: [
+        'Kết tủa BaSO₄ rất bền và không tan trong các axit thông thường.',
+        'Phản ứng này là phản ứng trao đổi đặc trưng dùng để nhận biết ion sunfat (SO₄²⁻).',
       ],
     },
   },

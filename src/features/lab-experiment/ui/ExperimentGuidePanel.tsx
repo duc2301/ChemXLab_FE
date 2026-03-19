@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, AlertCircle, Info } from 'lucide-react';
+import { AlertCircle, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Info } from 'lucide-react';
 import { useState } from 'react';
 import type { GuideObservation, GuideStep } from '../services/equipmentRegistry';
 import { getEquipmentById, GUIDED_EXPERIMENTS } from '../services/equipmentRegistry';
@@ -179,7 +179,7 @@ export const ExperimentGuidePanel = ({ experimentId }: ExperimentGuidePanelProps
                         border: `1px solid rgba(67,139,196,0.12)`,
                         padding: '16px 20px',
                     }}>
-                        <SectionLabel style={{ marginBottom: 6, fontSize: 8.5 }}>Bài học hóa học</SectionLabel>
+                        <SectionLabel style={{ marginBottom: 6, fontSize: 8.5 }}>Hoạt động</SectionLabel>
                         <div style={{ color: textPrimary, fontSize: 14.5, fontWeight: 700, lineHeight: 1.35, marginBottom: 4 }}>
                             {guide.title}
                         </div>
@@ -288,7 +288,7 @@ export const ExperimentGuidePanel = ({ experimentId }: ExperimentGuidePanelProps
                                                             color: isCompleted ? green : (isActive ? textPrimary : textSecond),
                                                             fontSize: 12.5, fontWeight: 700, lineHeight: 1.3,
                                                         }}>
-                                                            Bước {index + 1}: {step.title}
+                                                            {step.title}
                                                         </div>
                                                         {!isExpanded && (
                                                             <div style={{ color: textMuted, fontSize: 9, marginTop: 2 }}>

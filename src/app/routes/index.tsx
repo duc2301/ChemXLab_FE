@@ -14,7 +14,6 @@ import BlogPage from "../../pages/Blog";
 import ChatbotPage from "../../pages/Chatbot";
 import ExperiencePage from "../../pages/Experience";
 import HomePage from "../../pages/Home";
-import LabPage from "../../pages/Lab";
 import LabTest from "../../pages/Lab/Temp";
 import LibraryPage from "../../pages/Library";
 import GradeDetail from "../../pages/Library/GradeDetail";
@@ -34,13 +33,12 @@ export const AppRoutes = () => {
         <Route path="about" element={<AboutPage />} />
         <Route path="blog" element={<BlogPage />} />
         <Route path="support" element={<SupportPage />} />
-        <Route path="experience" element={<ExperiencePage />} />
+        <Route path="pricing" element={<ExperiencePage />} />
         <Route path="library" element={<LibraryPage />} />
         <Route path="library/:gradeId" element={<GradeDetail />} />
         <Route path="profile" element={<ProfilePage />} />
       </Route>
-      <Route path="lab" element={<LabPage />} />
-      <Route path="labtest" element={<LabTest />} />
+      <Route path="lab" element={<LabTest />} />
       <Route path="periodic-table" element={<PeriodicTablePage />} />
       <Route path="login" element={<LoginPage />} />
       <Route path="forgot-password" element={<ForgotPasswordPage />} />
