@@ -1540,7 +1540,7 @@ const LiquidLayer = ({
   onComplete?: () => any;
 }) => {
   const LIQUID_R = TUBE_INNER_R * 0.96;
-  const MAX_CYLINDER_H = TUBE_TOP_Y - TUBE_BOTTOM_Y - TUBE_MARGIN - LIQUID_R;
+  const MAX_TOTAL_H = TUBE_TOP_Y - TUBE_BOTTOM_Y - TUBE_MARGIN;
   const targetFill = Math.min(1, totalLiquidMl / MAX_TUBE_LAYERS);
 
   const bodyRef = useRef<THREE.Mesh>(null);
@@ -1565,6 +1565,28 @@ const LiquidLayer = ({
   const bubbles = useMemo<LiqBubble[]>(() => Array.from({ length: LL_BUBBLE_COUNT }, () =>
     ({ x: 0, y: 0, z: 0, vy: 0, vx: 0, vz: 0, scale: 0, age: 0, maxAge: 2, sourceIdx: -1, active: false, type: 'riser' as const, wobblePhase: 0 })), []);
   const bubbleStartT = useRef<number | null>(null);
+
+  // ── Track incremental pours for consistent drop sizes ───────────────────
+  const prevTargetFillRef = useRef(targetFill);
+  const currentPourVDeltaRef = useRef(targetFill / 1);
+  const currentPourDropScaleRef = useRef(0.15);
+  const currentPourDropCountRef = useRef(1);
+  const dropsSpawnedRef = useRef(0);
+
+  // When targetFill increases (new pour), compute drop count and scale
+  if (targetFill > prevTargetFillRef.current + 0.001) {
+    const delta = targetFill - prevTargetFillRef.current;
+    const mlAdded = delta * MAX_TUBE_LAYERS;
+    const dropCount = Math.min(10, Math.max(1, Math.ceil(mlAdded)));
+    currentPourDropCountRef.current = dropCount;
+    currentPourVDeltaRef.current = delta / dropCount;
+    // Uniform drop scale — halve if volume < 0.5ml
+    currentPourDropScaleRef.current = mlAdded < 0.5 ? 0.075 : 0.15;
+    dropsSpawnedRef.current = 0;
+    prevTargetFillRef.current = targetFill;
+  } else if (targetFill < prevTargetFillRef.current - 0.001) {
+    prevTargetFillRef.current = targetFill;
+  }
 
   // ── Surface geometry: ring with writable positions ─────────────────────────
   const surfGeo = useMemo(() => {
@@ -1606,16 +1628,35 @@ const LiquidLayer = ({
     }
 
     // ── Liquid body position ─────────────────────────────────────────────────
-    const h = Math.max(0.0001, visualFillRef.current * MAX_CYLINDER_H);
-    if (bodyRef.current) bodyRef.current.scale.y = h;
+    const totalH = visualFillRef.current * MAX_TOTAL_H;
+    const cylinderH = Math.max(0, totalH - LIQUID_R);
     const bodyBaseY = TUBE_BOTTOM_Y + offsetAboveSolid + LIQUID_R;
-    if (bodyRef.current) bodyRef.current.position.y = bodyBaseY;
-    if (capRef.current) capRef.current.position.y = bodyBaseY;
+
+    if (bodyRef.current) {
+      bodyRef.current.scale.y = Math.max(0.0001, cylinderH);
+      bodyRef.current.position.y = bodyBaseY;
+      bodyRef.current.visible = cylinderH > 0;
+    }
+
+    if (capRef.current) {
+      if (totalH < LIQUID_R) {
+        // Correct sphere-cap cross-section: at height h inside a sphere of radius R,
+        // the horizontal radius = sqrt(2·R·h - h²).
+        // Normalize against LIQUID_R (the geometry's radius) for the scale factors.
+        const scaleY = Math.max(0.001, totalH / LIQUID_R);
+        const scaleXZ = Math.sqrt(Math.max(0, 2 * LIQUID_R * totalH - totalH * totalH)) / LIQUID_R;
+        capRef.current.scale.set(scaleXZ, scaleY, scaleXZ);
+        capRef.current.position.y = TUBE_BOTTOM_Y + offsetAboveSolid + totalH;
+      } else {
+        capRef.current.scale.set(1, 1, 1);
+        capRef.current.position.y = bodyBaseY;
+      }
+    }
 
     // Current liquid surface Y (local space)
-    const surfaceY = bodyBaseY + h;
+    const surfaceY = TUBE_BOTTOM_Y + offsetAboveSolid + totalH;
 
-    const isBubbling = bubbleSources.length > 0 && h > 0.005;
+    const isBubbling = bubbleSources.length > 0 && totalH > 0.005;
 
     // ── Spawn bubbles (if HCl + Zn) ──────────────────────────────────────────
     if (isBubbling && !znDissolved) {
@@ -1697,10 +1738,8 @@ const LiquidLayer = ({
     }
 
     // ── Spawn falling drops (only while pouring) ─────────────────────────────
-    // Always exactly 10 drops, each carries 1/10 of totalLiquidMl
-    const volumePerDrop = totalLiquidMl / LL_DROP_COUNT;
-    const dropScaleFactor = Math.max(0.08, Math.min(0.35, volumePerDrop / 5)); // scale 0.08..0.35 based on volume
-    if (isPouring && t - lastDropT.current > 0.15) {
+    // Only spawn up to the calculated drop count for this pour
+    if (isPouring && t - lastDropT.current > 0.15 && dropsSpawnedRef.current < currentPourDropCountRef.current) {
       const di = drops.findIndex(d => !d.active);
       if (di !== -1) {
         const d = drops[di];
@@ -1709,14 +1748,17 @@ const LiquidLayer = ({
         d.z = (Math.random() - 0.5) * TUBE_INNER_R * 0.5;
         d.y = TUBE_TOP_Y + 0.1;
         d.vy = -0.05;
-        d.scale = TUBE_INNER_R * dropScaleFactor;
-        // Each drop adds 1/10 of total fill
-        d.vDelta = targetFill / LL_DROP_COUNT;
+        d.scale = TUBE_INNER_R * currentPourDropScaleRef.current;
+        // Each drop carries an equal fraction of this pour's fill
+        d.vDelta = currentPourVDeltaRef.current;
         lastDropT.current = t;
+        dropsSpawnedRef.current++;
       }
     }
 
     // ── Update drops ─────────────────────────────────────────────────────────
+    // Hemisphere center for tube bottom (the bottom bowl's center of curvature)
+    const hemiCenterY = TUBE_BOTTOM_Y + offsetAboveSolid + LIQUID_R;
     if (dropMeshRef.current) {
       for (let i = 0; i < LL_DROP_COUNT; i++) {
         const d = drops[i];
@@ -1726,7 +1768,23 @@ const LiquidLayer = ({
           // Stretch along velocity
           const stretchY = 1 + Math.abs(d.vy) * 4;
 
-          if (d.y - d.scale * stretchY <= surfaceY) {
+          // ── Hemispherical bottom boundary ────────────────────────────────
+          // If the drop is in the bowl region, check it against the curved wall
+          const relY = d.y - hemiCenterY;
+          if (relY < 0) {
+            // We're inside the hemispherical bowl
+            const dist = Math.sqrt(d.x * d.x + relY * relY + d.z * d.z);
+            if (dist >= LIQUID_R - d.scale) {
+              // Hit the curved wall → treat as surface contact at this point
+              d.active = false;
+              if (!spawnInstant)
+                logicFillTarget.current = Math.min(targetFill, logicFillTarget.current + d.vDelta);
+            }
+          }
+
+          // ── Flat surface boundary ────────────────────────────────────────
+          if (d.active && d.y - d.scale * stretchY <= surfaceY) {
+            d.y = surfaceY + d.scale * stretchY;
             d.active = false;
             lastHitT.current = t;
 
@@ -1749,7 +1807,6 @@ const LiquidLayer = ({
             for (let j = 0; j < LL_SPLASH_COUNT; j++) {
               if (!splashes[j].active) {
                 const angle = Math.random() * Math.PI * 2;
-                // Scale spread to match model-space tube size
                 const speed = (0.015 + Math.random() * 0.01);
                 splashes[j].active = true;
                 splashes[j].x = d.x;
@@ -1765,11 +1822,17 @@ const LiquidLayer = ({
             }
           }
 
-          _llDummy.position.set(d.x, d.y, d.z);
-          _llDummy.scale.set(d.scale, d.scale * stretchY, d.scale);
-          _llDummy.updateMatrix();
-          dropMeshRef.current.setMatrixAt(i, _llDummy.matrix);
-          dropMeshRef.current.visible = true;
+          if (d.active) {
+            _llDummy.position.set(d.x, d.y, d.z);
+            _llDummy.scale.set(d.scale, d.scale * stretchY, d.scale);
+            _llDummy.updateMatrix();
+            dropMeshRef.current.setMatrixAt(i, _llDummy.matrix);
+            dropMeshRef.current.visible = true;
+          } else {
+            _llDummy.scale.setScalar(0);
+            _llDummy.updateMatrix();
+            dropMeshRef.current.setMatrixAt(i, _llDummy.matrix);
+          }
         } else {
           _llDummy.scale.setScalar(0);
           _llDummy.updateMatrix();
@@ -1931,10 +1994,19 @@ const LiquidLayer = ({
           s.x += s.vx * dt;
           s.y += s.vy * dt;
           s.z += s.vz * dt;
-          // Clamp inside tube radius
+
+          // Hemisphere-aware radial clamp: radius shrinks as we go deeper into the bowl
+          const sRelY = s.y - hemiCenterY;
+          let allowedR: number;
+          if (sRelY < 0) {
+            // Inside hemispherical bowl — compute max allowed radius at this depth
+            allowedR = Math.sqrt(Math.max(0, LIQUID_R * LIQUID_R - sRelY * sRelY));
+          } else {
+            allowedR = LIQUID_R;
+          }
           const rr = s.x * s.x + s.z * s.z;
-          if (rr > LIQUID_R * LIQUID_R) {
-            const inv = LIQUID_R / Math.sqrt(rr);
+          if (rr > allowedR * allowedR && allowedR > 0) {
+            const inv = allowedR / Math.sqrt(rr);
             s.x *= inv; s.z *= inv;
           }
           if (s.y < surfaceY) { s.active = false; }
@@ -1954,8 +2026,16 @@ const LiquidLayer = ({
 
     // ── Ripple surface deformation ────────────────────────────────────────────
     if (surfRef.current && surfGeo) {
-      surfRef.current.position.y = surfaceY;
-
+      // Small Y offset (0.00005) to prevent Z-fighting with the cylinder rim
+      surfRef.current.position.y = surfaceY + 0.00005;
+      // Scale the surface mesh to match the actual tube cross-section at this height.
+      // When inside the hemispherical bowl (totalH < LIQUID_R), shrink x/z to fit.
+      if (totalH < LIQUID_R) {
+        const surfXZScale = Math.sqrt(Math.max(0, 2 * LIQUID_R * totalH - totalH * totalH)) / LIQUID_R;
+        surfRef.current.scale.set(surfXZScale, surfXZScale, 1);
+      } else {
+        surfRef.current.scale.set(1, 1, 1);
+      }
       // Age ripples
       for (let i = 0; i < LL_RIPPLE_COUNT; i++) {
         if (ripples[i].active) {
@@ -2002,7 +2082,8 @@ const LiquidLayer = ({
 
         // Tremor effect during bubbling (only while zinc is still dissolving)
         if (isBubbling && !znDissolved) {
-          const tremor = Math.sin(t * 40 + vx * 200 + vy * 200) * 0.0004;
+          // Reduced frequency and amplitude for a smoother look at close zoom
+          const tremor = Math.sin(t * 30 + vx * 80 + vy * 80) * 0.00018;
           totalZ += tremor;
         }
 
@@ -2044,13 +2125,13 @@ const LiquidLayer = ({
         >
           <meshPhysicalMaterial
             color={color}
-            transparent
-            opacity={0.8}
+            transparent={!importantOpacity}
+            opacity={importantOpacity ? 1 : 0.3}
             roughness={0.1}
             metalness={0.1}
-            transmission={0.4}
-            thickness={2}
-            ior={1.45}
+            transmission={importantOpacity ? 0 : 0.1}
+            thickness={1}
+            ior={1.33}
             reflectivity={0.5}
           />
         </mesh>
@@ -2083,7 +2164,7 @@ const LiquidLayer = ({
       {isPrecipitate && onComplete && <SnowflakePrecipitate
         tubeR={0.006}
         tubeBottomY={TUBE_BOTTOM_Y + 0.002}
-        liquidSurfaceY={TUBE_BOTTOM_Y + 0.002 + targetFill / 10}
+        liquidSurfaceY={TUBE_BOTTOM_Y + offsetAboveSolid + targetFill * MAX_TOTAL_H}
         active={isPrecipitate}
         onComplete={() => onComplete()}
       />}
