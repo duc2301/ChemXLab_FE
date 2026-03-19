@@ -187,7 +187,7 @@ const BlogPage = () => {
               </h3>
               <div className="space-y-3">
                 {[
-                  { title: "Phòng thí nghiệm ảo", link: "/labtest", icon: "🧪", color: "text-purple-600", bg: "bg-purple-50" },
+                  { title: "Phòng thí nghiệm ảo", link: "/lab", icon: "🧪", color: "text-purple-600", bg: "bg-purple-50" },
                   { title: "Bảng tuần hoàn", link: "/periodic-table", icon: "⚛️", color: "text-blue-600", bg: "bg-blue-50" },
                   { title: "Thư viện phân tử", link: "/library", icon: "🧬", color: "text-rose-600", bg: "bg-rose-50" },
                 ].map((item) => (

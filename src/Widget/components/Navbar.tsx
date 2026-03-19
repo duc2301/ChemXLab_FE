@@ -13,8 +13,9 @@ const NAV_DATA: NavItem[] = [
   { name: "Sản phẩm", path: "/products" },
   { name: "Giới thiệu", path: "/about" },
   { name: "Thư viện", path: "/library" },
-  { name: "Bảng giá", path: "/experience" },
-  { name: "ChemX AI", path: "/chatbot" },
+  { name: "Bảng giá", path: "/pricing" },
+  { name: "Thí nghiệm", path: "/lab" },
+  { name: "ChemXLab AI", path: "/chatbot" },
 ];
 
 const Navbar = () => {
@@ -102,7 +103,7 @@ const Navbar = () => {
 
           {NAV_DATA.map((item, index) => {
             const active = isActive(item.path);
-            const isAi = item.name === "ChemX AI";
+            const isAi = item.name === "ChemXLab AI";
             return (
               <Link
                 key={item.name}

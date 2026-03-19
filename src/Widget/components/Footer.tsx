@@ -98,7 +98,7 @@ const Footer = () => {
               <h4 className="text-slate-800 font-semibold text-sm mb-4">Sản phẩm</h4>
               <ul className="flex flex-col gap-2.5">
                 {[
-                  { label: "Thí nghiệm ảo", path: "/labtest" },
+                  { label: "Thí nghiệm ảo", path: "/lab" },
                   { label: "Thư viện hóa chất", path: "/library" },
                   { label: "Dành cho giáo viên", path: "/about" },
                   { label: "Bảng giá", path: "/experience" },

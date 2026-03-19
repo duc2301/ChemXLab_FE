@@ -517,7 +517,7 @@ const ProfilePage = () => {
                               type="primary"
                               size="large"
                               className="bg-indigo-600 hover:bg-indigo-700 h-12 px-8 rounded-xl shadow-lg shadow-indigo-200"
-                              onClick={() => navigate('/experience')}
+                              onClick={() => navigate('/pricing')}
                             >
                               Nâng cấp ngay
                             </Button>
