@@ -143,9 +143,12 @@ export const ExperimentPopup = ({ onBackToMenu, isGuidedMode, experimentId }: { 
   const isSubstance = contextEquipment?.category === 'substances';
   const isTestTubeItem = contextEquipment?.id === EQUIPMENT_IDS.TEST_TUBE;
   const tubeContents = contextMenu ? (testTubeContents.get(contextMenu.itemId) ?? []) : [];
-  const uniquePowderTypes = new Set(tubeContents).size;
+  const tubeSubstances = tubeContents.map(c => getEquipmentById(c.substanceId));
+  const uniqueSubstanceCount = new Set(tubeContents.map(c => c.substanceId)).size;
   const stirredCount = contextMenu ? (stirredTubes[contextMenu.itemId] ?? 0) : 0;
-  const canStir = isTestTubeItem && uniquePowderTypes >= 2 && stirredCount < tubeContents.length;
+
+  const allArePowder = tubeSubstances.length > 0 && tubeSubstances.every(s => s?.physicalState === 'powder');
+  const canStir = isTestTubeItem && allArePowder && uniqueSubstanceCount >= 2 && stirredCount < tubeContents.length;
   const alreadyStirred = isTestTubeItem && stirredCount >= tubeContents.length && tubeContents.length > 0;
   const isAlcoholLamp = contextEquipment?.id === EQUIPMENT_IDS.ALCOHOL_LAMP;
   const isBurning = contextMenu ? (alcoholLampStatus.get(contextMenu.itemId) ?? false) : false;
