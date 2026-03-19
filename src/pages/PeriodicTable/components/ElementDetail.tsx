@@ -97,9 +97,6 @@ const ElementDetail = ({ element, modelPath }: ElementDetailProps) => {
                             <span>No 3D Model</span>
                         </div>
                     )}
-                    <div className="absolute bottom-4 left-0 right-0 text-center text-xs text-slate-400 font-medium z-10">
-                        Mô hình nguyên tử của Bohr
-                    </div>
                 </div>
 
                 {/* Stats & Info */}
