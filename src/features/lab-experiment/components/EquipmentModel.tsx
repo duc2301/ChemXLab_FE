@@ -1543,16 +1543,21 @@ const LiquidLayer = ({
 
   // ── Track incremental pours for consistent drop sizes ───────────────────
   const prevTargetFillRef = useRef(targetFill);
-  const currentPourVDeltaRef = useRef(targetFill / LL_DROP_COUNT);
-  const currentPourDropScaleRef = useRef(0.06);
+  const currentPourVDeltaRef = useRef(targetFill / 1);
+  const currentPourDropScaleRef = useRef(0.15);
+  const currentPourDropCountRef = useRef(1);
+  const dropsSpawnedRef = useRef(0);
 
-  // If target fill jumped up (new pour), calculate params for THIS increment
+  // When targetFill increases (new pour), compute drop count and scale
   if (targetFill > prevTargetFillRef.current + 0.001) {
     const delta = targetFill - prevTargetFillRef.current;
-    currentPourVDeltaRef.current = delta / LL_DROP_COUNT;
-    const volAdded = delta * MAX_TUBE_LAYERS;
-    const volPerDrop = volAdded / LL_DROP_COUNT;
-    currentPourDropScaleRef.current = Math.max(0.06, Math.min(0.22, volPerDrop / 7.5));
+    const mlAdded = delta * MAX_TUBE_LAYERS;
+    const dropCount = Math.min(10, Math.max(1, Math.ceil(mlAdded)));
+    currentPourDropCountRef.current = dropCount;
+    currentPourVDeltaRef.current = delta / dropCount;
+    // Uniform drop scale — halve if volume < 0.5ml
+    currentPourDropScaleRef.current = mlAdded < 0.5 ? 0.075 : 0.15;
+    dropsSpawnedRef.current = 0;
     prevTargetFillRef.current = targetFill;
   } else if (targetFill < prevTargetFillRef.current - 0.001) {
     prevTargetFillRef.current = targetFill;
@@ -1708,7 +1713,8 @@ const LiquidLayer = ({
     }
 
     // ── Spawn falling drops (only while pouring) ─────────────────────────────
-    if (isPouring && t - lastDropT.current > 0.15) {
+    // Only spawn up to the calculated drop count for this pour
+    if (isPouring && t - lastDropT.current > 0.15 && dropsSpawnedRef.current < currentPourDropCountRef.current) {
       const di = drops.findIndex(d => !d.active);
       if (di !== -1) {
         const d = drops[di];
@@ -1718,9 +1724,10 @@ const LiquidLayer = ({
         d.y = TUBE_TOP_Y + 0.1;
         d.vy = -0.05;
         d.scale = TUBE_INNER_R * currentPourDropScaleRef.current;
-        // Increment fill based on the specific volume of THIS pour
+        // Each drop carries an equal fraction of this pour's fill
         d.vDelta = currentPourVDeltaRef.current;
         lastDropT.current = t;
+        dropsSpawnedRef.current++;
       }
     }
 
