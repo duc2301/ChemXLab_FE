@@ -71,7 +71,7 @@ export const SnowflakePrecipitate = ({
 
   // Tiêm (Inject) hiệu ứng loang vào MeshStandardMaterial để giữ nguyên khả năng nhận sáng
   const totalBaseHeight = baseStraightHeight + tubeR;
-  const onBeforeCompile = (shader: THREE.Shader) => {
+  const onBeforeCompile = (shader: THREE.WebGLProgramParametersWithUniforms) => {
     shader.uniforms.uTime = { value: 0 };
     shader.uniforms.uActive = { value: 0 };
     shader.uniforms.uHeight = { value: totalBaseHeight };
