@@ -1,5 +1,5 @@
 import { Modal } from "antd";
-import { MessageSquarePlus, MessagesSquare, Search, Trash2 } from "lucide-react";
+import { Clock, FlaskConical, HelpCircle, Plus, Trash2 } from "lucide-react";
 import type { SessionDTO } from "../../../entities/Chatbot";
 
 interface ChatSidebarProps {
@@ -19,6 +19,7 @@ const ChatSidebar = ({
     onDeleteSession,
     onClearAll,
 }: ChatSidebarProps) => {
+
     const handleDeleteSession = (e: React.MouseEvent, sessionId: string) => {
         e.stopPropagation();
         Modal.confirm({
@@ -42,96 +43,106 @@ const ChatSidebar = ({
         });
     };
 
-    const formatDate = (dateString: string) => {
-        const date = new Date(dateString);
-        const now = new Date();
-        const diff = now.getTime() - date.getTime();
-        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-        if (days === 0) return "Hôm nay";
-        if (days === 1) return "Hôm qua";
-        if (days < 7) return `${days} ngày trước`;
-        return date.toLocaleDateString("vi-VN");
-    };
+    const activeSession = sessions.find(s => s.sessionId === activeSessionId) || sessions[0];
+    const historySessions = sessions.filter(s => s.sessionId !== activeSession?.sessionId);
 
     return (
-        <div className="h-full w-72 bg-[#0B1120] border-r border-slate-800 flex flex-col">
-            {/* Header */}
-            <div className="p-4 space-y-3">
-                {/* New Chat Button */}
-                <button
-                    onClick={onNewChat}
-                    className="w-full flex items-center gap-3 px-4 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-medium transition-colors shadow-lg shadow-blue-600/20"
-                >
-                    <MessageSquarePlus className="w-5 h-5" />
-                    Cuộc trò chuyện mới
-                </button>
+        <div className="h-[calc(100vh-137px-40px)] w-[288px] bg-[#EFF4F9] rounded-tr-[48px] rounded-br-[48px] shadow-[0_10px_40px_rgba(0,0,0,0.03)] flex flex-col p-6 pt-8 z-20 relative">
+            <div className="flex-1 overflow-y-auto hide-scrollbar space-y-8">
 
-                {/* Search (optional UI) */}
-                <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                    <input
-                        type="text"
-                        placeholder="Tìm kiếm..."
-                        className="w-full bg-slate-800/50 border border-slate-700 rounded-lg pl-10 pr-4 py-2 text-sm text-slate-300 placeholder-slate-500 focus:outline-none focus:border-blue-500/50"
-                    />
-                </div>
-            </div>
-
-            {/* Sessions Label */}
-            <div className="px-4 py-2">
-                <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">
-                    Cuộc trò chuyện
-                </span>
-            </div>
-
-            {/* Session List */}
-            <div className="flex-1 overflow-y-auto px-2 space-y-1">
-                {sessions.length === 0 ? (
-                    <div className="text-center py-12 px-4">
-                        <MessagesSquare className="w-12 h-12 mx-auto mb-4 text-slate-700" />
-                        <p className="text-slate-500 text-sm">Chưa có cuộc trò chuyện</p>
-                        <p className="text-slate-600 text-xs mt-1">Bắt đầu bằng cách tạo cuộc trò chuyện mới</p>
-                    </div>
-                ) : (
-                    sessions.map((session) => (
+                {/* Chat hiện tại */}
+                {activeSession && (
+                    <div className="flex flex-col gap-3">
+                        <h3 className="uppercase text-[11px] leading-4 tracking-[1.1px] font-bold text-slate-500 px-2">
+                            CHAT HIỆN TẠI
+                        </h3>
+                        {/* Active Item */}
                         <div
-                            key={session.sessionId}
-                            onClick={() => onSelectSession(session.sessionId)}
-                            className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all ${activeSessionId === session.sessionId
-                                ? "bg-blue-600/20 border border-blue-500/30 text-white"
-                                : "hover:bg-slate-800/60 text-slate-400 hover:text-slate-200 border border-transparent"
-                                }`}
+                            className="relative flex items-center justify-between px-3 py-3 bg-white border border-slate-100 shadow-[0_2px_8px_rgba(0,0,0,0.04)] rounded-2xl group"
                         >
-                            <MessagesSquare className="w-4 h-4 flex-shrink-0" />
-                            <div className="flex-1 min-w-0">
-                                <p className="text-sm truncate font-medium">{session.topic}</p>
-                                <p className="text-xs text-slate-500 mt-0.5">
-                                    {formatDate(session.createdAt)} · {session.messageCount} tin nhắn
-                                </p>
+                            {/* Blue Edge Line */}
+                            <div className="absolute left-[-2px] top-[20%] bottom-[20%] w-1 bg-[#0060A8] rounded-r-full" />
+
+                            <div className="flex items-center gap-3 overflow-hidden pl-1 flex-1">
+                                <div className="w-[28px] h-[28px] bg-[#EAF4FE] rounded-lg flex items-center justify-center shrink-0">
+                                    {/* Icon User / Flask */}
+                                    <FlaskConical className="w-4 h-4 text-[#0060A8]" />
+                                </div>
+                                <span className="font-inter font-bold text-[14px] text-[#12284B] truncate">
+                                    {activeSession.topic || "ChemX AI"}
+                                </span>
                             </div>
-                            <button
-                                onClick={(e) => handleDeleteSession(e, session.sessionId)}
-                                className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-red-500/20 rounded-md text-slate-500 hover:text-red-400 transition-all"
-                            >
-                                <Trash2 className="w-3.5 h-3.5" />
-                            </button>
+
+                            {/* Actions & Online dot */}
+                            <div className="flex items-center gap-1 shrink-0 px-1">
+                                <button
+                                    onClick={(e) => handleDeleteSession(e, activeSession.sessionId)}
+                                    className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-50 rounded-md text-slate-400 hover:text-red-500 transition-all"
+                                    title="Xóa đoạn chat này"
+                                >
+                                    <Trash2 className="w-[14px] h-[14px]" />
+                                </button>
+                                <div className="w-[6px] h-[6px] bg-[#22C55E] rounded-full ml-1" />
+                            </div>
                         </div>
-                    ))
+                    </div>
+                )}
+
+                {/* Lịch sử */}
+                {historySessions.length > 0 && (
+                    <div className="flex flex-col gap-3">
+                        <h3 className="uppercase text-[11px] leading-4 tracking-[1.1px] font-bold text-slate-500 px-2 flex justify-between items-center group/header">
+                            <span>LỊCH SỬ</span>
+                            <button
+                                onClick={handleClearAll}
+                                className="opacity-0 group-hover/header:opacity-100 hover:text-red-500 text-slate-400 transition-all"
+                                title="Xóa tất cả chức trò chuyện"
+                            >
+                                <Trash2 className="w-[14px] h-[14px]" />
+                            </button>
+                        </h3>
+                        <div className="flex flex-col gap-0.5">
+                            {historySessions.map((session) => (
+                                <div
+                                    key={session.sessionId}
+                                    onClick={() => onSelectSession(session.sessionId)}
+                                    className="group flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors"
+                                >
+                                    <div className="flex items-center gap-3 overflow-hidden text-slate-500 group-hover:text-slate-700 flex-1">
+                                        <Clock className="w-4 h-4 shrink-0 opacity-70" strokeWidth={2} />
+                                        <span className="font-inter font-medium text-[13.5px] truncate pr-2">
+                                            {session.topic}
+                                        </span>
+                                    </div>
+                                    <button
+                                        onClick={(e) => handleDeleteSession(e, session.sessionId)}
+                                        className="shrink-0 opacity-0 group-hover:opacity-100 p-1 hover:bg-red-50 rounded-md text-slate-400 hover:text-red-500 transition-all"
+                                        title="Xóa đoạn chat này"
+                                    >
+                                        <Trash2 className="w-[14px] h-[14px]" />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 )}
             </div>
 
-            {/* Footer */}
-            {sessions.length > 0 && (
-                <div className="p-3 border-t border-slate-800">
-                    <button
-                        onClick={handleClearAll}
-                        className="w-full flex items-center justify-center gap-2 text-slate-500 hover:text-red-400 hover:bg-red-500/10 py-2 rounded-lg text-sm transition-colors"
-                    >
-                        <Trash2 className="w-4 h-4" />
-                        Xóa tất cả
-                    </button>
+            {/* Bottom Section */}
+            <div className="pt-6 shrink-0 mt-auto flex flex-col gap-4">
+                <button
+                    onClick={onNewChat}
+                    className="w-full h-[52px] bg-[#0060A8] hover:bg-[#00518f] text-white rounded-[16px] flex items-center justify-center gap-2 shadow-[0_4px_12px_rgba(0,96,168,0.3)] transition-all hover:shadow-[0_6px_16px_rgba(0,96,168,0.4)]"
+                >
+                    <Plus className="w-5 h-5" strokeWidth={2.5} />
+                    <span className="font-lexend font-semibold text-[15px]">Đoạn chat mới</span>
+                </button>
+
+                <div className="flex items-center gap-2 justify-start px-3 py-2 text-slate-500 hover:text-slate-700 cursor-pointer transition-colors w-max">
+                    <HelpCircle className="w-[18px] h-[18px]" strokeWidth={2} />
+                    <span className="font-inter font-medium text-[13.5px]">Help Center</span>
                 </div>
-            )}
+            </div>
         </div>
     );
 };

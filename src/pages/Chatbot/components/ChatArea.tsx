@@ -1,4 +1,4 @@
-import { FlaskConical, Sparkles } from "lucide-react";
+import { FileText, FlaskConical, Plus, Scale, Share2, Sparkles } from "lucide-react";
 import { useEffect, useRef } from "react";
 import type { MessageHistory } from "../../../entities/Chatbot";
 import ChatMessage from "./ChatMessage";
@@ -7,52 +7,50 @@ interface ChatAreaProps {
     messages: MessageHistory[];
     isLoading: boolean;
     sessionTopic?: string;
+    onSuggestionClick?: (text: string) => void;
 }
 
 const suggestions = [
-    { emoji: "⚗️", text: "Cân bằng phương trình: Fe + O₂ → Fe₂O₃" },
-    { emoji: "🔬", text: "Phân tích cấu trúc phân tử H₂SO₄" },
-    { emoji: "📚", text: "Giải thích phản ứng oxi-hóa khử" },
-    { emoji: "🧪", text: "Tính khối lượng mol của NaCl" },
+    { icon: <Plus className="w-4 h-4 text-[#438BC4]" strokeWidth={2.5} />, text: "Cân bằng phản ứng" },
+    { icon: <Share2 className="w-3.5 h-3.5 text-[#438BC4]" strokeWidth={2.5} />, text: "Cơ chế phản ứng" },
+    { icon: <FileText className="w-3.5 h-3.5 text-[#438BC4]" strokeWidth={2.5} />, text: "Tính khối lượng mol" },
+    { icon: <Share2 className="w-3.5 h-3.5 text-[#438BC4]" strokeWidth={2.5} />, text: "Cấu trúc Lewis" },
+    { icon: <Scale className="w-3.5 h-3.5 text-[#438BC4]" strokeWidth={2.5} />, text: "Cân bằng hoá học" },
 ];
 
-const ChatArea = ({ messages, isLoading }: ChatAreaProps) => {
+const ChatArea = ({ messages, isLoading, onSuggestionClick }: ChatAreaProps) => {
     const scrollRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         scrollRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages, isLoading]);
 
-    // Empty state - Gemini style
+    // Empty state 
     if (messages.length === 0 && !isLoading) {
         return (
-            <div className="h-full flex flex-col items-center justify-center px-6">
-                <div className="max-w-2xl w-full text-center">
-                    {/* Logo */}
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-400 mb-6 shadow-xl shadow-blue-500/30">
-                        <FlaskConical className="w-8 h-8 text-white" />
-                    </div>
+            <div className="h-full flex flex-col items-center justify-center px-6 relative z-10 w-full max-w-4xl mx-auto">
+                <div className="flex flex-col items-center justify-center text-center w-full mt-[-5vh]">
 
                     {/* Greeting */}
-                    <div className="mb-2">
-                        <span className="text-blue-400">✦</span>
-                        <span className="text-slate-400 ml-2">Xin chào!</span>
-                    </div>
-                    <h1 className="text-3xl md:text-4xl font-bold text-white mb-8">
-                        Tôi có thể giúp gì cho bạn?
+                    <h1 className="font-space font-bold text-[40px] md:text-[56px] leading-[1.2] text-[#12284B] tracking-tight mb-5">
+                        Xin chào! Tôi có thể<br />
+                        giúp gì cho bạn <span className="text-[#438BC4]">hôm nay?</span>
                     </h1>
 
-                    {/* Suggestions Grid */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-left">
+                    <p className="font-inter font-medium text-[15px] leading-[22px] text-slate-500 mb-10 max-w-[670px]">
+                        Hỏi về phản ứng hoá học, cấu trúc phân tử, cơ chế phản ứng, hay bất kỳ chủ đề nào trong hoá học.
+                    </p>
+
+                    {/* Suggestion Pills */}
+                    <div className="flex flex-wrap justify-center gap-3 w-full max-w-[800px]">
                         {suggestions.map((item, idx) => (
                             <button
                                 key={idx}
-                                className="flex items-start gap-3 p-4 bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 hover:border-slate-600 rounded-xl transition-all text-left group"
+                                onClick={() => onSuggestionClick?.(item.text)}
+                                className="flex items-center gap-2.5 px-5 py-2.5 bg-white border border-slate-100 shadow-[0_2px_8px_rgba(0,0,0,0.03)] rounded-full hover:bg-slate-50 transition-all cursor-pointer"
                             >
-                                <span className="text-xl">{item.emoji}</span>
-                                <span className="text-sm text-slate-300 group-hover:text-white transition-colors">
-                                    {item.text}
-                                </span>
+                                {item.icon}
+                                <span className="font-inter font-semibold text-[13.5px] text-slate-600">{item.text}</span>
                             </button>
                         ))}
                     </div>
@@ -62,8 +60,8 @@ const ChatArea = ({ messages, isLoading }: ChatAreaProps) => {
     }
 
     return (
-        <div className="h-full overflow-y-auto">
-            <div className="max-w-3xl mx-auto py-6 px-4 md:px-6">
+        <div className="h-full overflow-y-auto hide-scrollbar relative z-10 w-full flex justify-center">
+            <div className="w-[85%] max-w-[900px] py-8 px-4 md:px-8">
                 {/* Messages */}
                 {messages.map((message, idx) => (
                     <ChatMessage key={idx} message={message} />
@@ -72,30 +70,28 @@ const ChatArea = ({ messages, isLoading }: ChatAreaProps) => {
                 {/* Loading */}
                 {isLoading && (
                     <div className="flex gap-4 py-6">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center flex-shrink-0">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#438BC4] to-[#2A6BA6] flex items-center justify-center flex-shrink-0 shadow-[0_4px_15px_rgba(67,139,196,0.3)] border border-white/20">
                             <FlaskConical className="w-4 h-4 text-white" />
                         </div>
-                        <div className="flex-1 pt-1">
-                            <div className="flex items-center gap-3">
-                                <div className="flex gap-1">
-                                    {[0, 1, 2].map((i) => (
-                                        <span
-                                            key={i}
-                                            className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"
-                                            style={{ animationDelay: `${i * 150}ms` }}
-                                        />
-                                    ))}
-                                </div>
-                                <span className="text-sm text-slate-500 flex items-center gap-1.5">
-                                    <Sparkles className="w-4 h-4" />
-                                    Đang phân tích...
-                                </span>
+                        <div className="flex-1 pt-1.5 flex items-center gap-3">
+                            <div className="flex gap-1.5">
+                                {[0, 1, 2].map((i) => (
+                                    <span
+                                        key={i}
+                                        className="w-2 h-2 bg-[#438BC4] rounded-full animate-bounce"
+                                        style={{ animationDelay: `${i * 150}ms` }}
+                                    />
+                                ))}
                             </div>
+                            <span className="text-sm font-medium text-[#12284B]/60 flex items-center gap-1.5 ml-2">
+                                <Sparkles className="w-4 h-4 text-[#438BC4]" />
+                                Đang phân tích...
+                            </span>
                         </div>
                     </div>
                 )}
 
-                <div ref={scrollRef} />
+                <div ref={scrollRef} className="h-4" />
             </div>
         </div>
     );
