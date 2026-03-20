@@ -3,7 +3,6 @@ import { ArrowRight, FlaskConical, Play, Star, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import Mascot7 from "../../shared/assets/mascot/7.png";
-import Mascot8 from "../../shared/assets/mascot/8.png";
 
 const HomePage = () => {
   return (
@@ -100,7 +99,7 @@ const HomePage = () => {
                   <Users size={20} className="text-[#438BC4]" />
                 </div>
                 <div>
-                  <div className="text-[24px] font-bold text-[#3298DC] leading-[1.33]">10,000+</div>
+                  <div className="text-[24px] font-bold text-[#3298DC] leading-[1.33]">100+</div>
                   <div className="text-[16px] text-[#12284B] font-medium leading-[1.5]">Bạn học tham gia</div>
                 </div>
                 {/* Divider */}
@@ -330,7 +329,7 @@ const HomePage = () => {
               className="bg-[#FFFFFF] rounded-[20px] p-[20px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border-2 border-[#E2E8F0] hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] transition-all duration-300 flex flex-col group gap-3"
             >
               <div className="h-[190px] rounded-[16px] bg-gradient-to-br from-[#FAF5FF] to-[#FDF2F8] relative flex items-center justify-center overflow-hidden">
-                <img src={Mascot8} alt="Cấu phân tử hữu cơ" className="h-[140px] object-contain drop-shadow-2xl mix-blend-multiply opacity-90" />
+                <iframe src="https://drive.google.com/file/d/1sYM7PRzfnDGBIzjDV4mFlxdKnh5OTBq7/preview" className="absolute w-[160%] h-[160%] pointer-events-none mix-blend-multiply opacity-90" style={{ border: 'none' }} title="Thư viện hóa học"></iframe>
               </div>
               <div className="pt-2 flex-1 flex flex-col">
                 <h4 className="font-semibold text-[#04306E] text-[18px] mb-2 leading-[1.4]">Thư viện hóa học</h4>
@@ -349,12 +348,8 @@ const HomePage = () => {
               transition={{ duration: 0.5, delay: 0.3 }}
               className="bg-[#FFFFFF] rounded-[20px] p-[20px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border-2 border-[#E2E8F0] hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] transition-all duration-300 flex flex-col group gap-3"
             >
-              <div className="h-[190px] rounded-[16px] bg-gradient-to-br from-[#ECFDF5] to-[#F0FDFA] relative flex items-center justify-center overflow-hidden">
-                <div className="grid grid-cols-5 gap-2 p-4 opacity-70 scale-125 mix-blend-multiply">
-                  {["H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne"].map((e, i) => (
-                    <div key={i} className="w-10 h-10 bg-slate-300/30 border border-slate-400 rounded-lg text-[12px] font-bold text-slate-700 flex items-center justify-center shadow-inner">{e}</div>
-                  ))}
-                </div>
+              <div className="h-[190px] rounded-[16px] bg-gradient-to-br from-[#FAF5FF] to-[#FDF2F8] relative flex items-center justify-center overflow-hidden">
+                <iframe src="https://drive.google.com/file/d/1OBs3gTrIiDRhiR9yIkcKWoYXdrR5wgBA/preview" className="absolute w-[160%] h-[160%] pointer-events-none mix-blend-multiply opacity-90" style={{ border: 'none' }} title="Phản ứng hóa học"></iframe>
               </div>
               <div className="pt-2 flex-1 flex flex-col">
                 <h4 className="font-semibold text-[#04306E] text-[18px] mb-2 leading-[1.4]">Phản ứng hóa học</h4>

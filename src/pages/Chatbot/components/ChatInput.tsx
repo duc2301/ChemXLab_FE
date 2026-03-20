@@ -1,22 +1,21 @@
-import { Loader2, Send } from "lucide-react";
-import { useState } from "react";
+import { Send } from "lucide-react";
 
 interface ChatInputProps {
+    value: string;
+    onChange: (val: string) => void;
     onSend: (message: string) => void;
     isLoading: boolean;
 }
 
-const ChatInput = ({ onSend, isLoading }: ChatInputProps) => {
-    const [input, setInput] = useState("");
+const ChatInput = ({ value, onChange, onSend, isLoading }: ChatInputProps) => {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (input.trim() && !isLoading) {
-            onSend(input.trim());
-            setInput("");
-            // Reset textarea height
+        if (value.trim() && !isLoading) {
+            onSend(value.trim());
+            onChange("");
             const textarea = document.getElementById("chat-input") as HTMLTextAreaElement;
-            if (textarea) textarea.style.height = "auto";
+            if (textarea) textarea.style.height = "24px"; // reset to base height
         }
     };
 
@@ -29,43 +28,40 @@ const ChatInput = ({ onSend, isLoading }: ChatInputProps) => {
 
     const handleInput = (e: React.FormEvent<HTMLTextAreaElement>) => {
         const target = e.target as HTMLTextAreaElement;
-        target.style.height = "auto";
-        target.style.height = Math.min(target.scrollHeight, 200) + "px";
+        target.style.height = "24px";
+        const newHeight = Math.min(target.scrollHeight, 200);
+        target.style.height = newHeight + "px";
+        target.style.overflowY = target.scrollHeight > 200 ? "auto" : "hidden";
     };
 
     return (
-        <div className="border-t border-slate-800 bg-[#0F172A] p-4">
-            <div className="max-w-3xl mx-auto">
-                <form onSubmit={handleSubmit}>
-                    <div className="relative flex items-end gap-2 bg-slate-800/60 border border-slate-700 rounded-2xl p-2 focus-within:border-blue-500/50 focus-within:bg-slate-800/80 transition-all">
+        <div className="w-[85%] max-w-[900px] flex justify-center pb-8 z-20 mx-auto">
+            <div className="w-full bg-white border border-slate-100 shadow-[0_10px_40px_rgba(0,0,0,0.06)] rounded-[24px] p-4 flex flex-col gap-4 relative">
+                <form onSubmit={handleSubmit} className="w-full flex flex-col relative">
+                    {/* Text Area & Built-in Action Row */}
+                    <div className="flex w-full items-start justify-between relative gap-4 px-2">
                         <textarea
                             id="chat-input"
-                            value={input}
-                            onChange={(e) => setInput(e.target.value)}
+                            value={value}
+                            onChange={(e) => onChange(e.target.value)}
                             onKeyDown={handleKeyDown}
                             onInput={handleInput}
-                            placeholder="Hỏi ChemXLab AI..."
+                            placeholder="Hỏi về bất kỳ chủ đề hoá học nào..."
                             disabled={isLoading}
                             rows={1}
-                            className="flex-1 bg-transparent px-3 py-2 text-white placeholder-slate-500 focus:outline-none resize-none text-sm min-h-[40px] max-h-[200px] disabled:opacity-50"
+                            className="w-full flex-1 bg-transparent border-none focus:outline-none resize-none overflow-hidden font-inter font-medium text-[15px] leading-[24px] text-[#12284B] placeholder:text-slate-400 disabled:opacity-50 min-h-[24px] max-h-[200px] pt-2"
                         />
+
+                        {/* Send Button placed top right aligned */}
                         <button
                             type="submit"
-                            disabled={!input.trim() || isLoading}
-                            className="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:cursor-not-allowed rounded-xl text-white transition-colors"
+                            disabled={!value.trim() || isLoading}
+                            className="w-[42px] h-[42px] shrink-0 flex items-center justify-center bg-[#438BC4] rounded-[14px] text-white transition-all disabled:opacity-40 disabled:grayscale hover:bg-[#3271a3] active:scale-95"
                         >
-                            {isLoading ? (
-                                <Loader2 className="w-5 h-5 animate-spin" />
-                            ) : (
-                                <Send className="w-5 h-5" />
-                            )}
+                            <Send className="w-[18px] h-[18px] ml-0.5" strokeWidth={2.5} />
                         </button>
                     </div>
                 </form>
-
-                <p className="text-xs text-slate-600 text-center mt-2">
-                    Enter để gửi · Shift + Enter để xuống dòng
-                </p>
             </div>
         </div>
     );

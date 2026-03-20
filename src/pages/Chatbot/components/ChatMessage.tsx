@@ -21,9 +21,9 @@ const ChatMessage = ({ message, analysisData }: ChatMessageProps) => {
             {/* Avatar */}
             <div
                 className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${isUser
-                    ? "bg-gradient-to-br from-purple-500 to-pink-500"
-                    : "bg-gradient-to-br from-blue-500 to-cyan-400"
-                    } shadow-lg ${isUser ? "shadow-purple-500/20" : "shadow-blue-500/20"}`}
+                    ? "bg-gradient-to-br from-[#12284B]/20 to-[#12284B]/40"
+                    : "bg-gradient-to-br from-[#438BC4] to-[#2A6BA6] shadow-[0_4px_15px_rgba(67,139,196,0.3)] border border-white/20"
+                    } shadow-md`}
             >
                 {isUser ? (
                     <User className="w-4 h-4 text-white" />
@@ -36,101 +36,101 @@ const ChatMessage = ({ message, analysisData }: ChatMessageProps) => {
             <div className={`flex-1 min-w-0 ${isUser ? "flex flex-col items-end" : ""}`}>
                 {/* Sender label */}
                 <div className={`mb-1.5 ${isUser ? "text-right" : ""}`}>
-                    <span className="text-xs font-medium text-slate-500">
-                        {isUser ? "Bạn" : "ChemXLab AI"}
+                    <span className="text-xs font-semibold text-[#12284B]/50 tracking-wide uppercase">
+                        {isUser ? "Bạn" : "ChemX AI"}
                     </span>
                 </div>
 
                 {/* Message */}
                 {isUser ? (
-                    <div className="inline-block max-w-[85%] bg-blue-600/20 border border-blue-500/30 rounded-2xl rounded-tr-md px-4 py-3">
-                        <p className="text-sm text-white whitespace-pre-wrap">{message.content}</p>
+                    <div className="inline-block max-w-[85%] bg-gradient-to-br from-[#F0F7FF] to-[#E0EFFF] border border-[#B8DCFF] shadow-sm rounded-2xl rounded-tr-sm px-5 py-3.5">
+                        <p className="text-[15px] leading-[22px] font-inter font-medium text-[#12284B] whitespace-pre-wrap">{message.content}</p>
                     </div>
                 ) : (
-                    <div className="max-w-full prose prose-invert prose-sm">
+                    <div className="max-w-full prose prose-sm prose-[#12284B]">
                         <ReactMarkdown
                             remarkPlugins={[remarkGfm, remarkMath]}
                             rehypePlugins={[rehypeKatex]}
                             components={{
                                 h1: ({ children }) => (
-                                    <h1 className="text-xl font-bold text-blue-400 mt-4 mb-2 first:mt-0">
+                                    <h1 className="text-xl font-bold text-[#003D7A] mt-4 mb-2 first:mt-0 font-space tracking-tight">
                                         {children}
                                     </h1>
                                 ),
                                 h2: ({ children }) => (
-                                    <h2 className="text-lg font-bold text-blue-400 mt-4 mb-2 first:mt-0">
+                                    <h2 className="text-lg font-bold text-[#004A94] mt-4 mb-2 first:mt-0 font-space tracking-tight">
                                         {children}
                                     </h2>
                                 ),
                                 h3: ({ children }) => (
-                                    <h3 className="text-base font-semibold text-blue-300 mt-3 mb-1.5 first:mt-0">
+                                    <h3 className="text-base font-semibold text-[#005BB5] mt-3 mb-1.5 first:mt-0 font-inter">
                                         {children}
                                     </h3>
                                 ),
                                 p: ({ children }) => (
-                                    <p className="text-sm text-slate-200 mb-3 last:mb-0 leading-relaxed">
+                                    <p className="text-[15px] text-[#12284B] mb-3 last:mb-0 leading-[24px] font-inter font-medium">
                                         {children}
                                     </p>
                                 ),
                                 ul: ({ children }) => (
-                                    <ul className="text-sm text-slate-200 list-disc pl-5 mb-3 space-y-1.5">
+                                    <ul className="text-[15px] font-inter font-medium text-[#12284B] list-disc pl-5 mb-3 space-y-1.5 marker:text-[#438BC4]">
                                         {children}
                                     </ul>
                                 ),
                                 ol: ({ children }) => (
-                                    <ol className="text-sm text-slate-200 list-decimal pl-5 mb-3 space-y-1.5">
+                                    <ol className="text-[15px] font-inter font-medium text-[#12284B] list-decimal pl-5 mb-3 space-y-1.5 marker:text-[#438BC4]">
                                         {children}
                                     </ol>
                                 ),
-                                li: ({ children }) => <li className="text-slate-200">{children}</li>,
+                                li: ({ children }) => <li>{children}</li>,
                                 strong: ({ children }) => (
-                                    <strong className="text-cyan-300 font-semibold">{children}</strong>
+                                    <strong className="text-[#003D7A] font-bold">{children}</strong>
                                 ),
                                 em: ({ children }) => (
-                                    <em className="text-blue-300 italic">{children}</em>
+                                    <em className="text-[#475569] italic">{children}</em>
                                 ),
                                 code: ({ className, children }) => {
                                     const isInline = !className;
                                     if (isInline) {
                                         return (
-                                            <code className="bg-slate-800 text-cyan-300 px-1.5 py-0.5 rounded text-xs font-mono">
+                                            <code className="bg-[#E6F4FF] text-[#438BC4] border border-[#B8DCFF] px-1.5 py-0.5 rounded text-[13px] font-mono font-semibold">
                                                 {children}
                                             </code>
                                         );
                                     }
                                     return (
-                                        <code className="block bg-slate-900 border border-slate-700 text-cyan-300 p-4 rounded-xl text-xs font-mono overflow-x-auto my-3">
+                                        <code className="block bg-white/80 border border-[#E0EFFF] shadow-sm text-[#004A94] p-4 rounded-xl text-sm font-mono overflow-x-auto my-3 font-medium">
                                             {children}
                                         </code>
                                     );
                                 },
                                 pre: ({ children }) => (
-                                    <pre className="bg-slate-900 border border-slate-700 rounded-xl overflow-x-auto my-3">
+                                    <pre className="bg-transparent border-0 rounded-none overflow-x-auto my-0 p-0 shadow-none">
                                         {children}
                                     </pre>
                                 ),
                                 blockquote: ({ children }) => (
-                                    <blockquote className="border-l-4 border-blue-500 bg-slate-800/50 pl-4 py-2 my-3 text-slate-300 rounded-r-lg">
+                                    <blockquote className="border-l-4 border-[#438BC4] bg-[#F0F7FF] pl-4 py-2 my-3 text-[#12284B]/80 rounded-r-lg italic">
                                         {children}
                                     </blockquote>
                                 ),
                                 table: ({ children }) => (
-                                    <div className="overflow-x-auto my-4">
-                                        <table className="min-w-full text-sm border border-slate-700 rounded-xl overflow-hidden">
+                                    <div className="overflow-x-auto my-4 shadow-sm border border-[#B8DCFF] rounded-xl flex">
+                                        <table className="min-w-full text-sm font-inter text-left border-collapse">
                                             {children}
                                         </table>
                                     </div>
                                 ),
                                 thead: ({ children }) => (
-                                    <thead className="bg-slate-800">{children}</thead>
+                                    <thead className="bg-[#E6F4FF]/50 border-b border-[#B8DCFF]">{children}</thead>
                                 ),
                                 th: ({ children }) => (
-                                    <th className="px-4 py-2.5 text-left font-semibold text-blue-300 border-b border-slate-700">
+                                    <th className="px-4 py-3 font-bold text-[#003D7A] whitespace-nowrap">
                                         {children}
                                     </th>
                                 ),
                                 td: ({ children }) => (
-                                    <td className="px-4 py-2.5 text-slate-200 border-b border-slate-800">
+                                    <td className="px-4 py-3 text-[#12284B] font-medium border-b border-[#E0EFFF] last:border-0 relative bg-white/50">
                                         {children}
                                     </td>
                                 ),
@@ -139,7 +139,7 @@ const ChatMessage = ({ message, analysisData }: ChatMessageProps) => {
                                         href={href}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="text-blue-400 hover:text-blue-300 underline underline-offset-2"
+                                        className="text-[#0072E5] hover:text-[#005BB5] underline underline-offset-2 font-semibold"
                                     >
                                         {children}
                                     </a>

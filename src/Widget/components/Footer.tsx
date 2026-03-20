@@ -1,4 +1,4 @@
-import { ArrowRight, Facebook, Instagram } from "lucide-react";
+import { ArrowRight, Facebook } from "lucide-react";
 import { Link } from "react-router-dom";
 import logo from "../../shared/assets/Logo/logo.png";
 import Mascot9 from "../../shared/assets/mascot/9.png";
@@ -82,14 +82,6 @@ const Footer = () => {
                 >
                   <TikTok size={16} />
                 </a>
-                <a
-                  href="https://www.instagram.com/chemxlab"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-8 h-8 rounded-lg bg-slate-200 hover:bg-pink-600 hover:text-white text-slate-600 flex items-center justify-center transition-all duration-200"
-                >
-                  <Instagram size={16} />
-                </a>
               </div>
             </div>
 
@@ -99,9 +91,8 @@ const Footer = () => {
               <ul className="flex flex-col gap-2.5">
                 {[
                   { label: "Thí nghiệm ảo", path: "/lab" },
-                  { label: "Thư viện hóa chất", path: "/library" },
-                  { label: "Dành cho giáo viên", path: "/about" },
-                  { label: "Bảng giá", path: "/experience" },
+                  { label: "Thư viện hóa học", path: "/library" },
+                  { label: "Bảng giá", path: "/pricing" },
                 ].map((item) => (
                   <li key={item.label}>
                     <Link
@@ -121,9 +112,6 @@ const Footer = () => {
               <ul className="flex flex-col gap-2.5">
                 {[
                   { label: "Trung tâm trợ giúp", path: "/support" },
-                  { label: "Cộng đồng", path: "/support" },
-                  { label: "Báo lỗi", path: "/support" },
-                  { label: "Liên hệ", path: "/support" },
                 ].map((item) => (
                   <li key={item.label}>
                     <Link
@@ -165,7 +153,7 @@ const Footer = () => {
         <div className="border-t border-slate-100">
           <div className="container mx-auto px-6 py-6 flex flex-col md:flex-row items-center gap-2 justify-center">
             <p className="text-slate-400 text-xs text-center">
-              ©2026 Chem X Lab. Tất cả quyền được bảo lưu.
+              ©2026 ChemXLab. Tất cả quyền được bảo lưu.
             </p>
           </div>
         </div>
