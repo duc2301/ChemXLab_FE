@@ -36,7 +36,6 @@ const ToolsUsedBadge = ({ tools }: ToolsUsedBadgeProps) => {
 
     return (
         <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-slate-800">
-            <span className="text-xs text-slate-500">Công cụ sử dụng:</span>
             {tools.map((tool) => {
                 const config = toolConfig[tool as ChatToolType] || {
                     label: tool,
@@ -47,7 +46,7 @@ const ToolsUsedBadge = ({ tools }: ToolsUsedBadgeProps) => {
                 return (
                     <span
                         key={tool}
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border ${config.color}`}
+                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold border ${config.color}`}
                     >
                         {config.icon}
                         {config.label}

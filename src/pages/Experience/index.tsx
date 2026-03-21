@@ -66,8 +66,8 @@ const ExperiencePage = () => {
   const getPlanFeatureHeader = (name: string) => {
     switch (name.toUpperCase()) {
       case "FREE": return "GÓI MIỄN PHÍ BAO GỒM:";
-      case "SMART LAB": return "TẤT CẢ TRONG GÓI MIỄN PHÍ CỘNG:";
-      case "GENIUS LAB": return "TẤT CẢ TRONG GÓI HỌC SINH CỘNG:";
+      case "SMART LAB": return "TẤT CẢ TÍNH NĂNG GÓI FREE CỘNG:";
+      case "GENIUS LAB": return "TẤT CẢ TÍNH NĂNG GÓI SMART LAB CỘNG:";
       default: return "CÁC TÍNH NĂNG:";
     }
   };
@@ -109,12 +109,19 @@ const ExperiencePage = () => {
               const recommended = isRecommended(plan.name);
               return (
                 <div key={plan.id} className="w-full lg:flex-1 flex flex-col pt-[32px]">
-                  <div className={`p-8 flex flex-col w-full h-full min-h-[581px] transition-all duration-300 ease-out hover:-translate-y-2
+                  <div className={`relative p-8 flex flex-col w-full h-full min-h-[581px] transition-all duration-300 ease-out hover:-translate-y-2
                     ${recommended
-                      ? "bg-white/80 border border-white shadow-xl shadow-[#04306e]/5 backdrop-blur-[10px] rounded-[32px] transform scale-100 lg:scale-[1.03] z-10"
+                      ? "bg-white border-2 border-[#3398DB] shadow-[0_20px_40px_-15px_rgba(51,152,219,0.3)] backdrop-blur-[10px] rounded-[32px] transform scale-100 lg:scale-[1.05] z-10"
                       : "bg-white/40 border border-white/50 shadow-[0_8px_32px_rgba(4,48,110,0.05)] backdrop-blur-[10px] rounded-[32px]"
                     }
                   `}>
+                    {recommended && (
+                      <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                        <div className="bg-gradient-to-r from-[#04306E] to-[#3398DB] text-white text-[12px] font-bold px-4 py-1.5 rounded-full shadow-lg uppercase tracking-wider whitespace-nowrap">
+                          Phổ biến nhất
+                        </div>
+                      </div>
+                    )}
                     <h3 className="font-inter font-medium text-[18px] leading-[28px] text-[#334155] mb-2">
                       {getPlanName(plan.name)}
                     </h3>
@@ -140,11 +147,11 @@ const ExperiencePage = () => {
                         ${plan.name === "FREE"
                           ? "bg-white border border-[#E2E8F0] shadow-[0_1px_2px_rgba(0,0,0,0.05)] text-[#04306E] hover:bg-slate-50"
                           : recommended
-                            ? "bg-[#04306E] shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1)] text-white hover:bg-[#032454]"
+                            ? "bg-gradient-to-r from-[#04306E] to-[#3398DB] hover:from-[#032454] hover:to-[#2980B9] shadow-md text-white border border-transparent"
                             : "bg-white border border-[#E2E8F0] shadow-[0_1px_2px_rgba(0,0,0,0.05)] text-[#04306E] hover:bg-slate-50"
                         }`}
                     >
-                      {plan.price === 0 ? "Đăng kí miễn phí" : (recommended ? "Dùng thử" : "Bắt đầu ngay")}
+                      {plan.price === 0 ? "Đăng kí miễn phí" : "Bắt đầu ngay"}
                     </button>
 
                     <div className="w-full mt-[40px] pt-[24px] border-t border-[#E2E8F0]/50 flex-grow">

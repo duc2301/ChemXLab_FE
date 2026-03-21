@@ -89,8 +89,8 @@ function getElementsForLesson(lesson: Lesson): { number: number; name: string; s
 // Loading fallback
 function Model3DFallback() {
     return (
-        <div className="h-40 rounded-xl bg-slate-800/50 flex items-center justify-center">
-            <div className="w-8 h-8 border-2 border-blue-400/30 border-t-blue-400 rounded-full animate-spin" />
+        <div className="h-40 rounded-xl bg-white/60 flex items-center justify-center border border-[#E2E8F0] shadow-sm">
+            <div className="w-8 h-8 border-2 border-[#3398DB]/30 border-t-[#3398DB] rounded-full animate-spin" />
         </div>
     );
 }
@@ -105,12 +105,12 @@ const GradeDetail = () => {
 
     if (!gradeData) {
         return (
-            <div className="min-h-screen bg-[#0F172A] pt-20 flex items-center justify-center">
+            <div className="min-h-screen bg-[#F0F7FF] pt-20 flex items-center justify-center font-sans">
                 <div className="text-center">
-                    <h1 className="text-2xl font-bold text-white mb-4">
+                    <h1 className="text-2xl font-space font-bold text-[#04306E] mb-4">
                         Không tìm thấy dữ liệu
                     </h1>
-                    <Link to="/library" className="text-blue-400 hover:underline">
+                    <Link to="/library" className="font-inter text-[#3398DB] hover:underline">
                         ← Quay lại thư viện
                     </Link>
                 </div>
@@ -144,20 +144,20 @@ const GradeDetail = () => {
     const has3DContent = elements.length > 0;
 
     return (
-        <div className="min-h-screen bg-[#0F172A] pt-20 pb-16">
+        <div className="min-h-screen bg-gradient-to-b from-[#F0F7FF] via-[#E0F0FF] to-white pt-20 pb-16 font-sans">
             {/* Breadcrumb */}
-            <div className="bg-slate-800/50 border-b border-slate-700/50">
+            <div className="bg-white/80 border-b border-[#E2E8F0] sticky top-16 z-20 backdrop-blur-md shadow-sm">
                 <div className="container mx-auto px-6 py-4">
-                    <nav className="flex items-center gap-2 text-sm">
+                    <nav className="flex items-center gap-2 text-sm font-inter">
                         <Link
                             to="/library"
-                            className="text-slate-400 hover:text-white flex items-center gap-1"
+                            className="text-[#64748B] hover:text-[#04306E] flex items-center gap-1 transition-colors"
                         >
                             <ChevronLeft className="w-4 h-4" />
                             Thư viện
                         </Link>
-                        <span className="text-slate-600">/</span>
-                        <span className="text-white font-medium">Lớp {gradeData.grade}</span>
+                        <span className="text-[#CBD5E1]">/</span>
+                        <span className="text-[#04306E] font-medium">Lớp {gradeData.grade}</span>
                     </nav>
                 </div>
             </div>
@@ -166,18 +166,19 @@ const GradeDetail = () => {
                 <div className="flex gap-6">
                     {/* Sidebar - Topic List */}
                     <aside className="w-72 flex-shrink-0 hidden lg:block">
-                        <div className="sticky top-24 bg-slate-800/50 rounded-2xl border border-slate-700/50 overflow-hidden">
+                        <div className="sticky top-32 bg-white/90 rounded-2xl border border-[#E2E8F0] shadow-[0_8px_32px_rgba(4,48,110,0.05)] overflow-hidden backdrop-blur-md">
                             {/* Header */}
-                            <div className="p-4 border-b border-slate-700/50 bg-gradient-to-r from-blue-600/10 to-purple-600/10">
-                                <div className="flex items-center gap-3 mb-2">
-                                    <div className="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                                        <GraduationCap className="w-4 h-4 text-blue-400" />
+                            <div className="p-4 border-b border-[#E2E8F0] bg-gradient-to-r from-[#F0F7FF] to-white relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-[#3398DB]/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"></div>
+                                <div className="flex items-center gap-3 mb-2 relative z-10">
+                                    <div className="w-8 h-8 bg-[#3398DB]/10 rounded-lg flex items-center justify-center">
+                                        <GraduationCap className="w-4 h-4 text-[#3398DB]" />
                                     </div>
                                     <div>
-                                        <h2 className="text-base font-bold text-white">
+                                        <h2 className="text-base font-space font-bold text-[#04306E]">
                                             Lớp {gradeData.grade}
                                         </h2>
-                                        <p className="text-xs text-slate-400">
+                                        <p className="font-inter text-xs text-[#64748B]">
                                             {gradeData.topics.length} chủ đề
                                         </p>
                                     </div>
@@ -185,39 +186,39 @@ const GradeDetail = () => {
                             </div>
 
                             {/* Topics */}
-                            <div className="max-h-[calc(100vh-250px)] overflow-y-auto">
+                            <div className="max-h-[calc(100vh-250px)] overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: '#CBD5E1 transparent' }}>
                                 {gradeData.topics.map((topic) => (
-                                    <div key={topic.id} className="border-b border-slate-700/30 last:border-0">
+                                    <div key={topic.id} className="border-b border-[#F1F5F9] last:border-0">
                                         <button
                                             onClick={() => toggleTopic(topic.id)}
-                                            className="w-full px-4 py-3 flex items-start gap-2 hover:bg-slate-700/30 transition-colors text-left"
+                                            className="w-full px-4 py-3 flex items-start gap-2 hover:bg-[#F8FAFC] transition-colors text-left"
                                         >
                                             <div className="mt-0.5">
                                                 {expandedTopics.has(topic.id) ? (
-                                                    <ChevronDown className="w-4 h-4 text-blue-400" />
+                                                    <ChevronDown className="w-4 h-4 text-[#3398DB]" />
                                                 ) : (
-                                                    <ChevronRight className="w-4 h-4 text-slate-500" />
+                                                    <ChevronRight className="w-4 h-4 text-[#94A3B8]" />
                                                 )}
                                             </div>
                                             <div>
-                                                <h3 className="text-xs font-semibold text-white mb-0.5 line-clamp-2">
+                                                <h3 className="font-inter text-xs font-semibold text-[#334155] mb-0.5 line-clamp-2">
                                                     {topic.title}
                                                 </h3>
-                                                <p className="text-[10px] text-slate-500">
+                                                <p className="font-inter text-[10px] text-[#94A3B8]">
                                                     {topic.lessons.length} bài
                                                 </p>
                                             </div>
                                         </button>
 
                                         {expandedTopics.has(topic.id) && (
-                                            <div className="bg-slate-900/50 px-4 pb-3">
+                                            <div className="bg-[#F8FAFC]/50 px-4 pb-3">
                                                 {topic.lessons.map((lesson) => (
                                                     <button
                                                         key={lesson.id}
                                                         onClick={() => handleLessonClick(lesson, topic)}
-                                                        className={`w-full text-left py-1.5 px-3 rounded-lg text-xs transition-colors flex items-center gap-2 ${selectedLesson?.id === lesson.id
-                                                            ? "bg-blue-600/20 text-blue-300"
-                                                            : "text-slate-400 hover:text-white hover:bg-slate-700/50"
+                                                        className={`w-full text-left py-1.5 px-3 rounded-lg font-inter text-xs transition-colors flex items-center gap-2 ${selectedLesson?.id === lesson.id
+                                                            ? "bg-[#3398DB]/10 text-[#04306E] font-medium shadow-sm"
+                                                            : "text-[#64748B] hover:text-[#04306E] hover:bg-white"
                                                             }`}
                                                     >
                                                         <BookOpen className="w-3 h-3 flex-shrink-0" />
@@ -239,61 +240,67 @@ const GradeDetail = () => {
                                 {/* Lesson Content - Left side */}
                                 <div className="flex-1 min-w-0 space-y-4">
                                     {/* Header */}
-                                    <div className="bg-slate-800/30 rounded-xl border border-slate-700/50 p-4">
+                                    <div className="bg-white/80 backdrop-blur-md rounded-2xl border border-[#E2E8F0] p-6 shadow-sm">
                                         <button
                                             onClick={closeLessonView}
-                                            className="text-xs text-slate-400 hover:text-white mb-3 flex items-center gap-1"
+                                            className="font-inter text-xs text-[#64748B] hover:text-[#04306E] mb-4 flex items-center gap-1 transition-colors"
                                         >
                                             <ChevronLeft className="w-3 h-3" />
                                             Quay lại
                                         </button>
-                                        <div className="flex items-center gap-2 mb-2 flex-wrap">
-                                            <span className="text-[10px] text-blue-400 uppercase tracking-wider font-semibold">
+                                        <div className="flex items-center gap-2 mb-3 flex-wrap">
+                                            <span className="font-inter text-[10px] text-[#3398DB] bg-[#3398DB]/10 px-2 py-1 rounded-md uppercase tracking-wider font-semibold">
                                                 {selectedTopic.title}
                                             </span>
                                             {elements.length > 0 && (
-                                                <span className="px-2 py-0.5 bg-purple-500/20 border border-purple-400/30 rounded-full text-purple-300 text-[10px] flex items-center gap-1">
-                                                    <Atom className="w-2.5 h-2.5" />
-                                                    {elements.length} nguyên tố
-                                                </span>
+                                                <div className="inline-flex px-3 py-1 bg-purple-50 border border-purple-100 rounded-full text-purple-600 font-inter text-xs items-center gap-1.5">
+                                                    <Atom className="w-3.5 h-3.5" />
+                                                    <span className="font-medium">{elements.length} nguyên tố liên quan</span>
+                                                </div>
                                             )}
                                         </div>
-                                        <h1 className="text-xl font-bold text-white">
+                                        <h1 className="text-2xl md:text-3xl font-space font-bold text-[#04306E] mb-3">
                                             {selectedLesson.title}
                                         </h1>
                                     </div>
 
                                     {/* Lesson Content */}
-                                    <div className="bg-slate-800/30 rounded-xl border border-slate-700/50 p-4">
-                                        <div className="flex items-center gap-2 mb-4">
-                                            <Sparkles className="w-4 h-4 text-blue-400" />
-                                            <h3 className="text-white font-semibold text-sm">Nội dung bài học</h3>
+                                    <div className="bg-white/80 backdrop-blur-md rounded-2xl border border-[#E2E8F0] p-6 md:p-8 shadow-sm">
+                                        <div className="flex items-center gap-2 mb-6 pb-4 border-b border-[#F1F5F9]">
+                                            <Sparkles className="w-5 h-5 text-[#3398DB]" />
+                                            <h3 className="text-[#04306E] font-space font-bold text-lg">Nội dung bài học</h3>
                                         </div>
-                                        <EnhancedContentRenderer
-                                            content={selectedLesson.content}
-                                            keyPoints={selectedLesson.keyPoints}
-                                        />
+                                        <div className="font-inter text-[#334155] leading-relaxed">
+                                            <EnhancedContentRenderer
+                                                content={selectedLesson.content}
+                                                keyPoints={selectedLesson.keyPoints}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
 
                                 {/* 3D Content - Right side */}
                                 {has3DContent && (
-                                    <div className="w-72 flex-shrink-0 space-y-4">
+                                    <div className="w-72 flex-shrink-0 space-y-4 hidden xl:block">
                                         {/* 3D Element Models */}
                                         {elements.length > 0 && (
-                                            <div className="sticky top-24">
-                                                <div className="flex items-center gap-2 mb-2">
-                                                    <Box className="w-4 h-4 text-purple-400" />
-                                                    <h4 className="text-white text-sm font-semibold">Mô hình 3D</h4>
+                                            <div className="sticky top-32">
+                                                <div className="flex items-center gap-2 mb-3 bg-white/60 p-3 rounded-xl border border-[#E2E8F0] shadow-sm backdrop-blur-sm">
+                                                    <div className="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center">
+                                                        <Box className="w-4 h-4 text-purple-600" />
+                                                    </div>
+                                                    <h4 className="text-[#04306E] font-space text-sm font-bold">Mô hình 3D</h4>
                                                 </div>
-                                                <div className="space-y-3">
+                                                <div className="space-y-4">
                                                     {elements.map((element) => (
                                                         <Suspense key={element.number} fallback={<Model3DFallback />}>
-                                                            <ElementViewer3D
-                                                                elementNumber={element.number}
-                                                                elementName={element.name}
-                                                                elementSymbol={element.symbol}
-                                                            />
+                                                            <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-sm overflow-hidden p-2 relative group hover:shadow-md transition-shadow">
+                                                                <ElementViewer3D
+                                                                    elementNumber={element.number}
+                                                                    elementName={element.name}
+                                                                    elementSymbol={element.symbol}
+                                                                />
+                                                            </div>
                                                         </Suspense>
                                                     ))}
                                                 </div>
@@ -303,20 +310,24 @@ const GradeDetail = () => {
                                 )}
                             </div>
                         ) : (
-                            <div className="bg-slate-800/30 rounded-2xl border border-slate-700/50 p-12 text-center">
-                                <div className="w-16 h-16 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <BookOpen className="w-8 h-8 text-blue-400" />
+                            <div className="bg-white/80 backdrop-blur-md rounded-2xl border border-[#E2E8F0] p-12 text-center shadow-sm flex flex-col items-center justify-center min-h-[400px]">
+                                <div className="w-20 h-20 bg-gradient-to-br from-[#F0F7FF] to-white border border-[#E2E8F0] rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm shadow-[#3398DB]/5">
+                                    <BookOpen className="w-10 h-10 text-[#3398DB]" />
                                 </div>
-                                <h2 className="text-lg font-semibold text-white mb-2">
+                                <h2 className="text-2xl font-space font-bold text-[#04306E] mb-3">
                                     Chọn bài học để bắt đầu
                                 </h2>
-                                <p className="text-slate-400 text-sm max-w-md mx-auto mb-4">
-                                    Click vào chủ đề ở bên trái để xem danh sách bài học
+                                <p className="font-inter text-[#64748B] text-sm max-w-md mx-auto mb-6 leading-relaxed">
+                                    Hãy chọn một chủ đề ở danh mục bên trái, sau đó click vào bài học để xem chi tiết lý thuyết và các mô hình biểu diễn 3D (nếu có).
                                 </p>
-                                <div className="flex flex-wrap justify-center gap-2">
-                                    <div className="px-3 py-1.5 bg-purple-500/10 border border-purple-400/20 rounded-full flex items-center gap-1.5">
-                                        <Box className="w-3 h-3 text-purple-400" />
-                                        <span className="text-purple-200 text-xs">Mô hình 3D</span>
+                                <div className="flex flex-wrap justify-center gap-3">
+                                    <div className="px-4 py-2 bg-purple-50 border border-purple-100 rounded-lg flex items-center gap-2">
+                                        <Box className="w-4 h-4 text-purple-500" />
+                                        <span className="text-purple-700 font-inter text-sm font-medium">Hỗ trợ Mô hình 3D</span>
+                                    </div>
+                                    <div className="px-4 py-2 bg-[#F0F7FF] border border-[#E2E8F0] rounded-lg flex items-center gap-2">
+                                        <Sparkles className="w-4 h-4 text-[#3398DB]" />
+                                        <span className="text-[#04306E] font-inter text-sm font-medium">Lý thuyết trực quan</span>
                                     </div>
                                 </div>
                             </div>

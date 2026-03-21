@@ -87,43 +87,36 @@ const GRADES: GradeInfo[] = [
 
 const LibraryPage = () => {
     return (
-        <div className="min-h-screen bg-[#0F172A] pt-20 pb-16">
+        <div className="min-h-screen bg-gradient-to-b from-[#F0F7FF] via-[#E0F0FF] to-white pt-20 pb-16 font-sans">
             {/* Hero Section */}
             <section className="relative py-16 overflow-hidden">
-                <div className="absolute inset-0">
-                    <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[120px]"></div>
-                    <div className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[100px]"></div>
+                <div className="absolute inset-0 pointer-events-none">
+                    <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] bg-[#3398DB]/10 rounded-full blur-[120px]"></div>
+                    <div className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] bg-[#04306E]/10 rounded-full blur-[100px]"></div>
                 </div>
 
                 <div className="container mx-auto px-6 relative z-10">
                     <div className="text-center max-w-4xl mx-auto">
-                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500/10 border border-blue-500/20 rounded-full mb-6">
-                            <BookOpen className="w-4 h-4 text-blue-400" />
-                            <span className="text-blue-300 text-sm font-medium">
-                                Chương trình Chân Trời Sáng Tạo 2024-2025
-                            </span>
-                        </div>
 
-                        <h1 className="text-4xl md:text-6xl font-extrabold text-white mb-6 leading-tight">
+                        <h1 className="text-4xl md:text-6xl font-space font-bold text-[#04306E] mb-6 leading-[1.1] tracking-[-1.5px]">
                             Hệ thống Kiến thức{" "}
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#04306E] to-[#3398DB]">
                                 Hóa học
                             </span>
                         </h1>
 
-                        <p className="text-lg text-slate-300 max-w-2xl mx-auto mb-8">
+                        <p className="text-lg md:text-xl font-inter text-[#475569] max-w-2xl mx-auto mb-8 font-medium">
                             Trọn bộ kiến thức Hóa học từ lớp 6 đến lớp 12, được biên soạn theo
-                            chương trình sách giáo khoa mới nhất. Đầy đủ lý thuyết, công thức
-                            và ví dụ minh họa.
+                            chương trình sách giáo khoa mới nhất. Đầy đủ lý thuyết, công thức và cập nhật liên tục.
                         </p>
 
-                        <div className="flex justify-center gap-6 text-slate-400 text-sm">
+                        <div className="flex justify-center gap-6 text-[#64748B] text-sm font-inter font-medium mb-4">
                             <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 bg-emerald-400 rounded-full"></div>
+                                <div className="w-2.5 h-2.5 bg-[#3398DB] rounded-full shadow-[0_0_8px_rgba(51,152,219,0.5)]"></div>
                                 THCS: Lớp 6-9
                             </div>
                             <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 bg-amber-400 rounded-full"></div>
+                                <div className="w-2.5 h-2.5 bg-[#04306E] rounded-full shadow-[0_0_8px_rgba(4,48,110,0.5)]"></div>
                                 THPT: Lớp 10-12
                             </div>
                         </div>
@@ -136,43 +129,47 @@ const LibraryPage = () => {
                 <div className="container mx-auto px-6">
                     {/* THCS Section */}
                     <div className="mb-16">
-                        <h2 className="text-2xl font-bold text-white mb-2">
-                            Trung học cơ sở (THCS)
-                        </h2>
-                        <p className="text-slate-400 mb-8">
-                            Phần Hóa học trong môn Khoa học tự nhiên
-                        </p>
+                        <div className="mb-8 text-center md:text-left">
+                            <h2 className="text-3xl font-space font-bold text-[#04306E] mb-2 tracking-[-0.5px]">
+                                Trung học cơ sở (THCS)
+                            </h2>
+                            <p className="font-inter text-[#64748B] text-lg">
+                                Phần Hóa học trong môn Khoa học tự nhiên
+                            </p>
+                        </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                             {GRADES.filter((g) => g.level === "THCS").map((grade) => (
                                 <Link
                                     key={grade.id}
                                     to={`/library/${grade.id}`}
-                                    className="group relative bg-slate-800/50 backdrop-blur border border-slate-700/50 rounded-2xl p-6 hover:border-slate-600 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+                                    className="group relative bg-white/80 backdrop-blur-[10px] border border-white rounded-[24px] p-6 hover:border-[#3398DB]/30 transition-all duration-300 hover:-translate-y-1 shadow-[0_8px_32px_rgba(4,48,110,0.05)] hover:shadow-[0_20px_40px_-15px_rgba(51,152,219,0.2)] flex flex-col items-start"
                                 >
                                     <div
-                                        className={`w-14 h-14 bg-gradient-to-br ${grade.color} rounded-xl flex items-center justify-center text-white mb-4 group-hover:scale-110 transition-transform`}
+                                        className={`w-14 h-14 bg-gradient-to-br ${grade.color} rounded-2xl flex items-center justify-center text-white mb-5 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 shadow-md`}
                                     >
                                         {grade.icon}
                                     </div>
 
-                                    <div className="text-slate-400 text-xs font-medium uppercase tracking-wider mb-1">
+                                    <div className="font-inter text-[#94A3B8] text-xs font-bold uppercase tracking-wider mb-2">
                                         {grade.subject}
                                     </div>
 
-                                    <h3 className="text-2xl font-bold text-white mb-2">
+                                    <h3 className="text-2xl font-space font-bold text-[#04306E] mb-3">
                                         Lớp {grade.grade}
                                     </h3>
 
-                                    <p className="text-slate-400 text-sm mb-4 line-clamp-2">
+                                    <p className="font-inter text-[#475569] text-sm mb-6 line-clamp-2 leading-relaxed min-h-[44px]">
                                         {grade.description}
                                     </p>
 
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-xs text-slate-500">
-                                            {grade.topicsCount} chủ đề
+                                    <div className="flex items-center justify-between pt-4 border-t border-[#F1F5F9] w-full mt-auto">
+                                        <span className="font-inter text-xs font-semibold text-[#64748B]">
+                                            {grade.topicsCount} CHỦ ĐỀ
                                         </span>
-                                        <ArrowRight className="w-5 h-5 text-slate-500 group-hover:text-white group-hover:translate-x-1 transition-all" />
+                                        <div className="w-8 h-8 rounded-full bg-[#F0F7FF] flex items-center justify-center group-hover:bg-[#3398DB] transition-colors duration-300">
+                                            <ArrowRight className="w-4 h-4 text-[#3398DB] group-hover:text-white transition-colors duration-300" />
+                                        </div>
                                     </div>
                                 </Link>
                             ))}
@@ -181,41 +178,45 @@ const LibraryPage = () => {
 
                     {/* THPT Section */}
                     <div>
-                        <h2 className="text-2xl font-bold text-white mb-2">
-                            Trung học phổ thông (THPT)
-                        </h2>
-                        <p className="text-slate-400 mb-8">Môn Hóa học chuyên biệt</p>
+                        <div className="mb-8 text-center md:text-left">
+                            <h2 className="text-3xl font-space font-bold text-[#04306E] mb-2 tracking-[-0.5px]">
+                                Trung học phổ thông (THPT)
+                            </h2>
+                            <p className="font-inter text-[#64748B] text-lg">Môn Hóa học chuyên biệt</p>
+                        </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {GRADES.filter((g) => g.level === "THPT").map((grade) => (
                                 <Link
                                     key={grade.id}
                                     to={`/library/${grade.id}`}
-                                    className="group relative bg-slate-800/50 backdrop-blur border border-slate-700/50 rounded-2xl p-6 hover:border-slate-600 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+                                    className="group relative bg-white/80 backdrop-blur-[10px] border border-white rounded-[24px] p-6 hover:border-[#3398DB]/30 transition-all duration-300 hover:-translate-y-1 shadow-[0_8px_32px_rgba(4,48,110,0.05)] hover:shadow-[0_20px_40px_-15px_rgba(51,152,219,0.2)] flex flex-col items-start"
                                 >
                                     <div
-                                        className={`w-14 h-14 bg-gradient-to-br ${grade.color} rounded-xl flex items-center justify-center text-white mb-4 group-hover:scale-110 transition-transform`}
+                                        className={`w-14 h-14 bg-gradient-to-br ${grade.color} rounded-2xl flex items-center justify-center text-white mb-5 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 shadow-md`}
                                     >
                                         {grade.icon}
                                     </div>
 
-                                    <div className="text-slate-400 text-xs font-medium uppercase tracking-wider mb-1">
+                                    <div className="font-inter text-[#94A3B8] text-xs font-bold uppercase tracking-wider mb-2">
                                         {grade.subject}
                                     </div>
 
-                                    <h3 className="text-2xl font-bold text-white mb-2">
+                                    <h3 className="text-2xl font-space font-bold text-[#04306E] mb-3">
                                         Lớp {grade.grade}
                                     </h3>
 
-                                    <p className="text-slate-400 text-sm mb-4 line-clamp-2">
+                                    <p className="font-inter text-[#475569] text-sm mb-6 line-clamp-2 leading-relaxed min-h-[44px]">
                                         {grade.description}
                                     </p>
 
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-xs text-slate-500">
-                                            {grade.topicsCount} chương
+                                    <div className="flex items-center justify-between pt-4 border-t border-[#F1F5F9] w-full mt-auto">
+                                        <span className="font-inter text-xs font-semibold text-[#64748B]">
+                                            {grade.topicsCount} CHƯƠNG
                                         </span>
-                                        <ArrowRight className="w-5 h-5 text-slate-500 group-hover:text-white group-hover:translate-x-1 transition-all" />
+                                        <div className="w-8 h-8 rounded-full bg-[#F0F7FF] flex items-center justify-center group-hover:bg-[#3398DB] transition-colors duration-300">
+                                            <ArrowRight className="w-4 h-4 text-[#3398DB] group-hover:text-white transition-colors duration-300" />
+                                        </div>
                                     </div>
                                 </Link>
                             ))}
