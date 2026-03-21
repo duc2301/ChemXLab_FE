@@ -37,7 +37,7 @@ const ChatMessage = ({ message, analysisData }: ChatMessageProps) => {
                 {/* Sender label */}
                 <div className={`mb-1.5 ${isUser ? "text-right" : ""}`}>
                     <span className="text-xs font-semibold text-[#12284B]/50 tracking-wide uppercase">
-                        {isUser ? "Bạn" : "ChemX AI"}
+                        {isUser ? "Bạn" : "ChemXLab AI"}
                     </span>
                 </div>
 

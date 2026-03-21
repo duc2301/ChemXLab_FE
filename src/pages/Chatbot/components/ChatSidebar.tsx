@@ -1,5 +1,5 @@
 import { Modal } from "antd";
-import { Clock, FlaskConical, HelpCircle, Plus, Trash2 } from "lucide-react";
+import { Clock, HelpCircle, Plus, Trash2 } from "lucide-react";
 import type { SessionDTO } from "../../../entities/Chatbot";
 
 interface ChatSidebarProps {
@@ -64,12 +64,8 @@ const ChatSidebar = ({
                             <div className="absolute left-[-2px] top-[20%] bottom-[20%] w-1 bg-[#0060A8] rounded-r-full" />
 
                             <div className="flex items-center gap-3 overflow-hidden pl-1 flex-1">
-                                <div className="w-[28px] h-[28px] bg-[#EAF4FE] rounded-lg flex items-center justify-center shrink-0">
-                                    {/* Icon User / Flask */}
-                                    <FlaskConical className="w-4 h-4 text-[#0060A8]" />
-                                </div>
                                 <span className="font-inter font-bold text-[14px] text-[#12284B] truncate">
-                                    {activeSession.topic || "ChemX AI"}
+                                    {activeSession.topic || "ChemXLab AI"}
                                 </span>
                             </div>
 

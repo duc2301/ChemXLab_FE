@@ -111,6 +111,7 @@ const Footer = () => {
               <h4 className="text-slate-800 font-semibold text-sm mb-4">Hỗ trợ</h4>
               <ul className="flex flex-col gap-2.5">
                 {[
+                  { label: "Giới thiệu", path: "/about" },
                   { label: "Trung tâm trợ giúp", path: "/support" },
                 ].map((item) => (
                   <li key={item.label}>

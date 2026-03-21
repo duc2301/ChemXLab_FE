@@ -11,7 +11,6 @@ interface NavItem {
 
 const NAV_DATA: NavItem[] = [
   { name: "Sản phẩm", path: "/products" },
-  { name: "Giới thiệu", path: "/about" },
   { name: "Thư viện", path: "/library" },
   { name: "Bảng giá", path: "/pricing" },
   { name: "Thí nghiệm", path: "/lab" },
