@@ -1,7 +1,10 @@
+import { Modal } from 'antd';
+import { LogIn } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useLabSettings } from '../../../features/lab-environment/services/labSettingsStore';
 import Mascot7 from '../../../shared/assets/mascot/7.png';
+import Navbar from '../../../Widget/components/Navbar';
 import { LabScene } from '../../../Widget/lab-scene/ui/LabScene';
 import ChatWidget from './components/ChatWidget';
 
@@ -268,6 +271,18 @@ const LabTest = () => {
   const [gameState, setGameState] = useState<GameState>('welcome');
   const [settingsTab, setSettingsTab] = useState<SettingsTab>('controls');
   const [activePreset, setActivePreset] = useState<string>('standard');
+  const [showLoginModal, setShowLoginModal] = useState(false);
+
+  // Check if user is logged in
+  const token = localStorage.getItem("token") || localStorage.getItem("jwtToken");
+  const isLoggedIn = !!token;
+
+  // Show login modal if not logged in
+  useEffect(() => {
+    if (!isLoggedIn) {
+      setShowLoginModal(true);
+    }
+  }, [isLoggedIn]);
 
   // Read settings from zustand store
   const settings = useLabSettings();
@@ -328,6 +343,41 @@ const LabTest = () => {
   const handleBackToPause = () => setGameState('paused');
 
   const isPaused = gameState === 'paused' || gameState === 'settings';
+
+  if (!isLoggedIn) {
+    return (
+      <div className="h-screen bg-[#FBFBFB] flex items-center justify-center relative overflow-hidden">
+        <Navbar />
+        <Modal open={showLoginModal} footer={null} closable={false} centered className="login-modal rounded-[24px]">
+          <div className="text-center py-6 px-4">
+            <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-[#0060A8] flex items-center justify-center shadow-lg">
+              <LogIn className="w-8 h-8 text-white" />
+            </div>
+            <h2 className="text-[24px] font-space font-bold text-[#12284B] mb-3">
+              Yêu cầu đăng nhập
+            </h2>
+            <p className="font-inter text-slate-500 mb-8 px-4 leading-relaxed">
+              Vui lòng đăng nhập vào tài khoản <strong className="text-[#438BC4]">ChemXLab</strong> để tiếp tục sử dụng phòng thí nghiệm.
+            </p>
+            <div className="flex gap-4 justify-center">
+              <button
+                onClick={() => navigate("/")}
+                className="px-6 py-3 border border-slate-200 rounded-[12px] text-slate-600 font-semibold hover:bg-slate-50 hover:border-slate-300 transition-all active:scale-95"
+              >
+                Quay lại
+              </button>
+              <Link
+                to="/login"
+                className="px-6 py-3 bg-[#0060A8] shadow-md hover:shadow-lg text-white rounded-[12px] font-semibold transition-all active:scale-95"
+              >
+                Đăng nhập
+              </Link>
+            </div>
+          </div>
+        </Modal>
+      </div>
+    );
+  }
 
   return (
     <main className="w-full h-screen relative bg-white overflow-hidden font-sans">
