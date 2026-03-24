@@ -1,7 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { Box, ExternalLink } from "lucide-react";
-import type { ErrorInfo, ReactNode } from "react";
-import { Component } from "react";
+import { Box, ExternalLink, Maximize2 } from "lucide-react";
+import { Component, type ErrorInfo, type ReactNode } from "react";
 import MoleculeViewer from "../../../components/ThreeD/MoleculeViewer";
 
 class ModelErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
@@ -35,9 +34,11 @@ class ModelErrorBoundary extends Component<{ children: ReactNode }, { hasError: 
 interface ElementDetailProps {
     element: any | null;
     modelPath: string | null;
+    onFullScreen?: () => void;
 }
 
-const ElementDetail = ({ element, modelPath }: ElementDetailProps) => {
+const ElementDetail = ({ element, modelPath, onFullScreen }: ElementDetailProps) => {
+
     if (!element) {
         return (
             <div className="hidden lg:flex flex-col items-center justify-center p-8 h-full bg-white text-center">
@@ -85,16 +86,28 @@ const ElementDetail = ({ element, modelPath }: ElementDetailProps) => {
                 </div>
 
                 {/* 3D Viewer Area */}
-                <div className="flex-1 min-h-[300px] relative mt-4 bg-white">
+                <div className="flex-1 min-h-[300px] relative mt-4 bg-white group">
                     {modelPath ? (
-                        <div className="w-full h-full absolute inset-0 bg-slate-50">
+                        <div className="w-full h-full absolute inset-0 bg-slate-50 overflow-hidden rounded-2xl border border-slate-100 shadow-inner">
                             <ModelErrorBoundary key={modelPath}>
                                 <MoleculeViewer modelPath={modelPath} autoRotate={true} />
                             </ModelErrorBoundary>
+
+                            {/* Full screen toggle button */}
+                            <button
+                                onClick={onFullScreen}
+                                className="absolute top-4 right-4 p-2.5 bg-white/80 backdrop-blur-md rounded-full text-slate-600 hover:text-blue-600 hover:bg-white shadow-lg transition-all duration-300 opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0"
+                                title="Mở rộng"
+                            >
+                                <Maximize2 size={20} />
+                            </button>
                         </div>
                     ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-slate-50 text-slate-300">
-                            <span>No 3D Model</span>
+                        <div className="w-full h-full flex items-center justify-center bg-slate-50 text-slate-300 rounded-2xl border border-dashed border-slate-200">
+                            <div className="flex flex-col items-center">
+                                <Box className="w-8 h-8 mb-2 opacity-50" />
+                                <span className="text-sm font-medium">Không có mô hình 3D</span>
+                            </div>
                         </div>
                     )}
                 </div>

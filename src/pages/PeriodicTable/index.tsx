@@ -1,6 +1,8 @@
-import { ArrowLeft, Search } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ArrowLeft, Search, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import MoleculeViewer from '../../components/ThreeD/MoleculeViewer';
 import logo from "../../shared/assets/Logo/logo.png";
 import ElementCard from './components/ElementCard';
 import ElementDetail from './components/ElementDetail';
@@ -11,6 +13,7 @@ const PeriodicTablePage = () => {
     const [selectedElement, setSelectedElement] = useState<any>(null);
     const [searchTerm, setSearchTerm] = useState("");
     const [activeCategory, setActiveCategory] = useState<string | null>(null);
+    const [isFullScreen, setIsFullScreen] = useState(false);
 
     const elements = periodicData.elements;
 
@@ -145,11 +148,103 @@ const PeriodicTablePage = () => {
                             <ElementDetail
                                 element={selectedElement}
                                 modelPath={getModelPath(selectedElement)}
+                                onFullScreen={() => setIsFullScreen(true)}
                             />
                         )}
                     </div>
                 </div>
             </div>
+
+            {/* Full Screen Overlay - Moved here to ensure true full screen */}
+            <AnimatePresence>
+                {isFullScreen && selectedElement && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[9999] bg-[#050b18] flex flex-col items-center justify-center overflow-hidden"
+                    >
+                        {/* Background subtle effect */}
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-900/20 via-transparent to-transparent opacity-50"></div>
+                        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-150 contrast-150"></div>
+
+                        {/* Top HUD Info */}
+                        <div className="absolute top-0 left-0 w-full p-8 md:p-12 flex justify-between items-start z-10">
+                            <motion.div
+                                initial={{ x: -20, opacity: 0 }}
+                                animate={{ x: 0, opacity: 1 }}
+                                transition={{ delay: 0.2 }}
+                                className="flex flex-col"
+                            >
+                                {/* <span className="text-blue-400 text-xs font-bold uppercase tracking-[0.3em] mb-2">Thông tin nguyên tử</span>
+                                <h2 className="text-white text-4xl md:text-6xl font-bold font-google tracking-tight flex items-baseline gap-4">
+                                    {selectedElement.name}
+                                    <span className="text-blue-500/50 text-2xl md:text-3xl font-light italic">{selectedElement.symbol}</span>
+                                </h2>
+                                <div className="mt-4 flex items-center gap-3">
+                                    <div className="px-3 py-1 bg-white/5 border border-white/10 rounded-full backdrop-blur-md">
+                                        <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">{selectedElement.category}</span>
+                                    </div>
+                                </div> */}
+                            </motion.div>
+
+                            <motion.button
+                                initial={{ scale: 0.8, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                transition={{ delay: 0.2 }}
+                                onClick={() => setIsFullScreen(false)}
+                                className="p-4 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-2xl backdrop-blur-md transition-all duration-300 group"
+                            >
+                                <X size={32} className="group-hover:rotate-90 transition-transform duration-300" />
+                            </motion.button>
+                        </div>
+
+                        {/* Main 3D Display Area */}
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                            transition={{ type: "spring", damping: 30, stiffness: 150 }}
+                            className="relative w-full h-full flex items-center justify-center p-4"
+                        >
+                            <div className="w-full h-full max-w-7xl max-h-[80vh] relative">
+                                {getModelPath(selectedElement) && (
+                                    <MoleculeViewer modelPath={getModelPath(selectedElement)!} />
+                                )}
+                            </div>
+                        </motion.div>
+
+                        {/* Bottom Stats HUD */}
+                        <motion.div
+                            initial={{ y: 50, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ delay: 0.3, type: "spring" }}
+                            className="absolute bottom-12 w-full max-w-4xl px-8"
+                        >
+                            {/* <div className="grid grid-cols-3 gap-1 md:gap-4 p-6 bg-white/5 border border-white/10 rounded-[2rem] backdrop-blur-xl shadow-2xl">
+                                <div className="flex flex-col items-center justify-center border-r border-white/10">
+                                    <span className="text-[10px] md:text-xs text-slate-500 font-bold uppercase tracking-widest mb-2">Số nguyên tử</span>
+                                    <span className="text-2xl md:text-5xl text-white font-black font-google">{selectedElement.number}</span>
+                                </div>
+                                <div className="flex flex-col items-center justify-center border-r border-white/10">
+                                    <span className="text-[10px] md:text-xs text-slate-500 font-bold uppercase tracking-widest mb-2">Ký hiệu hóa học</span>
+                                    <span className="text-3xl md:text-6xl text-blue-400 font-black font-google">{selectedElement.symbol}</span>
+                                </div>
+                                <div className="flex flex-col items-center justify-center">
+                                    <span className="text-[10px] md:text-xs text-slate-500 font-bold uppercase tracking-widest mb-2">Khối lượng (u)</span>
+                                    <span className="text-2xl md:text-5xl text-white font-black font-google">{selectedElement.atomic_mass}</span>
+                                </div>
+                            </div> */}
+                        </motion.div>
+
+                        {/* Corner Accents for HUD feel */}
+                        <div className="absolute bottom-8 left-8 w-16 h-16 border-l-2 border-b-2 border-white/5 rounded-bl-3xl pointer-events-none"></div>
+                        <div className="absolute bottom-8 right-8 w-16 h-16 border-r-2 border-b-2 border-white/5 rounded-br-3xl pointer-events-none"></div>
+                        <div className="absolute top-8 left-8 w-16 h-16 border-l-2 border-t-2 border-white/5 rounded-tl-3xl pointer-events-none"></div>
+                        <div className="absolute top-8 right-8 w-16 h-16 border-r-2 border-t-2 border-white/5 rounded-tr-3xl pointer-events-none"></div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

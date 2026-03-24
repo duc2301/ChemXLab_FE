@@ -1,4 +1,4 @@
-import { OrbitControls, Stage, useGLTF } from '@react-three/drei';
+import { Clone, OrbitControls, Stage, useGLTF } from '@react-three/drei';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Suspense, useRef } from 'react';
 
@@ -16,7 +16,7 @@ const Model = ({ path }: ModelProps) => {
         }
     });
 
-    return <primitive ref={ref} object={scene} />;
+    return <Clone ref={ref} object={scene} />;
 };
 
 interface MoleculeViewerProps {
