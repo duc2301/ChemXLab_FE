@@ -133,7 +133,7 @@ const Footer = () => {
                 {[
                   { label: "Điều khoản dịch vụ", path: "/terms" },
                   { label: "Chính sách bảo mật", path: "/privacy" },
-                  { label: "Bản quyền", path: "/refund" },
+                  { label: "Bản quyền", path: "/copyright" },
                 ].map((item) => (
                   <li key={item.label}>
                     <Link

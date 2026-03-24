@@ -37,6 +37,7 @@
     "rehype-katex": "^7.0.1",
     "remark-gfm": "^4.0.1",
     "remark-math": "^6.0.0",
+    "swiper": "^12.1.2",
     "tailwindcss": "^4.1.17",
     "three": "^0.181.2",
     "zustand": "^4.4.7"

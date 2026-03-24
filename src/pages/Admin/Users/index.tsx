@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import {
     Eye,
     Filter,
@@ -55,8 +56,13 @@ const CreateUserModal = ({ onClose, onSuccess }: { onClose: () => void; onSucces
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fadeIn">
-            <div className="bg-white rounded-xl w-full max-w-lg p-6 shadow-2xl relative">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+            <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.2 }}
+                className="bg-white rounded-2xl w-full max-w-lg p-6 shadow-2xl relative"
+            >
                 <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
                     <X size={24} />
                 </button>
@@ -103,7 +109,7 @@ const CreateUserModal = ({ onClose, onSuccess }: { onClose: () => void; onSucces
                         </button>
                     </div>
                 </form>
-            </div>
+            </motion.div>
         </div>
     );
 };
@@ -111,8 +117,13 @@ const CreateUserModal = ({ onClose, onSuccess }: { onClose: () => void; onSucces
 // --- Modal Xem Chi Tiết ---
 const ViewUserModal = ({ user, onClose }: { user: UserAdmin; onClose: () => void }) => {
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl w-full max-w-sm p-6 shadow-xl relative">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+            <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.2 }}
+                className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-xl relative"
+            >
                 <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><X size={20} /></button>
                 <div className="flex flex-col items-center pt-4">
                     <div className="w-24 h-24 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 text-3xl font-bold mb-4 overflow-hidden border-4 border-white shadow-lg">
@@ -136,7 +147,7 @@ const ViewUserModal = ({ user, onClose }: { user: UserAdmin; onClose: () => void
                         <span className="text-gray-900 font-medium">{formatDate(user.createdAt)}</span>
                     </div>
                 </div>
-            </div>
+            </motion.div>
         </div>
     );
 };
@@ -198,18 +209,18 @@ const AdminUsers = () => {
     );
 
     return (
-        <div className="space-y-6 p-6">
-            {/* Header Section */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="space-y-6 p-6 font-lexend">
+            {/* Page Header */}
+            <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Quản lý người dùng</h1>
-                    <p className="text-gray-500 text-sm mt-1">
-                        Tổng số: <span className="font-semibold text-indigo-600">{users.length}</span> tài khoản
+                    <h1 className="text-2xl font-bold text-[#12284B] font-space">Quản lý người dùng</h1>
+                    <p className="text-[#475569] text-sm mt-1">
+                        Tổng số: <span className="font-semibold text-[#3298DC]">{users.length}</span> tài khoản
                     </p>
                 </div>
                 <button
                     onClick={() => setShowCreateModal(true)}
-                    className="flex items-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-xl hover:bg-indigo-700 transition shadow-sm font-medium"
+                    className="flex items-center gap-2 bg-[#3298DC] text-white px-5 py-2.5 rounded-xl hover:bg-[#287BBF] transition shadow-sm font-medium"
                 >
                     <Plus size={20} /> Thêm người dùng
                 </button>
@@ -224,7 +235,7 @@ const AdminUsers = () => {
                         placeholder="Tìm kiếm theo tên, email..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
+                        className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#3298DC]/20 focus:border-[#3298DC] transition-all"
                     />
                 </div>
                 <div className="flex items-center gap-2 min-w-[200px]">

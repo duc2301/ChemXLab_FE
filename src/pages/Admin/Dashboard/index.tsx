@@ -6,10 +6,10 @@ import {
     Users,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import type { DashboardTransaction } from "../../../entities/Dashboard";
 import type { UserAdmin } from "../../../entities/Admin";
-import { getDashboardTransactions } from "../../../features/Dashboard";
+import type { DashboardTransaction } from "../../../entities/Dashboard";
 import { getAllUsers } from "../../../features/Admin";
+import { getDashboardTransactions } from "../../../features/Dashboard";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 const formatCurrency = (amount: number) =>
@@ -96,12 +96,12 @@ const LineChart = ({ points }: { points: ChartPoint[] }) => {
         >
             <defs>
                 <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor="#6366f1" />
-                    <stop offset="100%" stopColor="#818cf8" />
+                    <stop offset="0%" stopColor="#025D9E" />
+                    <stop offset="100%" stopColor="#3298DC" />
                 </linearGradient>
                 <linearGradient id={areaGradientId} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#6366f1" stopOpacity="0.2" />
-                    <stop offset="100%" stopColor="#6366f1" stopOpacity="0" />
+                    <stop offset="0%" stopColor="#3298DC" stopOpacity="0.2" />
+                    <stop offset="100%" stopColor="#3298DC" stopOpacity="0" />
                 </linearGradient>
             </defs>
 
@@ -166,7 +166,7 @@ const LineChart = ({ points }: { points: ChartPoint[] }) => {
                         </text>
 
                         {/* Dot with hover */}
-                        <circle cx={x} cy={y} r={5} fill="#6366f1" stroke="#fff" strokeWidth={2} />
+                        <circle cx={x} cy={y} r={5} fill="#025D9E" stroke="#fff" strokeWidth={2} />
                         <title>
                             {p.label}: {formatCurrency(p.value)}
                         </title>
@@ -189,11 +189,11 @@ const StatCard = ({
     icon: React.ReactNode;
     color: string;
 }) => (
-    <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
+    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg hover:-translate-y-0.5 transition-all">
         <div className="flex items-start justify-between">
             <div>
-                <p className="text-sm text-gray-500 font-medium">{title}</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">{value}</p>
+                <p className="text-sm text-[#475569] font-medium font-lexend">{title}</p>
+                <p className="text-3xl font-bold text-[#12284B] mt-2 font-space">{value}</p>
             </div>
             <div className={`w-12 h-12 rounded-xl ${color} flex items-center justify-center`}>
                 {icon}
@@ -272,8 +272,8 @@ const AdminDashboard = () => {
         <div className="space-y-6">
             {/* Header */}
             <div>
-                <h1 className="text-2xl font-bold text-gray-900">Bảng điều khiển</h1>
-                <p className="text-gray-500 mt-1">Tổng quan hoạt động hệ thống</p>
+                <h1 className="text-2xl font-bold text-[#12284B] font-space">Bảng điều khiển</h1>
+                <p className="text-[#475569] mt-1 font-lexend">Tổng quan hoạt động hệ thống</p>
             </div>
 
             {/* Stat cards */}
@@ -300,16 +300,16 @@ const AdminDashboard = () => {
                     title="Doanh thu (kỳ đã chọn)"
                     value={isLoading ? "—" : formatCurrency(totalRevenue)}
                     icon={<TrendingUp size={24} className="text-white" />}
-                    color="bg-gradient-to-br from-indigo-500 to-indigo-600"
+                    color="bg-gradient-to-br from-[#025D9E] to-[#3298DC]"
                 />
             </div>
 
             {/* Revenue Line Chart */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm">
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                 <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
                     <div>
-                        <h2 className="text-lg font-semibold text-gray-900">Thống kê doanh thu</h2>
-                        <p className="text-sm text-gray-500">Doanh thu giao dịch PAID theo ngày</p>
+                        <h2 className="text-lg font-semibold text-[#12284B] font-space">Thống kê doanh thu</h2>
+                        <p className="text-sm text-[#475569] font-lexend">Doanh thu giao dịch PAID theo ngày</p>
                     </div>
 
                     {/* Date range picker */}
@@ -320,7 +320,7 @@ const AdminDashboard = () => {
                                 type="datetime-local"
                                 value={fromInput}
                                 onChange={(e) => setFromInput(e.target.value)}
-                                className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                                className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#3298DC]/40"
                             />
                         </div>
                         <div className="flex flex-col gap-1">
@@ -335,7 +335,7 @@ const AdminDashboard = () => {
                         <button
                             onClick={fetchTransactions}
                             disabled={isLoading}
-                            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white text-sm font-medium rounded-lg transition-colors"
+                            className="flex items-center gap-2 px-4 py-2 bg-[#025D9E] hover:bg-[#12284B] disabled:opacity-60 text-white text-sm font-medium rounded-lg transition-colors"
                         >
                             <RefreshCw size={14} className={isLoading ? "animate-spin" : ""} />
                             Áp dụng
@@ -345,7 +345,7 @@ const AdminDashboard = () => {
 
                 {isLoading ? (
                     <div className="flex h-64 items-center justify-center">
-                        <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                        <div className="w-8 h-8 border-4 border-[#3298DC] border-t-transparent rounded-full animate-spin" />
                     </div>
                 ) : (
                     <LineChart points={chartPoints} />
@@ -353,10 +353,10 @@ const AdminDashboard = () => {
             </div>
 
             {/* Users table */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm">
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                 <div className="mb-6">
-                    <h2 className="text-lg font-semibold text-gray-900">Danh sách người dùng</h2>
-                    <p className="text-sm text-gray-500">Tất cả người dùng trong hệ thống</p>
+                    <h2 className="text-lg font-semibold text-[#12284B] font-space">Danh sách người dùng</h2>
+                    <p className="text-sm text-[#475569] font-lexend">Tất cả người dùng trong hệ thống</p>
                 </div>
                 {usersLoading ? (
                     <div className="flex h-40 items-center justify-center">
@@ -381,7 +381,7 @@ const AdminDashboard = () => {
                                 {users.map((u) => (
                                     <tr
                                         key={u.id}
-                                        className="border-b border-gray-50 hover:bg-gray-50 transition-colors"
+                                        className="border-b border-gray-50 hover:bg-indigo-50/30 transition-colors"
                                     >
                                         <td className="py-3 px-4">
                                             <div className="flex items-center gap-3">
@@ -440,10 +440,10 @@ const AdminDashboard = () => {
 
             {/* Transaction list */}
             {transactions.length > 0 && (
-                <div className="bg-white rounded-2xl p-6 shadow-sm">
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                     <div className="mb-6">
-                        <h2 className="text-lg font-semibold text-gray-900">Danh sách giao dịch</h2>
-                        <p className="text-sm text-gray-500">
+                        <h2 className="text-lg font-semibold text-[#12284B] font-space">Danh sách giao dịch</h2>
+                        <p className="text-sm text-[#475569] font-lexend">
                             {transactions.length} giao dịch trong kỳ đã chọn
                         </p>
                     </div>
@@ -471,7 +471,7 @@ const AdminDashboard = () => {
                                 {transactions.map((t) => (
                                     <tr
                                         key={t.id}
-                                        className="border-b border-gray-50 hover:bg-gray-50 transition-colors"
+                                        className="border-b border-gray-50 hover:bg-indigo-50/30 transition-colors"
                                     >
                                         <td className="py-3 px-4 text-sm font-mono text-gray-600 max-w-[200px] truncate">
                                             {t.transactionCode}

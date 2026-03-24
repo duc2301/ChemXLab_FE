@@ -1,13 +1,13 @@
 import { useGoogleLogin } from "@react-oauth/google";
 import { message } from "antd";
+import { motion } from "framer-motion";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
 import type { LoginForm } from "../../../entities/Auth";
 import { GoogleLogin as GoogleLoginAuth, Login } from "../../../features/Auth";
 
 // Import icons
-import { ArrowLeft, Eye, EyeOff, LogIn, Mail, Lock, UserPlus } from "lucide-react";
+import { AlertCircle, ArrowLeft, Eye, EyeOff, Lock, LogIn, Mail, UserPlus } from "lucide-react";
 
 // Import assets
 import logo from "../../../shared/assets/Logo/logo.png";
@@ -26,12 +26,28 @@ const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
+  const [formError, setFormError] = useState<string>("");
+  const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
+
+  const validateEmail = (email: string): boolean => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+
   const handleLogin = async () => {
-    if (!email || !password) {
-      message.warning("Vui lòng nhập email và mật khẩu");
+    const errors: { email?: string; password?: string } = {};
+    if (!email) errors.email = "Vui lòng nhập email";
+    else if (!validateEmail(email)) errors.email = "Email không đúng định dạng";
+    if (!password) errors.password = "Vui lòng nhập mật khẩu";
+    else if (password.length < 6) errors.password = "Mật khẩu phải có ít nhất 6 ký tự";
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      setFormError("");
       return;
     }
 
+    setFormError("");
+    setFieldErrors({});
     setIsLoading(true);
     try {
       const loginData: LoginForm = {
@@ -47,9 +63,30 @@ const LoginPage = () => {
         } else {
           navigate('/');
         }
+      } else {
+        setFormError("Email hoặc mật khẩu không đúng. Vui lòng thử lại.");
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Login capture:", err);
+      if (err?.response) {
+        const serverMsg = err.response?.data?.message;
+        const status = err.response?.status;
+        if (status === 401) {
+          setFormError("Email hoặc mật khẩu không đúng.");
+        } else if (status === 403) {
+          setFormError("Tài khoản của bạn đã bị khóa. Vui lòng liên hệ hỗ trợ.");
+        } else if (status === 429) {
+          setFormError("Bạn đã đăng nhập quá nhiều lần. Vui lòng thử lại sau.");
+        } else if (serverMsg) {
+          setFormError(serverMsg);
+        } else {
+          setFormError("Đã xảy ra lỗi. Vui lòng thử lại sau.");
+        }
+      } else if (err?.request) {
+        setFormError("Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.");
+      } else {
+        setFormError("Đã xảy ra lỗi không xác định. Vui lòng thử lại.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -167,7 +204,7 @@ const LoginPage = () => {
       <motion.div
         initial={{ opacity: 0, x: 40 }}
         animate={{ opacity: 1, x: 0 }}
-        transition={{ 
+        transition={{
           type: "spring",
           stiffness: 100,
           damping: 20,
@@ -177,7 +214,7 @@ const LoginPage = () => {
       >
 
         {/* Left Column - Seamless curved white background */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.2, duration: 0.6 }}
@@ -242,7 +279,7 @@ const LoginPage = () => {
           </div>
         </motion.div>
 
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.3, duration: 0.6 }}
@@ -260,30 +297,31 @@ const LoginPage = () => {
             </div>
 
             <div className="mb-10">
-              <h1 className="text-3xl font-black tracking-tight mb-2">Đăng nhập</h1>
+              <h1 className="text-3xl font-black tracking-tight mb-2 font-space">Đăng nhập</h1>
             </div>
 
             <div className="space-y-5" onKeyDown={handleKeyDown}>
               {/* Account Input */}
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-white/70 flex items-center gap-2 uppercase tracking-widest">
+                <label className="text-[10px] font-black text-white/70 flex items-center gap-2 uppercase tracking-widest font-lexend">
                   <Mail size={12} className="text-[#8CC1E9]" />
-                  Tên đăng nhập hoặc Email
+                  Email
                 </label>
                 <input
                   type="email"
-                  placeholder="admin@chemxlab.com"
+                  placeholder="Nhập email"
                   required
                   value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  className="w-full bg-white/[0.04] border border-transparent rounded-2xl px-5 py-4 focus:outline-none focus:border-[#8CC1E9]/50 transition-all text-sm placeholder:text-white/30"
+                  onChange={e => { setEmail(e.target.value); setFieldErrors(prev => ({ ...prev, email: undefined })); setFormError(""); }}
+                  className={`w-full bg-white/[0.04] border rounded-2xl px-5 py-4 focus:outline-none focus:border-[#8CC1E9]/50 transition-all text-sm placeholder:text-white/30 ${fieldErrors.email ? 'border-red-500/70' : 'border-transparent'}`}
                 />
+                {fieldErrors.email && <p className="text-red-400 text-xs mt-1 font-medium flex items-center gap-1"><AlertCircle size={12} />{fieldErrors.email}</p>}
               </div>
 
               {/* Password Input */}
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <label className="text-[10px] font-black text-white/70 flex items-center gap-2 uppercase tracking-widest">
+                  <label className="text-[10px] font-black text-white/70 flex items-center gap-2 uppercase tracking-widest font-lexend">
                     <Lock size={12} className="text-[#8CC1E9]" />
                     Mật khẩu
                   </label>
@@ -297,8 +335,8 @@ const LoginPage = () => {
                     placeholder="Nhập mật khẩu"
                     required
                     value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    className="w-full bg-white/[0.04] border border-transparent rounded-2xl px-5 py-4 pr-14 focus:outline-none focus:border-[#8CC1E9]/50 transition-all text-sm placeholder:text-white/30"
+                    onChange={e => { setPassword(e.target.value); setFieldErrors(prev => ({ ...prev, password: undefined })); setFormError(""); }}
+                    className={`w-full bg-white/[0.04] border rounded-2xl px-5 py-4 pr-14 focus:outline-none focus:border-[#8CC1E9]/50 transition-all text-sm placeholder:text-white/30 ${fieldErrors.password ? 'border-red-500/70' : 'border-transparent'}`}
                   />
                   <button
                     type="button"
@@ -308,7 +346,20 @@ const LoginPage = () => {
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
+                {fieldErrors.password && <p className="text-red-400 text-xs mt-1 font-medium flex items-center gap-1"><AlertCircle size={12} />{fieldErrors.password}</p>}
               </div>
+
+              {/* Form Error Banner */}
+              {formError && (
+                <motion.div
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 flex items-center gap-2 text-red-300 text-sm"
+                >
+                  <AlertCircle size={16} className="flex-shrink-0" />
+                  {formError}
+                </motion.div>
+              )}
 
               {/* Login Action */}
               <button

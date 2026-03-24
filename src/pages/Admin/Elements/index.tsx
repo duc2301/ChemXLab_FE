@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import {
     AlertTriangle,
     Atom,
@@ -68,8 +69,11 @@ const ViewElementModal = ({ element, onClose }: ViewElementModalProps) => {
     const category = props.category || "—";
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
-            <div
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
+            <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.2 }}
                 className="bg-white rounded-2xl w-full max-w-lg shadow-xl relative overflow-hidden"
                 onClick={(e) => e.stopPropagation()}
             >
@@ -84,7 +88,7 @@ const ViewElementModal = ({ element, onClose }: ViewElementModalProps) => {
                 {isLoadingDetail ? (
                     <div className="flex items-center justify-center py-20">
                         <div className="flex flex-col items-center gap-3">
-                            <Loader2 size={32} className="animate-spin text-indigo-500" />
+                            <Loader2 size={32} className="animate-spin text-[#3298DC]" />
                             <p className="text-sm text-gray-400">Đang tải chi tiết...</p>
                         </div>
                     </div>
@@ -120,8 +124,8 @@ const ViewElementModal = ({ element, onClose }: ViewElementModalProps) => {
                         <div className="px-6 py-5 space-y-5 max-h-[50vh] overflow-y-auto">
                             {/* Basic Info */}
                             <div>
-                                <h4 className="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                                <h4 className="text-xs font-bold text-[#025D9E] uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-[#025D9E]" />
                                     Thông tin cơ bản
                                 </h4>
                                 <div className="space-y-2.5">
@@ -157,7 +161,7 @@ const ViewElementModal = ({ element, onClose }: ViewElementModalProps) => {
                                         <div className="flex flex-wrap gap-1 justify-end max-w-[200px]">
                                             {Array.isArray(props.oxidationStates) && props.oxidationStates.length > 0
                                                 ? props.oxidationStates.map((state: string, i: number) => (
-                                                    <span key={i} className="inline-flex items-center px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 text-xs font-bold border border-indigo-100">
+                                                    <span key={i} className="inline-flex items-center px-2 py-0.5 rounded-md bg-[#E6F4FF] text-[#025D9E] text-xs font-bold border border-[#B6DCFE]">
                                                         {state}
                                                     </span>
                                                 ))
@@ -193,7 +197,7 @@ const ViewElementModal = ({ element, onClose }: ViewElementModalProps) => {
                         </div>
                     </>
                 )}
-            </div>
+            </motion.div>
         </div>
     );
 };
@@ -347,8 +351,13 @@ const ElementModal = ({ element, onClose, onSave }: ElementModalProps) => {
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-xl">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.2 }}
+                className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-xl"
+            >
                 <div className="sticky top-0 bg-white px-6 py-4 border-b border-gray-100 flex items-center justify-between z-10">
                     <h2 className="text-xl font-semibold text-gray-900">
                         {isEditing ? "Chỉnh sửa nguyên tố" : "Tạo nguyên tố mới"}
@@ -375,7 +384,7 @@ const ElementModal = ({ element, onClose, onSave }: ElementModalProps) => {
                                 required
                                 maxLength={3}
                                 disabled={isSaving}
-                                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-center font-bold text-lg disabled:opacity-50 disabled:bg-gray-50"
+                                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3298DC]/20 focus:border-[#3298DC] text-center font-bold text-lg disabled:opacity-50 disabled:bg-gray-50"
                             />
                         </div>
                         <div>
@@ -393,7 +402,7 @@ const ElementModal = ({ element, onClose, onSave }: ElementModalProps) => {
                                 placeholder="VD: 1.008"
                                 required
                                 disabled={isSaving}
-                                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 disabled:opacity-50 disabled:bg-gray-50"
+                                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3298DC]/20 focus:border-[#3298DC] disabled:opacity-50 disabled:bg-gray-50"
                             />
                         </div>
                     </div>
@@ -406,7 +415,7 @@ const ElementModal = ({ element, onClose, onSave }: ElementModalProps) => {
                             placeholder="VD: Hydrogen, Helium..."
                             required
                             disabled={isSaving}
-                            className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 disabled:opacity-50 disabled:bg-gray-50"
+                            className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3298DC]/20 focus:border-[#3298DC] disabled:opacity-50 disabled:bg-gray-50"
                         />
                     </div>
                     <div>
@@ -414,11 +423,11 @@ const ElementModal = ({ element, onClose, onSave }: ElementModalProps) => {
                             <label className="text-sm font-medium text-gray-700">Properties (JSON)</label>
                             <div className="flex gap-3">
                                 <button type="button" onClick={loadTemplate} disabled={isSaving}
-                                    className="text-xs text-indigo-600 hover:text-indigo-700 font-medium disabled:opacity-50">
+                                    className="text-xs text-[#025D9E] hover:text-[#12284B] font-medium disabled:opacity-50">
                                     Mẫu chuẩn
                                 </button>
                                 <button type="button" onClick={formatJson} disabled={isSaving}
-                                    className="text-xs text-indigo-600 hover:text-indigo-700 font-medium disabled:opacity-50">
+                                    className="text-xs text-[#025D9E] hover:text-[#12284B] font-medium disabled:opacity-50">
                                     Format JSON
                                 </button>
                             </div>
@@ -430,7 +439,7 @@ const ElementModal = ({ element, onClose, onSave }: ElementModalProps) => {
                             rows={6}
                             required
                             disabled={isSaving}
-                            className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono text-sm disabled:opacity-50 disabled:bg-gray-50 ${propertiesError ? "border-red-300 bg-red-50" : "border-gray-200"}`}
+                            className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3298DC]/20 focus:border-[#3298DC] font-mono text-sm disabled:opacity-50 disabled:bg-gray-50 ${propertiesError ? "border-red-300 bg-red-50" : "border-gray-200"}`}
                         />
                         {propertiesError && <p className="text-red-500 text-xs mt-1">{propertiesError}</p>}
                     </div>
@@ -440,18 +449,23 @@ const ElementModal = ({ element, onClose, onSave }: ElementModalProps) => {
                             Hủy
                         </button>
                         <button type="submit" disabled={isSaving}
-                            className="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+                            className="flex-1 px-4 py-2.5 bg-[#025D9E] text-white rounded-lg font-medium hover:bg-[#12284B] transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
                             {isSaving && <Loader2 size={16} className="animate-spin" />}
                             {isSaving ? "Đang lưu..." : isEditing ? "Lưu thay đổi" : "Tạo nguyên tố"}
                         </button>
                     </div>
                 </form>
-            </div>
+            </motion.div>
 
             {/* Close confirmation overlay */}
             {showCloseConfirm && (
-                <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-[60]">
-                    <div className="bg-white rounded-2xl w-full max-w-xs p-6 shadow-xl">
+                <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-[60]">
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.2 }}
+                        className="bg-white rounded-2xl w-full max-w-xs p-6 shadow-xl"
+                    >
                         <div className="text-center">
                             <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-3">
                                 <AlertTriangle size={24} className="text-amber-600" />
@@ -469,7 +483,7 @@ const ElementModal = ({ element, onClose, onSave }: ElementModalProps) => {
                                 </button>
                             </div>
                         </div>
-                    </div>
+                    </motion.div>
                 </div>
             )}
         </div>
@@ -486,8 +500,13 @@ interface DeleteModalProps {
 
 const DeleteModal = ({ element, onClose, onConfirm, isDeleting }: DeleteModalProps) => {
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-xl">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+            <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.2 }}
+                className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-xl"
+            >
                 <div className="text-center">
                     <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
                         <Trash2 size={24} className="text-red-600" />
@@ -509,7 +528,7 @@ const DeleteModal = ({ element, onClose, onConfirm, isDeleting }: DeleteModalPro
                         </button>
                     </div>
                 </div>
-            </div>
+            </motion.div>
         </div>
     );
 };
@@ -661,7 +680,7 @@ const AdminElements = () => {
         return (
             <div className="flex items-center justify-center h-[calc(100vh-120px)]">
                 <div className="flex flex-col items-center gap-4">
-                    <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                    <div className="w-10 h-10 border-4 border-[#3298DC] border-t-transparent rounded-full animate-spin" />
                     <p className="text-gray-500">Đang tải dữ liệu...</p>
                 </div>
             </div>
@@ -673,14 +692,14 @@ const AdminElements = () => {
             {/* Page Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Quản lý nguyên tố</h1>
-                    <p className="text-gray-500 mt-1">
+                    <h1 className="text-2xl font-bold text-[#12284B] font-space">Quản lý nguyên tố</h1>
+                    <p className="text-[#475569] mt-1 font-lexend">
                         Quản lý các nguyên tố hóa học · {elements.length} nguyên tố
                     </p>
                 </div>
                 <button
                     onClick={() => setShowCreateModal(true)}
-                    className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2.5 bg-[#025D9E] text-white rounded-lg font-medium hover:bg-[#12284B] transition-colors"
                 >
                     <Plus size={18} />
                     Thêm nguyên tố
@@ -697,7 +716,7 @@ const AdminElements = () => {
                             placeholder="Tìm theo ký hiệu, tên, ID hoặc phân loại..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                            className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3298DC]/20 focus:border-[#3298DC]"
                         />
                     </div>
                     <div className="relative">
@@ -705,7 +724,7 @@ const AdminElements = () => {
                         <select
                             value={categoryFilter}
                             onChange={(e) => setCategoryFilter(e.target.value)}
-                            className="pl-9 pr-8 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white text-sm appearance-none cursor-pointer min-w-[180px]"
+                            className="pl-9 pr-8 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3298DC]/20 focus:border-[#3298DC] bg-white text-sm appearance-none cursor-pointer min-w-[180px]"
                         >
                             {CATEGORY_OPTIONS.map((opt) => (
                                 <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -757,7 +776,7 @@ const AdminElements = () => {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className="text-sm font-medium text-gray-900 group-hover:text-indigo-600 transition-colors">{el.name}</span>
+                                            <span className="text-sm font-medium text-gray-900 group-hover:text-[#025D9E] transition-colors">{el.name}</span>
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className="text-sm text-gray-600 font-mono">{el.atomicMass}</span>
@@ -771,17 +790,17 @@ const AdminElements = () => {
                                             <div className="flex items-center justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); setViewingElement(el); }}
-                                                    className="p-2 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-all"
+                                                    className="p-2 text-[#025D9E] bg-[#E6F4FF] hover:bg-[#B6DCFE]/40 rounded-lg transition-all"
                                                     title="Xem chi tiết"
                                                 >
                                                     <Eye size={16} />
                                                 </button>
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); setEditingElement(el); }}
-                                                    className="p-2 hover:bg-indigo-50 rounded-lg transition-colors"
+                                                    className="p-2 hover:bg-[#E6F4FF] rounded-lg transition-colors"
                                                     title="Chỉnh sửa"
                                                 >
-                                                    <Edit size={16} className="text-gray-400 group-hover:text-indigo-600" />
+                                                    <Edit size={16} className="text-gray-400 group-hover:text-[#025D9E]" />
                                                 </button>
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); setDeletingElement(el); }}
