@@ -15,6 +15,9 @@ import ChatbotPage from "../../pages/Chatbot";
 import ExperiencePage from "../../pages/Experience";
 import HomePage from "../../pages/Home";
 import LabTest from "../../pages/Lab/Temp";
+import CopyrightPage from "../../pages/Legal/Copyright";
+import PrivacyPage from "../../pages/Legal/Privacy";
+import TermsPage from "../../pages/Legal/Terms";
 import LibraryPage from "../../pages/Library";
 import GradeDetail from "../../pages/Library/GradeDetail";
 import PaymentPage from "../../pages/Payment";
@@ -37,6 +40,9 @@ export const AppRoutes = () => {
         <Route path="library" element={<LibraryPage />} />
         <Route path="library/:gradeId" element={<GradeDetail />} />
         <Route path="profile" element={<ProfilePage />} />
+        <Route path="terms" element={<TermsPage />} />
+        <Route path="privacy" element={<PrivacyPage />} />
+        <Route path="copyright" element={<CopyrightPage />} />
       </Route>
       <Route path="lab" element={<LabTest />} />
       <Route path="periodic-table" element={<PeriodicTablePage />} />

@@ -1,11 +1,15 @@
 import { BarChart2, BookOpen, Briefcase, Contact, FlaskConical, GraduationCap, Landmark, Layers, Rocket } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
 
 // Import MoleculeViewer directly from components/ThreeD
 import MoleculeViewerModel from "../../components/ThreeD/MoleculeViewer";
 
 const ProductsPage = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("Tất cả");
+
 
   const filters = ["Tất cả", "Cơ bản", "Trung bình", "Nâng cao", "Hữu cơ", "Cấu trúc"];
 
@@ -172,7 +176,10 @@ const ProductsPage = () => {
                     {exp.desc}
                   </p>
 
-                  <button className="w-full mt-auto bg-[#12284B] text-white rounded-2xl py-4 flex items-center justify-center gap-2 font-space font-bold text-sm shadow-[0_10px_15px_-3px_rgba(18,40,75,0.2)] hover:bg-[#1e3a6a] transition-colors group-hover:shadow-[0_15px_25px_-5px_rgba(18,40,75,0.3)]">
+                  <button
+                    onClick={() => navigate("/lab")}
+                    className="w-full mt-auto bg-[#12284B] text-white rounded-2xl py-4 flex items-center justify-center gap-2 font-space font-bold text-sm shadow-[0_10px_15px_-3px_rgba(18,40,75,0.2)] hover:bg-[#1e3a6a] transition-colors group-hover:shadow-[0_15px_25px_-5px_rgba(18,40,75,0.3)]"
+                  >
                     Bắt đầu Thí nghiệm
                     <Rocket className="w-4 h-4 ml-1" />
                   </button>

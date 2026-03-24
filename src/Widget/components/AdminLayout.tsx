@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { isAdmin } from "../../features/Admin";
@@ -31,17 +32,22 @@ const AdminLayout = () => {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100/80 flex items-center justify-center"
+            >
                 <div className="flex flex-col items-center gap-4">
-                    <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-                    <p className="text-gray-600">Đang kiểm tra quyền truy cập...</p>
+                    <div className="w-12 h-12 border-4 border-[#3298DC] border-t-transparent rounded-full animate-spin" />
+                    <p className="text-[#475569] font-inter">Đang kiểm tra quyền truy cập...</p>
                 </div>
-            </div>
+            </motion.div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gray-100">
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100/80">
             <AdminSidebar
                 isCollapsed={sidebarCollapsed}
                 onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}

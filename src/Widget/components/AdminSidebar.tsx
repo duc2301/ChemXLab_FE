@@ -45,8 +45,8 @@ const sidebarItems: SidebarItem[] = [
     {
         id: "chemicals",
         label: "Quản lý Hóa chất",
-        icon: <FlaskConical size={20} />, 
-        path: "/admin/chemicals",         
+        icon: <FlaskConical size={20} />,
+        path: "/admin/chemicals",
     },
 ];
 interface AdminSidebarProps {
@@ -68,17 +68,17 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
     };
     return (
         <aside
-            className={`fixed left-0 top-0 h-screen bg-gradient-to-b from-[#1a1b2e] to-[#2e3048] text-white transition-all duration-300 z-50 flex flex-col ${isCollapsed ? "w-[72px]" : "w-[260px]"
+            className={`fixed left-0 top-0 h-screen bg-gradient-to-b from-[#0A1628] to-[#12284B] text-white transition-all duration-300 z-50 flex flex-col font-inter ${isCollapsed ? "w-[72px]" : "w-[260px]"
                 }`}
         >
             {/* Logo */}
             <div className="flex items-center gap-3 px-4 py-5 border-b border-white/10">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#3298DC] to-[#025D9E] flex items-center justify-center shadow-lg">
                     <FlaskConical size={22} className="text-white" />
                 </div>
                 {!isCollapsed && (
                     <div className="overflow-hidden">
-                        <h1 className="text-lg font-bold tracking-tight">ChemXLab</h1>
+                        <h1 className="text-lg font-bold tracking-tight font-space">ChemXLab</h1>
                         <p className="text-xs text-gray-400">Admin Panel</p>
                     </div>
                 )}
@@ -90,12 +90,12 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
                         key={item.id}
                         to={item.path}
                         className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 group ${isActive(item.path)
-                            ? "bg-white/15 text-white shadow-lg"
+                            ? "bg-[#3298DC]/20 text-white shadow-[0_0_8px_rgba(99,102,241,0.4)] border-transparent"
                             : "text-gray-300 hover:bg-white/10 hover:text-white"
                             }`}
                     >
                         <span
-                            className={`transition-colors ${isActive(item.path) ? "text-indigo-400" : "text-gray-400 group-hover:text-indigo-400"
+                            className={`transition-colors ${isActive(item.path) ? "text-[#8CC1E9]" : "text-gray-400 group-hover:text-[#8CC1E9]"
                                 }`}
                         >
                             {item.icon}
@@ -104,7 +104,7 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
                             <span className="font-medium text-sm">{item.label}</span>
                         )}
                         {isActive(item.path) && !isCollapsed && (
-                            <div className="ml-auto w-1.5 h-6 rounded-full bg-indigo-500" />
+                            <div className="ml-auto w-1.5 h-6 rounded-full bg-[#3298DC]" />
                         )}
                     </Link>
                 ))}
@@ -114,7 +114,7 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
                 {/* Back to Home */}
                 <Link
                     to="/"
-                    className="flex items-center gap-3 px-3 py-3 w-full rounded-xl text-gray-300 hover:bg-indigo-500/20 hover:text-indigo-400 transition-all duration-200"
+                    className="flex items-center gap-3 px-3 py-3 w-full rounded-xl text-gray-300 hover:bg-[#3298DC]/20 hover:text-[#8CC1E9] transition-all duration-200"
                 >
                     <Home size={20} />
                     {!isCollapsed && <span className="font-medium text-sm">Về trang chủ</span>}
@@ -131,7 +131,7 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
             {/* Collapse Toggle */}
             <button
                 onClick={onToggle}
-                className="absolute -right-3 top-20 w-6 h-6 bg-indigo-600 rounded-full flex items-center justify-center shadow-lg hover:bg-indigo-700 transition-colors"
+                className="absolute -right-3 top-20 w-6 h-6 bg-[#3298DC] rounded-full flex items-center justify-center shadow-lg hover:bg-[#025D9E] transition-colors"
                 style={{ cursor: "pointer", zIndex: 60 }}
             >
                 {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
