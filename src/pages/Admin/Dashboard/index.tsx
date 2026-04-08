@@ -35,9 +35,9 @@ interface ChartPoint {
 }
 
 const LineChart = ({ points }: { points: ChartPoint[] }) => {
-    const W = 780;
-    const H = 280;
-    const PAD = { top: 30, right: 30, bottom: 50, left: 80 };
+    const W = 1200;
+    const H = 320;
+    const PAD = { top: 30, right: 40, bottom: 50, left: 80 };
 
     if (points.length === 0) {
         return (
@@ -94,7 +94,7 @@ const LineChart = ({ points }: { points: ChartPoint[] }) => {
         <svg
             viewBox={`0 0 ${W} ${H}`}
             className="w-full"
-            style={{ height: H }}
+            style={{ maxHeight: 340 }}
             preserveAspectRatio="xMidYMid meet"
         >
             <defs>
@@ -268,11 +268,10 @@ const Pagination = ({
                         <button
                             key={p}
                             onClick={() => onPageChange(p as number)}
-                            className={`min-w-[36px] h-9 rounded-lg text-sm font-medium transition-all duration-200 ${
-                                currentPage === p
-                                    ? "bg-[#025D9E] text-white shadow-md shadow-blue-200"
-                                    : "text-gray-600 hover:bg-gray-100"
-                            }`}
+                            className={`min-w-[36px] h-9 rounded-lg text-sm font-medium transition-all duration-200 ${currentPage === p
+                                ? "bg-[#025D9E] text-white shadow-md shadow-blue-200"
+                                : "text-gray-600 hover:bg-gray-100"
+                                }`}
                         >
                             {p}
                         </button>
@@ -336,11 +335,10 @@ const FilterPill = ({
         <select
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            className={`appearance-none pl-3 pr-8 py-2.5 border rounded-xl text-sm font-medium transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#3298DC]/40 ${
-                value
-                    ? "border-[#3298DC] bg-[#3298DC]/5 text-[#025D9E]"
-                    : "border-gray-200 text-gray-600 hover:border-gray-300"
-            }`}
+            className={`appearance-none pl-3 pr-8 py-2.5 border rounded-xl text-sm font-medium transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#3298DC]/40 ${value
+                ? "border-[#3298DC] bg-[#3298DC]/5 text-[#025D9E]"
+                : "border-gray-200 text-gray-600 hover:border-gray-300"
+                }`}
         >
             <option value="">{label}</option>
             {options.map((opt) => (
@@ -381,7 +379,7 @@ const AdminDashboard = () => {
     const [txSearch, setTxSearch] = useState("");
     const [txStatusFilter, setTxStatusFilter] = useState("");
     const [txMethodFilter, setTxMethodFilter] = useState("");
-    const [txSortBy, setTxSortBy] = useState("");
+    const [txSortBy, setTxSortBy] = useState("date_desc");
     const [txPage, setTxPage] = useState(1);
 
     const abortRef = useRef<AbortController | null>(null);
@@ -435,6 +433,9 @@ const AdminDashboard = () => {
                 (u) => u.status?.toLowerCase() === userStatusFilter.toLowerCase()
             );
         }
+
+        // Default sort: newest first by createdAt
+        result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
         return result;
     }, [users, userSearch, userRoleFilter, userStatusFilter]);
@@ -500,27 +501,10 @@ const AdminDashboard = () => {
         setTxPage(1);
     }, [txSearch, txStatusFilter, txMethodFilter, txSortBy]);
 
-    // ── Unique values for filter options ─────────────────────────────────────
-    const userRoles = useMemo(
-        () => [...new Set(users.map((u) => u.role).filter(Boolean))],
-        [users]
-    );
-    const userStatuses = useMemo(
-        () => [...new Set(users.map((u) => u.status).filter(Boolean))],
-        [users]
-    );
-    const txStatuses = useMemo(
-        () => [...new Set(transactions.map((t) => t.status).filter(Boolean))],
-        [transactions]
-    );
-    const txMethods = useMemo(
-        () => [...new Set(transactions.map((t) => t.paymentMethod).filter(Boolean))],
-        [transactions]
-    );
 
     // ── Helpers ──────────────────────────────────────────────────────────────
     const hasActiveUserFilters = userSearch || userRoleFilter || userStatusFilter;
-    const hasActiveTxFilters = txSearch || txStatusFilter || txMethodFilter || txSortBy;
+    const hasActiveTxFilters = txSearch || txStatusFilter || txMethodFilter || (txSortBy && txSortBy !== "date_desc");
 
     const clearUserFilters = () => {
         setUserSearch("");
@@ -532,7 +516,7 @@ const AdminDashboard = () => {
         setTxSearch("");
         setTxStatusFilter("");
         setTxMethodFilter("");
-        setTxSortBy("");
+        setTxSortBy("date_desc");
     };
 
     // ── Aggregate transactions per day for chart ─────────────────────────────
@@ -660,23 +644,6 @@ const AdminDashboard = () => {
                             value={userSearch}
                             onChange={setUserSearch}
                             placeholder="Tìm theo tên hoặc email..."
-                        />
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                        <FilterPill
-                            label="Vai trò"
-                            value={userRoleFilter}
-                            onChange={setUserRoleFilter}
-                            options={userRoles.map((r) => ({ value: r, label: r }))}
-                        />
-                        <FilterPill
-                            label="Trạng thái"
-                            value={userStatusFilter}
-                            onChange={setUserStatusFilter}
-                            options={userStatuses.map((s) => ({
-                                value: s,
-                                label: s.charAt(0).toUpperCase() + s.slice(1),
-                            }))}
                         />
                     </div>
                 </div>
@@ -811,18 +778,6 @@ const AdminDashboard = () => {
                     </div>
                     <div className="flex flex-wrap gap-2">
                         <FilterPill
-                            label="Trạng thái"
-                            value={txStatusFilter}
-                            onChange={setTxStatusFilter}
-                            options={txStatuses.map((s) => ({ value: s, label: s }))}
-                        />
-                        <FilterPill
-                            label="Phương thức"
-                            value={txMethodFilter}
-                            onChange={setTxMethodFilter}
-                            options={txMethods.map((m) => ({ value: m, label: m }))}
-                        />
-                        <FilterPill
                             label="Sắp xếp"
                             value={txSortBy}
                             onChange={setTxSortBy}
@@ -874,7 +829,7 @@ const AdminDashboard = () => {
                                             key={t.id}
                                             className="border-b border-gray-50 hover:bg-blue-50/40 transition-colors"
                                         >
-                                            <td className="py-3 px-4 text-sm font-mono text-gray-600 max-w-[200px] truncate">
+                                            <td className="py-3 px-4 text-sm font-mono text-gray-600 whitespace-nowrap">
                                                 {t.transactionCode}
                                             </td>
                                             <td className="py-3 px-4 text-sm font-semibold text-gray-900">
