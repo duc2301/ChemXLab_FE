@@ -8,7 +8,7 @@ import {
     Users,
     X,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { UserAdmin } from "../../../entities/Admin";
 import type { DashboardTransaction } from "../../../entities/Dashboard";
 import { getAllUsers } from "../../../features/Admin";
@@ -22,9 +22,6 @@ const toLocalDatetimeInput = (date: Date) => {
     const pad = (n: number) => String(n).padStart(2, "0");
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 };
-
-const toApiDateTime = (localInputValue: string) =>
-    localInputValue ? new Date(localInputValue).toISOString().slice(0, 19) : "";
 
 const ITEMS_PER_PAGE = 8;
 
@@ -356,18 +353,17 @@ const FilterPill = ({
 
 // ─── Main page ───────────────────────────────────────────────────────────────
 const AdminDashboard = () => {
-    // Default range: last 30 days → now
-    const now = new Date();
-    const thirtyDaysAgo = new Date(now);
-    thirtyDaysAgo.setDate(now.getDate() - 30);
+    // Date range inputs (default set from data after fetch)
+    const [fromInput, setFromInput] = useState("");
+    const [toInput, setToInput] = useState(toLocalDatetimeInput(new Date()));
 
-    const [fromInput, setFromInput] = useState(toLocalDatetimeInput(thirtyDaysAgo));
-    const [toInput, setToInput] = useState(toLocalDatetimeInput(now));
+    // Applied chart range (only updates when "Áp dụng" is clicked)
+    const [chartFrom, setChartFrom] = useState("");
+    const [chartTo, setChartTo] = useState(toLocalDatetimeInput(new Date()));
 
     const [transactions, setTransactions] = useState<DashboardTransaction[]>([]);
-    const [allTimeRevenue, setAllTimeRevenue] = useState<number | null>(null);
     const [users, setUsers] = useState<UserAdmin[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
     const [usersLoading, setUsersLoading] = useState(true);
 
     // ── User filters ─────────────────────────────────────────────────────────
@@ -383,8 +379,6 @@ const AdminDashboard = () => {
     const [txSortBy, setTxSortBy] = useState("date_desc");
     const [txPage, setTxPage] = useState(1);
 
-    const abortRef = useRef<AbortController | null>(null);
-
     // Fetch users once
     useEffect(() => {
         getAllUsers().then((u) => {
@@ -393,34 +387,50 @@ const AdminDashboard = () => {
         });
     }, []);
 
-    const fetchTransactions = async () => {
-        if (abortRef.current) abortRef.current.abort();
-        abortRef.current = new AbortController();
-        setIsLoading(true);
-        const data = await getDashboardTransactions(
-            toApiDateTime(fromInput),
-            toApiDateTime(toInput)
-        );
-        setTransactions(data);
-        setIsLoading(false);
-    };
-
+    // Fetch all transactions once; default chart range = first PAID txn → now
     useEffect(() => {
-        fetchTransactions();
-        // Fetch all-time revenue (wide range)
-        const fetchAllTimeRevenue = async () => {
-            const allData = await getDashboardTransactions(
+        const fetchAll = async () => {
+            setIsLoading(true);
+            const data = await getDashboardTransactions(
                 "2020-01-01T00:00:00",
                 new Date().toISOString().slice(0, 19)
             );
-            const total = allData
+            setTransactions(data);
+
+            const nowStr = toLocalDatetimeInput(new Date());
+            setToInput(nowStr);
+            setChartTo(nowStr);
+
+            const paidTimestamps = data
                 .filter((t) => t.status === "PAID")
-                .reduce((s, t) => s + t.amount, 0);
-            setAllTimeRevenue(total);
+                .map((t) => new Date(t.paidAt).getTime())
+                .filter((ts) => !Number.isNaN(ts));
+
+            if (paidTimestamps.length > 0) {
+                const earliestStr = toLocalDatetimeInput(new Date(Math.min(...paidTimestamps)));
+                setFromInput(earliestStr);
+                setChartFrom(earliestStr);
+            }
+
+            setIsLoading(false);
         };
-        fetchAllTimeRevenue();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        fetchAll();
     }, []);
+
+    // Apply date range to chart only (transaction list is unaffected)
+    const applyChartFilter = () => {
+        setChartFrom(fromInput);
+        setChartTo(toInput);
+    };
+
+    // Map userId → email for buyer lookup in transaction list
+    const userEmailMap = useMemo(() => {
+        const map: Record<string, string> = {};
+        users.forEach((u) => {
+            if (u.id) map[u.id] = u.email;
+        });
+        return map;
+    }, [users]);
 
     // ── Filtered & paginated users ───────────────────────────────────────────
     const filteredUsers = useMemo(() => {
@@ -464,7 +474,7 @@ const AdminDashboard = () => {
         setUserPage(1);
     }, [userSearch, userRoleFilter, userStatusFilter]);
 
-    // ── Filtered & paginated transactions ────────────────────────────────────
+    // ── Filtered & paginated transactions (all, not date-scoped) ─────────────
     const filteredTransactions = useMemo(() => {
         let result = [...transactions];
 
@@ -473,7 +483,8 @@ const AdminDashboard = () => {
             result = result.filter(
                 (t) =>
                     t.transactionCode?.toLowerCase().includes(q) ||
-                    t.id?.toLowerCase().includes(q)
+                    t.id?.toLowerCase().includes(q) ||
+                    userEmailMap[t.userId]?.toLowerCase().includes(q)
             );
         }
 
@@ -501,7 +512,7 @@ const AdminDashboard = () => {
         }
 
         return result;
-    }, [transactions, txSearch, txStatusFilter, txMethodFilter, txSortBy]);
+    }, [transactions, txSearch, txStatusFilter, txMethodFilter, txSortBy, userEmailMap]);
 
     const txTotalPages = Math.max(1, Math.ceil(filteredTransactions.length / ITEMS_PER_PAGE));
     const paginatedTransactions = filteredTransactions.slice(
@@ -532,26 +543,44 @@ const AdminDashboard = () => {
         setTxSortBy("date_desc");
     };
 
+    // Transactions within the currently-applied chart range
+    const chartTransactions = useMemo(() => {
+        const fromTs = chartFrom ? new Date(chartFrom).getTime() : Number.NEGATIVE_INFINITY;
+        const toTs = chartTo ? new Date(chartTo).getTime() : Number.POSITIVE_INFINITY;
+        return transactions.filter((t) => {
+            if (t.status !== "PAID") return false;
+            const ts = new Date(t.paidAt).getTime();
+            return ts >= fromTs && ts <= toTs;
+        });
+    }, [transactions, chartFrom, chartTo]);
+
     // ── Aggregate transactions per day for chart ─────────────────────────────
-    const chartPoints: ChartPoint[] = (() => {
+    const chartPoints: ChartPoint[] = useMemo(() => {
         const map: Record<string, number> = {};
-        transactions
-            .filter((t) => t.status === "PAID")
-            .forEach((t) => {
-                const day = t.paidAt.slice(0, 10);
-                map[day] = (map[day] ?? 0) + t.amount;
-            });
+        chartTransactions.forEach((t) => {
+            const day = t.paidAt.slice(0, 10);
+            map[day] = (map[day] ?? 0) + t.amount;
+        });
         return Object.entries(map)
             .sort(([a], [b]) => a.localeCompare(b))
             .map(([date, value]) => ({
                 label: date.slice(5),
                 value,
             }));
-    })();
+    }, [chartTransactions]);
 
-    const totalRevenue = transactions
-        .filter((t) => t.status === "PAID")
-        .reduce((s, t) => s + t.amount, 0);
+    const totalRevenue = useMemo(
+        () => chartTransactions.reduce((s, t) => s + t.amount, 0),
+        [chartTransactions]
+    );
+
+    const allTimeRevenue = useMemo(
+        () =>
+            transactions
+                .filter((t) => t.status === "PAID")
+                .reduce((s, t) => s + t.amount, 0),
+        [transactions]
+    );
 
     return (
         <div className="space-y-6">
@@ -572,7 +601,7 @@ const AdminDashboard = () => {
                 />
                 <StatCard
                     title="Tổng doanh thu"
-                    value={allTimeRevenue === null ? "—" : formatCurrency(allTimeRevenue)}
+                    value={isLoading ? "—" : formatCurrency(allTimeRevenue)}
                     icon={<TrendingUp size={28} className="text-white" />}
                     gradient="bg-gradient-to-br from-[#025D9E] via-[#0284c7] to-[#38bdf8]"
                     accentLight="bg-white"
@@ -613,7 +642,7 @@ const AdminDashboard = () => {
                             />
                         </div>
                         <button
-                            onClick={fetchTransactions}
+                            onClick={applyChartFilter}
                             disabled={isLoading}
                             className="flex items-center gap-2 px-4 py-2 bg-[#025D9E] hover:bg-[#12284B] disabled:opacity-60 text-white text-sm font-medium rounded-lg transition-colors"
                         >
@@ -771,7 +800,7 @@ const AdminDashboard = () => {
                         </h2>
                         <p className="text-sm text-[#475569] font-lexend">
                             {filteredTransactions.length === transactions.length
-                                ? `${transactions.length} giao dịch trong kỳ đã chọn`
+                                ? `Tất cả ${transactions.length} giao dịch trong hệ thống`
                                 : `${filteredTransactions.length} / ${transactions.length} kết quả`}
                         </p>
                     </div>
@@ -792,7 +821,7 @@ const AdminDashboard = () => {
                         <SearchBar
                             value={txSearch}
                             onChange={setTxSearch}
-                            placeholder="Tìm theo mã giao dịch..."
+                            placeholder="Tìm theo mã giao dịch hoặc email người mua..."
                         />
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -828,6 +857,7 @@ const AdminDashboard = () => {
                                     <tr className="border-b border-gray-100">
                                         {[
                                             "Mã giao dịch",
+                                            "Người mua",
                                             "Số tiền",
                                             "Phương thức",
                                             "Trạng thái",
@@ -843,13 +873,22 @@ const AdminDashboard = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {paginatedTransactions.map((t) => (
+                                    {paginatedTransactions.map((t) => {
+                                        const buyerEmail = userEmailMap[t.userId];
+                                        return (
                                         <tr
                                             key={t.id}
                                             className="border-b border-gray-50 hover:bg-blue-50/40 transition-colors"
                                         >
                                             <td className="py-3 px-4 text-sm font-mono text-gray-600 whitespace-nowrap">
                                                 {t.transactionCode}
+                                            </td>
+                                            <td className="py-3 px-4 text-sm text-gray-600 whitespace-nowrap">
+                                                {buyerEmail ? (
+                                                    buyerEmail
+                                                ) : (
+                                                    <span className="text-gray-400 italic">Không xác định</span>
+                                                )}
                                             </td>
                                             <td className="py-3 px-4 text-sm font-semibold text-gray-900">
                                                 {formatCurrency(t.amount)}
@@ -873,7 +912,8 @@ const AdminDashboard = () => {
                                                 {new Date(t.paidAt).toLocaleString("vi-VN")}
                                             </td>
                                         </tr>
-                                    ))}
+                                        );
+                                    })}
                                 </tbody>
                             </table>
                         </div>
