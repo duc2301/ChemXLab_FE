@@ -365,6 +365,7 @@ const AdminDashboard = () => {
     const [toInput, setToInput] = useState(toLocalDatetimeInput(now));
 
     const [transactions, setTransactions] = useState<DashboardTransaction[]>([]);
+    const [allTimeRevenue, setAllTimeRevenue] = useState<number | null>(null);
     const [users, setUsers] = useState<UserAdmin[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [usersLoading, setUsersLoading] = useState(true);
@@ -406,6 +407,18 @@ const AdminDashboard = () => {
 
     useEffect(() => {
         fetchTransactions();
+        // Fetch all-time revenue (wide range)
+        const fetchAllTimeRevenue = async () => {
+            const allData = await getDashboardTransactions(
+                "2020-01-01T00:00:00",
+                new Date().toISOString().slice(0, 19)
+            );
+            const total = allData
+                .filter((t) => t.status === "PAID")
+                .reduce((s, t) => s + t.amount, 0);
+            setAllTimeRevenue(total);
+        };
+        fetchAllTimeRevenue();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
@@ -558,8 +571,8 @@ const AdminDashboard = () => {
                     accentLight="bg-white"
                 />
                 <StatCard
-                    title="Doanh thu (kỳ đã chọn)"
-                    value={isLoading ? "—" : formatCurrency(totalRevenue)}
+                    title="Tổng doanh thu"
+                    value={allTimeRevenue === null ? "—" : formatCurrency(allTimeRevenue)}
                     icon={<TrendingUp size={28} className="text-white" />}
                     gradient="bg-gradient-to-br from-[#025D9E] via-[#0284c7] to-[#38bdf8]"
                     accentLight="bg-white"
@@ -572,6 +585,12 @@ const AdminDashboard = () => {
                     <div>
                         <h2 className="text-lg font-semibold text-[#12284B] font-space">Thống kê doanh thu</h2>
                         <p className="text-sm text-[#475569] font-lexend">Doanh thu giao dịch PAID theo ngày</p>
+                        {!isLoading && (
+                            <div className="mt-2 flex items-baseline gap-2">
+                                <span className="text-2xl font-bold text-[#025D9E] font-space">{formatCurrency(totalRevenue)}</span>
+                                <span className="text-xs text-gray-400 font-lexend">trong kỳ đã chọn</span>
+                            </div>
+                        )}
                     </div>
 
                     <div className="flex flex-wrap items-end gap-3">
