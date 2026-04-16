@@ -8,7 +8,8 @@ import {
     Trash2,
     X,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Pagination, { ITEMS_PER_PAGE } from "../../../components/Admin/Pagination";
 import type { CreatePackageForm, PackageAdmin, UpdatePackageForm } from "../../../entities/Admin";
 import {
     createPackage,
@@ -229,18 +230,17 @@ const DeleteModal = ({ pkg, onClose, onConfirm }: DeleteModalProps) => {
 
 const AdminPackages = () => {
     const [packages, setPackages] = useState<PackageAdmin[]>([]);
-    const [filteredPackages, setFilteredPackages] = useState<PackageAdmin[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [editingPackage, setEditingPackage] = useState<PackageAdmin | null>(null);
     const [deletingPackage, setDeletingPackage] = useState<PackageAdmin | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
 
     // Fetch packages
     const fetchPackages = async () => {
         const data = await getAllPackagesAdmin();
         setPackages(data);
-        setFilteredPackages(data);
         setIsLoading(false);
     };
 
@@ -248,18 +248,27 @@ const AdminPackages = () => {
         fetchPackages();
     }, []);
 
-    // Filter packages
-    useEffect(() => {
+    // Filtered packages with useMemo
+    const filteredPackages = useMemo(() => {
         if (searchQuery) {
-            setFilteredPackages(
-                packages.filter((pkg) =>
-                    pkg.name.toLowerCase().includes(searchQuery.toLowerCase())
-                )
+            return packages.filter((pkg) =>
+                pkg.name.toLowerCase().includes(searchQuery.toLowerCase())
             );
-        } else {
-            setFilteredPackages(packages);
         }
+        return packages;
     }, [packages, searchQuery]);
+
+    // Pagination
+    const totalPages = Math.max(1, Math.ceil(filteredPackages.length / ITEMS_PER_PAGE));
+    const paginatedPackages = useMemo(() => {
+        const start = (currentPage - 1) * ITEMS_PER_PAGE;
+        return filteredPackages.slice(start, start + ITEMS_PER_PAGE);
+    }, [filteredPackages, currentPage]);
+
+    // Reset page when search changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery]);
 
     // Handle create package
     const handleCreatePackage = async (data: CreatePackageForm) => {
@@ -344,7 +353,7 @@ const AdminPackages = () => {
 
             {/* Packages Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredPackages.map((pkg) => (
+                {paginatedPackages.map((pkg) => (
                     <div
                         key={pkg.id}
                         className="bg-white rounded-2xl p-6 shadow-sm border-2 border-transparent transition-all duration-200 hover:shadow-md hover:border-[#3298DC]/30 hover:-translate-y-1"
@@ -409,6 +418,17 @@ const AdminPackages = () => {
                     <p className="text-gray-500">Không có gói nào</p>
                 </div>
             )}
+
+            {/* Pagination */}
+            <div className="bg-white rounded-2xl shadow-sm px-6">
+                <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={setCurrentPage}
+                    totalItems={filteredPackages.length}
+                    itemName="gói"
+                />
+            </div>
 
             {/* Modals */}
             {showCreateModal && (

@@ -8,7 +8,8 @@ import {
     Users as UsersIcon,
     X,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Pagination, { ITEMS_PER_PAGE } from "../../../components/Admin/Pagination";
 import type { CreateUserForm, UserAdmin } from "../../../entities/Admin";
 import { createUser, deleteUser, getAllUsers } from "../../../features/Admin";
 
@@ -155,10 +156,10 @@ const ViewUserModal = ({ user, onClose }: { user: UserAdmin; onClose: () => void
 // --- Main Page Component ---
 const AdminUsers = () => {
     const [users, setUsers] = useState<UserAdmin[]>([]);
-    const [filteredUsers, setFilteredUsers] = useState<UserAdmin[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const [roleFilter, setRoleFilter] = useState<string>("all");
+    const [currentPage, setCurrentPage] = useState(1);
 
     // States cho Modal
     const [showCreateModal, setShowCreateModal] = useState(false);
@@ -169,7 +170,6 @@ const AdminUsers = () => {
         setIsLoading(true);
         const data = await getAllUsers();
         setUsers(data);
-        setFilteredUsers(data);
         setIsLoading(false);
     };
 
@@ -177,9 +177,9 @@ const AdminUsers = () => {
         fetchUsers();
     }, []);
 
-    // Xử lý Filter & Search
-    useEffect(() => {
-        let result = users;
+    // Filtered users with useMemo
+    const filteredUsers = useMemo(() => {
+        let result = [...users];
         if (searchQuery) {
             const query = searchQuery.toLowerCase();
             result = result.filter(u => u.fullName?.toLowerCase().includes(query) || u.email?.toLowerCase().includes(query));
@@ -187,8 +187,22 @@ const AdminUsers = () => {
         if (roleFilter !== "all") {
             result = result.filter(u => u.role?.toLowerCase() === roleFilter.toLowerCase());
         }
-        setFilteredUsers(result);
+        // Sort newest first
+        result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        return result;
     }, [users, searchQuery, roleFilter]);
+
+    // Pagination
+    const totalPages = Math.max(1, Math.ceil(filteredUsers.length / ITEMS_PER_PAGE));
+    const paginatedUsers = useMemo(() => {
+        const start = (currentPage - 1) * ITEMS_PER_PAGE;
+        return filteredUsers.slice(start, start + ITEMS_PER_PAGE);
+    }, [filteredUsers, currentPage]);
+
+    // Reset page when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery, roleFilter]);
 
     // Xử lý Xóa
     const handleDelete = async (id: string) => {
@@ -269,8 +283,8 @@ const AdminUsers = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
-                            {filteredUsers.length > 0 ? (
-                                filteredUsers.map((user) => (
+                            {paginatedUsers.length > 0 ? (
+                                paginatedUsers.map((user) => (
                                     <tr key={user.id} className="hover:bg-indigo-50/30 transition-colors group">
                                         <td className="py-4 px-6">
                                             <div className="flex items-center gap-3">
@@ -304,7 +318,7 @@ const AdminUsers = () => {
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan={4} className="py-12 text-center text-gray-500">
+                                    <td colSpan={5} className="py-12 text-center text-gray-500">
                                         <UsersIcon size={48} className="mx-auto mb-3 text-gray-300" />
                                         <p>Không tìm thấy người dùng phù hợp</p>
                                     </td>
@@ -313,6 +327,13 @@ const AdminUsers = () => {
                         </tbody>
                     </table>
                 </div>
+                <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={setCurrentPage}
+                    totalItems={filteredUsers.length}
+                    itemName="người dùng"
+                />
             </div>
 
             {/* Render Modals */}

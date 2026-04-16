@@ -2,8 +2,6 @@ import { motion } from "framer-motion";
 import {
     AlertTriangle,
     Atom,
-    ChevronLeft,
-    ChevronRight,
     Edit,
     Eye,
     Filter,
@@ -13,7 +11,8 @@ import {
     Trash2,
     X,
 } from "lucide-react";
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import Pagination, { ITEMS_PER_PAGE } from "../../../components/Admin/Pagination";
 import type { CreateElementForm, ElementAdmin, ElementProperties, UpdateElementForm } from "../../../entities/Admin";
 import {
     createElement,
@@ -22,9 +21,6 @@ import {
     getElementById,
     updateElement,
 } from "../../../features/Admin";
-
-// ============== CONSTANTS ==============
-const ITEMS_PER_PAGE = 20;
 
 const CATEGORY_OPTIONS = [
     { value: "", label: "Tất cả" },
@@ -831,47 +827,13 @@ const AdminElements = () => {
                 )}
 
                 {/* Pagination */}
-                {totalPages > 1 && (
-                    <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100">
-                        <p className="text-sm text-gray-500">
-                            Trang {currentPage} / {totalPages} · {filteredElements.length} nguyên tố
-                        </p>
-                        <div className="flex items-center gap-1">
-                            <button
-                                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                                disabled={currentPage === 1}
-                                className="p-2 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                            >
-                                <ChevronLeft size={18} />
-                            </button>
-                            {Array.from({ length: totalPages }, (_, i) => i + 1)
-                                .filter((page) => page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1)
-                                .map((page, idx, arr) => (
-                                    <Fragment key={page}>
-                                        {idx > 0 && arr[idx - 1] !== page - 1 && (
-                                            <span className="px-1 text-gray-400 text-sm">…</span>
-                                        )}
-                                        <button
-                                            onClick={() => setCurrentPage(page)}
-                                            className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${currentPage === page
-                                                ? "bg-indigo-600 text-white"
-                                                : "hover:bg-gray-100 text-gray-600"
-                                                }`}
-                                        >
-                                            {page}
-                                        </button>
-                                    </Fragment>
-                                ))}
-                            <button
-                                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                                disabled={currentPage === totalPages}
-                                className="p-2 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                            >
-                                <ChevronRight size={18} />
-                            </button>
-                        </div>
-                    </div>
-                )}
+                <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={setCurrentPage}
+                    totalItems={filteredElements.length}
+                    itemName="nguyên tố"
+                />
             </div>
 
             {/* Modals */}
