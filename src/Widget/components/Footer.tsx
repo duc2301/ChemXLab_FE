@@ -92,6 +92,7 @@ const Footer = () => {
                 {[
                   { label: "Thí nghiệm ảo", path: "/lab" },
                   { label: "Thư viện hóa học", path: "/library" },
+                  { label: "Bảng tuần hoàn", path: "/periodic-table" },
                   { label: "Bảng giá", path: "/pricing" },
                 ].map((item) => (
                   <li key={item.label}>
