@@ -39,6 +39,7 @@ export const AppRoutes = () => {
         <Route path="pricing" element={<ExperiencePage />} />
         <Route path="library" element={<LibraryPage />} />
         <Route path="library/:gradeId" element={<GradeDetail />} />
+
         <Route path="profile" element={<ProfilePage />} />
         <Route path="terms" element={<TermsPage />} />
         <Route path="privacy" element={<PrivacyPage />} />
