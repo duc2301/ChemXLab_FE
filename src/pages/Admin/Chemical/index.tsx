@@ -11,7 +11,8 @@ import {
   Upload,
   X
 } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import Pagination, { ITEMS_PER_PAGE } from "../../../components/Admin/Pagination";
 import type {
   ChemicalAdmin,
   CreateChemicalForm,
@@ -46,6 +47,7 @@ const AdminChemicalsPage = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   // --- Form State ---
   const [formData, setFormData] = useState({
@@ -219,13 +221,27 @@ const AdminChemicalsPage = () => {
     }
   };
 
-  const filteredList = chemicals
-    .filter(
-      (c) =>
-        c.formula.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (c.commonName && c.commonName.toLowerCase().includes(searchTerm.toLowerCase()))
-    )
-    .sort((a, b) => a.formula.localeCompare(b.formula));
+  const filteredList = useMemo(() => {
+    return chemicals
+      .filter(
+        (c) =>
+          c.formula.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (c.commonName && c.commonName.toLowerCase().includes(searchTerm.toLowerCase()))
+      )
+      .sort((a, b) => a.formula.localeCompare(b.formula));
+  }, [chemicals, searchTerm]);
+
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil(filteredList.length / ITEMS_PER_PAGE));
+  const paginatedList = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredList.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredList, currentPage]);
+
+  // Reset page when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   return (
     <div className="p-6 font-lexend">
@@ -284,12 +300,12 @@ const AdminChemicalsPage = () => {
                     </div>
                   </td>
                 </tr>
-              ) : filteredList.length === 0 ? (
+              ) : paginatedList.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="p-8 text-center text-gray-500">Không tìm thấy dữ liệu.</td>
                 </tr>
               ) : (
-                filteredList.map((item) => {
+                paginatedList.map((item) => {
                   const safeMolData = getSafeMolData(item.molecularData);
 
                   return (
@@ -353,6 +369,13 @@ const AdminChemicalsPage = () => {
             </tbody>
           </table>
         </div>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+          totalItems={filteredList.length}
+          itemName="hóa chất"
+        />
       </div>
 
       {/* MODAL FORM */}
