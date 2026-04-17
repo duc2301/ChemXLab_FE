@@ -1,11 +1,23 @@
 import { Spin } from "antd";
-import { Minus, Plus } from "lucide-react";
+import { Minus, Plus, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Package } from "../../entities/Package";
 import type { Payment } from "../../entities/Payment";
 import { getAllPackages } from "../../features/Package";
 import { createPayment } from "../../features/Payment";
+
+type PromoConfig = { originalPrice: number; displayedDiscount: number };
+
+const PROMO_CONFIG: Record<string, PromoConfig> = {
+  "SMART LAB": { originalPrice: 79000, displayedDiscount: 80 },
+  "GENIUS LAB": { originalPrice: 179000, displayedDiscount: 80 },
+};
+
+const getPromo = (plan: Package): PromoConfig | null => {
+  const config = PROMO_CONFIG[plan.name.toUpperCase()];
+  return config && config.originalPrice > plan.price ? config : null;
+};
 
 const ExperiencePage = () => {
   const [packages, setPackages] = useState<Package[]>([]);
@@ -107,6 +119,8 @@ const ExperiencePage = () => {
           ) : (
             standardPackages.map((plan) => {
               const recommended = isRecommended(plan.name);
+              const promo = getPromo(plan);
+              const savings = promo ? promo.originalPrice - plan.price : 0;
               return (
                 <div key={plan.id} className="w-full lg:flex-1 flex flex-col pt-[32px]">
                   <div className={`relative p-8 flex flex-col w-full h-full min-h-[581px] transition-all duration-300 ease-out hover:-translate-y-2
@@ -115,35 +129,85 @@ const ExperiencePage = () => {
                       : "bg-white/40 border border-white/50 shadow-[0_8px_32px_rgba(4,48,110,0.05)] backdrop-blur-[10px] rounded-[32px]"
                     }
                   `}>
+                    {promo && (
+                      <>
+                        <div aria-hidden className="absolute inset-0 pointer-events-none rounded-[32px] overflow-hidden">
+                          <div className="absolute top-0 -left-1/2 h-full w-[60%] bg-gradient-to-r from-transparent via-white/40 to-transparent promo-shimmer" />
+                          <div className="absolute -top-16 -right-16 w-48 h-48 rounded-full bg-gradient-to-br from-[#FFE4E6] to-[#FFEDD5] opacity-60 blur-2xl" />
+                        </div>
+                      </>
+                    )}
+
                     {recommended && (
-                      <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                      <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-30">
                         <div className="bg-gradient-to-r from-[#04306E] to-[#3398DB] text-white text-[12px] font-bold px-4 py-1.5 rounded-full shadow-lg uppercase tracking-wider whitespace-nowrap">
-                          Phổ biến nhất
+                          Khuyên dùng
                         </div>
                       </div>
                     )}
-                    <h3 className="font-inter font-medium text-[18px] leading-[28px] text-[#334155] mb-2">
+
+                    {promo && (
+                      <div className="absolute top-5 right-5 z-20 pointer-events-none">
+                        <div className="relative">
+                          <div className="absolute inset-0 rounded-full bg-[#FF4757] blur-xl opacity-50 animate-pulse" />
+                          <div className="absolute inset-0 rounded-full promo-pulse-ring" />
+                          <div className="relative w-[64px] h-[64px] rounded-full bg-gradient-to-br from-[#FF4757] via-[#FF6B35] to-[#F97316] border-[3px] border-white shadow-[0_10px_24px_-6px_rgba(255,71,87,0.6)] flex flex-col items-center justify-center promo-float">
+                            <span className="font-space font-black text-[18px] leading-none text-white tracking-tight drop-shadow-sm">-{promo.displayedDiscount}%</span>
+                            <span className="font-inter font-bold text-[8px] leading-none text-white/95 mt-[3px] tracking-[2px]">OFF</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <h3 className="relative z-10 font-inter font-medium text-[18px] leading-[28px] text-[#334155] mb-2">
                       {getPlanName(plan.name)}
                     </h3>
 
-                    <div className="flex items-end gap-1 mb-2">
-                      <span className="font-inter font-bold text-[40px] lg:text-[48px] leading-[1] text-[#04306E]">
-                        {formatPrice(plan.price)}
-                      </span>
-                      {plan.price > 0 && (
-                        <span className="font-inter font-medium text-[14px] leading-[20px] text-[#94A3B8] pb-1">
-                          /gói
+                    {promo ? (
+                      <div className="relative z-10">
+                        <div className="flex items-center gap-2 mb-1 h-[24px]">
+                          <span className="font-inter font-medium text-[18px] leading-[24px] text-[#94A3B8] line-through decoration-[#FB7185]/80 decoration-[2px]">
+                            {formatPrice(promo.originalPrice)}
+                          </span>
+                          <span className="inline-flex items-center font-inter font-bold text-[10px] leading-none tracking-wider uppercase text-white bg-gradient-to-r from-[#DC2626] via-[#FF4757] to-[#F97316] px-[8px] py-[4px] rounded-full shadow-sm promo-gradient-shift">
+                            Giảm {promo.displayedDiscount}%
+                          </span>
+                        </div>
+                        <div className="flex items-end gap-1 mb-2">
+                          <span className="font-space font-bold text-[44px] lg:text-[52px] leading-[1] text-transparent bg-clip-text bg-gradient-to-br from-[#04306E] via-[#0B4A8F] to-[#3398DB] drop-shadow-sm">
+                            {formatPrice(plan.price)}
+                          </span>
+                          <span className="font-inter font-medium text-[14px] leading-[20px] text-[#94A3B8] pb-1.5">
+                            /gói
+                          </span>
+                        </div>
+                        <div className="inline-flex items-center gap-1.5 mb-[12px] self-start rounded-full bg-gradient-to-r from-[#FFF7ED] to-[#FEF2F2] border border-[#FED7AA] px-3 py-[4px] shadow-sm">
+                          <Sparkles className="w-3 h-3 text-[#F97316]" strokeWidth={2.5} />
+                          <span className="font-inter font-bold text-[11px] leading-[16px] text-[#C2410C]">
+                            Tiết kiệm {formatPrice(savings)}
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="relative z-10 flex items-end gap-1 mb-2">
+                        <span className="font-inter font-bold text-[40px] lg:text-[48px] leading-[1] text-[#04306E]">
+                          {formatPrice(plan.price)}
                         </span>
-                      )}
-                    </div>
+                        {plan.price > 0 && (
+                          <span className="font-inter font-medium text-[14px] leading-[20px] text-[#94A3B8] pb-1">
+                            /gói
+                          </span>
+                        )}
+                      </div>
+                    )}
 
-                    <p className="font-inter font-normal text-[14px] leading-[23px] text-[#64748B] min-h-[48px] mb-[28px]">
+                    <p className="relative z-10 font-inter font-normal text-[14px] leading-[23px] text-[#64748B] min-h-[48px] mb-[28px]">
                       {getPlanDesc(plan.name)}
                     </p>
 
                     <button
                       onClick={() => handleBuyPackage(plan.id)}
-                      className={`w-full py-[14px] rounded-full font-inter font-semibold text-[14px] leading-[20px] text-center transition-all duration-300
+                      className={`relative z-10 w-full py-[14px] rounded-full font-inter font-semibold text-[14px] leading-[20px] text-center transition-all duration-300
                         ${plan.name === "FREE"
                           ? "bg-white border border-[#E2E8F0] shadow-[0_1px_2px_rgba(0,0,0,0.05)] text-[#04306E] hover:bg-slate-50"
                           : recommended
@@ -154,7 +218,7 @@ const ExperiencePage = () => {
                       {plan.price === 0 ? "Đăng kí miễn phí" : "Bắt đầu ngay"}
                     </button>
 
-                    <div className="w-full mt-[40px] pt-[24px] border-t border-[#E2E8F0]/50 flex-grow">
+                    <div className="relative z-10 w-full mt-[40px] pt-[24px] border-t border-[#E2E8F0]/50 flex-grow">
                       <div className="font-inter font-bold text-[12px] leading-[16px] tracking-[0.6px] uppercase text-[#94A3B8] mb-[16px]">
                         {getPlanFeatureHeader(plan.name)}
                       </div>
