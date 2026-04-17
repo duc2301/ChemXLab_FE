@@ -11,6 +11,7 @@ import {
     getConversationHistory,
     sendMessage,
 } from "../../features/Chatbot";
+import { SubscriptionRequiredScreen, useAccessGate } from "../../shared/components/AccessGate";
 import Navbar from "../../Widget/components/Navbar";
 import ChatArea from "./components/ChatArea";
 import ChatInput from "./components/ChatInput";
@@ -30,21 +31,22 @@ const ChatbotPage = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [showLoginModal, setShowLoginModal] = useState(false);
 
-    // Check if user is logged in
-    const token = localStorage.getItem("token") || localStorage.getItem("jwtToken");
-    const isLoggedIn = !!token;
+    // Gate access: must be logged in AND have an active subscription
+    const accessStatus = useAccessGate();
+    const isAuthorized = accessStatus === "authorized";
 
-    // Show login modal if not logged in
     useEffect(() => {
-        if (!isLoggedIn) {
+        if (accessStatus === "unauthenticated") {
             setShowLoginModal(true);
             setIsInitialLoading(false);
+        } else if (accessStatus === "no-subscription") {
+            setIsInitialLoading(false);
         }
-    }, [isLoggedIn]);
+    }, [accessStatus]);
 
-    // Load sessions on mount
+    // Load sessions on mount (only after access is confirmed)
     useEffect(() => {
-        if (!isLoggedIn) return;
+        if (!isAuthorized) return;
 
         const initializeChat = async () => {
             setIsInitialLoading(true);
@@ -63,7 +65,7 @@ const ChatbotPage = () => {
             setIsInitialLoading(false);
         };
         initializeChat();
-    }, [isLoggedIn]);
+    }, [isAuthorized]);
 
     const refreshSessions = useCallback(async () => {
         const sessionList = await getAllSessions();
@@ -165,7 +167,7 @@ const ChatbotPage = () => {
         }
     }, []);
 
-    if (!isLoggedIn) {
+    if (accessStatus === "unauthenticated") {
         return (
             <div className="h-screen bg-[#FBFBFB] flex items-center justify-center relative overflow-hidden">
                 <Navbar />
@@ -198,6 +200,20 @@ const ChatbotPage = () => {
                 </Modal>
             </div>
         );
+    }
+
+    if (accessStatus === "loading") {
+        return (
+            <div className="h-screen bg-[#FBFBFB] flex flex-col items-center justify-center relative overflow-hidden">
+                <Navbar />
+                <Spin size="large" />
+                <p className="text-[#12284B]/60 mt-4 font-inter font-medium">Đang kiểm tra quyền truy cập...</p>
+            </div>
+        );
+    }
+
+    if (accessStatus === "no-subscription") {
+        return <SubscriptionRequiredScreen featureName="trợ lý AI ChemXLab" />;
     }
 
     if (isInitialLoading) {

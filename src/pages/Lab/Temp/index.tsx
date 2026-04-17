@@ -1,9 +1,10 @@
-import { Modal } from 'antd';
+import { Modal, Spin } from 'antd';
 import { LogIn } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLabSettings } from '../../../features/lab-environment/services/labSettingsStore';
 import Mascot7 from '../../../shared/assets/mascot/7.png';
+import { SubscriptionRequiredScreen, useAccessGate } from '../../../shared/components/AccessGate';
 import Navbar from '../../../Widget/components/Navbar';
 import { LabScene } from '../../../Widget/lab-scene/ui/LabScene';
 import ChatWidget from './components/ChatWidget';
@@ -273,16 +274,14 @@ const LabTest = () => {
   const [activePreset, setActivePreset] = useState<string>('standard');
   const [showLoginModal, setShowLoginModal] = useState(false);
 
-  // Check if user is logged in
-  const token = localStorage.getItem("token") || localStorage.getItem("jwtToken");
-  const isLoggedIn = !!token;
+  // Gate access: must be logged in AND have an active subscription
+  const accessStatus = useAccessGate();
 
-  // Show login modal if not logged in
   useEffect(() => {
-    if (!isLoggedIn) {
+    if (accessStatus === "unauthenticated") {
       setShowLoginModal(true);
     }
-  }, [isLoggedIn]);
+  }, [accessStatus]);
 
   // Read settings from zustand store
   const settings = useLabSettings();
@@ -344,7 +343,7 @@ const LabTest = () => {
 
   const isPaused = gameState === 'paused' || gameState === 'settings';
 
-  if (!isLoggedIn) {
+  if (accessStatus === "unauthenticated") {
     return (
       <div className="h-screen bg-[#FBFBFB] flex items-center justify-center relative overflow-hidden">
         <Navbar />
@@ -377,6 +376,20 @@ const LabTest = () => {
         </Modal>
       </div>
     );
+  }
+
+  if (accessStatus === "loading") {
+    return (
+      <div className="h-screen bg-[#FBFBFB] flex flex-col items-center justify-center relative overflow-hidden">
+        <Navbar />
+        <Spin size="large" />
+        <p className="text-[#12284B]/60 mt-4 font-inter font-medium">Đang kiểm tra quyền truy cập...</p>
+      </div>
+    );
+  }
+
+  if (accessStatus === "no-subscription") {
+    return <SubscriptionRequiredScreen featureName="phòng thí nghiệm ảo" />;
   }
 
   return (
