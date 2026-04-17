@@ -40,6 +40,7 @@
     "swiper": "^12.1.2",
     "tailwindcss": "^4.1.17",
     "three": "^0.181.2",
+    "xlsx-js-style": "^1.2.0",
     "zustand": "^4.4.7"
   },
   "devDependencies": {

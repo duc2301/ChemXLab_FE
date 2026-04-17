@@ -1,4 +1,5 @@
 import {
+    Download,
     Filter,
     RefreshCw,
     Search,
@@ -6,7 +7,8 @@ import {
     Users,
     X,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import XLSX from "xlsx-js-style";
 import Pagination, { ITEMS_PER_PAGE } from "../../../components/Admin/Pagination";
 import type { UserAdmin } from "../../../entities/Admin";
 import type { DashboardTransaction } from "../../../entities/Dashboard";
@@ -462,6 +464,148 @@ const AdminDashboard = () => {
         setTxSortBy("date_desc");
     };
 
+    // ── Export transactions to Excel ─────────────────────────────────────────
+    const exportTransactionsToExcel = useCallback(() => {
+        const headers = [
+            "STT",
+            "Mã giao dịch",
+            "Người mua (Email)",
+            "Số tiền (VND)",
+            "Phương thức thanh toán",
+            "Trạng thái",
+            "Ngày thanh toán",
+        ];
+
+        // Build rows: title row + empty row + header row + data rows
+        const now = new Date();
+        const exportDateStr = now.toLocaleString("vi-VN");
+        const titleRow = [`BÁO CÁO DANH SÁCH GIAO DỊCH — Xuất lúc: ${exportDateStr}`];
+        const emptyRow: string[] = [];
+
+        const dataRows = filteredTransactions.map((t, idx) => [
+            idx + 1,
+            t.transactionCode || "",
+            userEmailMap[t.userId] || "Không xác định",
+            t.amount,
+            t.paymentMethod || "",
+            t.status || "",
+            t.paidAt ? new Date(t.paidAt).toLocaleString("vi-VN") : "",
+        ]);
+
+        const allRows = [titleRow, emptyRow, headers, ...dataRows];
+        const worksheet = XLSX.utils.aoa_to_sheet(allRows);
+
+        // ── Merge title row across all columns ──
+        worksheet["!merges"] = [
+            { s: { r: 0, c: 0 }, e: { r: 0, c: headers.length - 1 } },
+        ];
+
+        // ── Column widths ──
+        worksheet["!cols"] = [
+            { wch: 6 },   // STT
+            { wch: 44 },  // Mã giao dịch
+            { wch: 32 },  // Email
+            { wch: 18 },  // Số tiền
+            { wch: 22 },  // Phương thức
+            { wch: 14 },  // Trạng thái
+            { wch: 24 },  // Ngày thanh toán
+        ];
+
+        // ── Styling helpers ──
+        const borderThin = {
+            top: { style: "thin", color: { rgb: "D1D5DB" } },
+            bottom: { style: "thin", color: { rgb: "D1D5DB" } },
+            left: { style: "thin", color: { rgb: "D1D5DB" } },
+            right: { style: "thin", color: { rgb: "D1D5DB" } },
+        };
+
+        const titleStyle = {
+            font: { bold: true, sz: 14, color: { rgb: "FFFFFF" } },
+            fill: { fgColor: { rgb: "025D9E" } },
+            alignment: { horizontal: "center", vertical: "center" },
+        };
+
+        const headerStyle = {
+            font: { bold: true, sz: 11, color: { rgb: "FFFFFF" } },
+            fill: { fgColor: { rgb: "12284B" } },
+            alignment: { horizontal: "center", vertical: "center", wrapText: true },
+            border: borderThin,
+        };
+
+        const dataStyleEven = {
+            font: { sz: 11, color: { rgb: "1F2937" } },
+            fill: { fgColor: { rgb: "FFFFFF" } },
+            alignment: { vertical: "center" },
+            border: borderThin,
+        };
+
+        const dataStyleOdd = {
+            font: { sz: 11, color: { rgb: "1F2937" } },
+            fill: { fgColor: { rgb: "F0F7FF" } },
+            alignment: { vertical: "center" },
+            border: borderThin,
+        };
+
+        const currencyStyle = (isOdd: boolean) => ({
+            ...(isOdd ? dataStyleOdd : dataStyleEven),
+            numFmt: '#,##0 "₫"',
+            alignment: { horizontal: "right", vertical: "center" },
+        });
+
+        const centerStyle = (isOdd: boolean) => ({
+            ...(isOdd ? dataStyleOdd : dataStyleEven),
+            alignment: { horizontal: "center", vertical: "center" },
+        });
+
+        // ── Apply styles to cells ──
+        const range = XLSX.utils.decode_range(worksheet["!ref"] || "A1");
+
+        for (let R = range.s.r; R <= range.e.r; R++) {
+            for (let C = range.s.c; C <= Math.min(range.e.c, headers.length - 1); C++) {
+                const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
+                if (!worksheet[cellRef]) worksheet[cellRef] = { v: "", t: "s" };
+                const cell = worksheet[cellRef];
+
+                if (R === 0) {
+                    // Title row
+                    cell.s = titleStyle;
+                } else if (R === 2) {
+                    // Header row
+                    cell.s = headerStyle;
+                } else if (R >= 3) {
+                    // Data rows
+                    const isOdd = (R - 3) % 2 === 1;
+                    if (C === 0) {
+                        // STT — center
+                        cell.s = centerStyle(isOdd);
+                    } else if (C === 3) {
+                        // Số tiền — currency format
+                        cell.s = currencyStyle(isOdd);
+                    } else if (C === 5) {
+                        // Trạng thái — center
+                        cell.s = centerStyle(isOdd);
+                    } else {
+                        cell.s = isOdd ? dataStyleOdd : dataStyleEven;
+                    }
+                }
+            }
+        }
+
+        // ── Row heights ──
+        worksheet["!rows"] = [
+            { hpt: 32 }, // Title
+            { hpt: 8 },  // Empty spacer
+            { hpt: 28 }, // Header
+            ...dataRows.map(() => ({ hpt: 22 })),
+        ];
+
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Giao dịch");
+
+        const timestamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}_${String(now.getHours()).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}`;
+        XLSX.writeFile(workbook, `GiaoDich_${timestamp}.xlsx`);
+    }, [filteredTransactions, userEmailMap]);
+
     // Transactions within the currently-applied chart range
     const chartTransactions = useMemo(() => {
         const fromTs = chartFrom ? new Date(chartFrom).getTime() : Number.NEGATIVE_INFINITY;
@@ -723,15 +867,25 @@ const AdminDashboard = () => {
                                 : `${filteredTransactions.length} / ${transactions.length} kết quả`}
                         </p>
                     </div>
-                    {hasActiveTxFilters && (
+                    <div className="flex items-center gap-2">
                         <button
-                            onClick={clearTxFilters}
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+                            onClick={exportTransactionsToExcel}
+                            disabled={filteredTransactions.length === 0}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-[#025D9E] hover:bg-[#12284B] disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors shadow-sm"
                         >
-                            <X size={12} />
-                            Xoá bộ lọc
+                            <Download size={12} />
+                            Xuất Excel
                         </button>
-                    )}
+                        {hasActiveTxFilters && (
+                            <button
+                                onClick={clearTxFilters}
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+                            >
+                                <X size={12} />
+                                Xoá bộ lọc
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 {/* Search & Filter bar */}
